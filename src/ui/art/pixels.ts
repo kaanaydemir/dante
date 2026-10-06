@@ -103,9 +103,10 @@ export class ToneMap {
 }
 
 /**
- * Render a tone map as an engraving: solid ink for the darkest tones, then
- * cross-hatching, diagonal hatching, sparse strokes and stipple, paper for
- * light. `ink` / `paper` are 0xRRGGBB.
+ * Render a tone map as a line engraving (Doré): solid ink in the deepest
+ * shadow, cross-hatching, then diagonal hatching that thins out toward the
+ * light, and ink contours where the tone jumps (silhouettes). `ink` / `paper`
+ * are 0xRRGGBB.
  */
 export function engrave(tone: ToneMap, ink: number, paper: number, seed = 1): ImageData {
   const { w, h } = tone;
@@ -120,19 +121,22 @@ export function engrave(tone: ToneMap, ink: number, paper: number, seed = 1): Im
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const t = tone.get(x, y);
-      const d1 = (x + y) % 2 === 0; // main diagonal lines, 2px period
-      const d2 = (x - y + 1024) % 2 === 0;
-      const d3 = (x + y) % 3 === 0;
-      const d4 = (x + y) % 4 === 0;
+      const a = (x + y) % 1024;
+      const b = (x - y + 1024) % 1024;
       let isInk: boolean;
       if (t > 0.9) isInk = true;
-      else if (t > 0.75) isInk = d1 || d2 ? (x % 2 === 0 || y % 2 === 0) : true;
-      else if (t > 0.6) isInk = d1 || (d2 && y % 2 === 0);
-      else if (t > 0.45) isInk = d1 && y % 2 === 0 ? true : d3;
-      else if (t > 0.3) isInk = d3;
-      else if (t > 0.18) isInk = d4 && r() < 0.85;
-      else if (t > 0.08) isInk = r() < t * 0.35;
-      else isInk = false;
+      else if (t > 0.74) isInk = a % 2 === 0 || b % 3 === 0;
+      else if (t > 0.58) isInk = a % 3 === 0 || b % 4 === 0;
+      else if (t > 0.42) isInk = a % 3 === 0;
+      else if (t > 0.28) isInk = a % 4 === 0 && (x + 3 * y) % 7 !== 0;
+      else if (t > 0.16) isInk = a % 6 === 0 && (x * 3 + y) % 5 !== 0;
+      else isInk = t > 0.08 && r() < 0.02;
+      // Contours: a strong change of tone next to this pixel draws an edge.
+      if (!isInk) {
+        const right = tone.get(x + 1, y);
+        const down = tone.get(x, y + 1);
+        if ((right - t > 0.42 && right > 0.6) || (down - t > 0.42 && down > 0.6)) isInk = true;
+      }
       const i = (y * w + x) * 4;
       img.data[i] = isInk ? ir : pr;
       img.data[i + 1] = isInk ? ig : pg;
