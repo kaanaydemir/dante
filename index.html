@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="description" content="Dante's Inferno as a book you read, play and change. Longfellow's 1867 translation." />
+    <title>The Divine Comedy — A Playable Book</title>
+    <link rel="icon" href="data:," />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #07060a;
+        color: #e9dfc6;
+      }
+      #game {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #07060a;
+      }
+      #game canvas {
+        display: block;
+        outline: none;
+      }
+      noscript {
+        display: block;
+        padding: 2rem;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 20px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game" aria-label="The Divine Comedy — A Playable Book"></div>
+    <noscript>This book needs JavaScript to open.</noscript>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

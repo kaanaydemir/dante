@@ -47,10 +47,10 @@ Kaynak metin `docs/source/inferno/canto-NN.txt` dosyalarıdır (Longfellow, 1867
 | Büyüklükler | `minor` ±1, `major` ±2, `centre` ±3. `centre` bu bölümde yalnızca Francesca sahnesinde kullanılır. | §2.9 |
 | Seçim bütçesi | Her kantoda bir `major` (ya da `centre`) seçim, 0–2 `minor` diyalog seçimi ve 0–3 sistemik ölçüm | §3.2 |
 | Vergilius'un güveni | `trust` 0–10 arasındadır ve Vergilius ilk konuştuğunda 4 olur. Öğüdüne uymak +1, öğüdüne karşı gitmek −1. | §3.3 |
-| Sözler | Bölüm 1'de 14 söz vardır; biri Yük, biri koşullu. Her söz, köken dizesinin **son kelimesidir**. Bu yüzden oyuncunun tercetleri, sonları gerçekten kafiyeli Longfellow dizelerinden kurulur. | §3.4 |
+| Sözler | Bölüm 1'de 14 söz vardır; biri Yük, biri koşullu. Her söz, köken dizesinin **son kelimesidir** (Wall'un dizesi kelimenin çoğuluyla, "walls" ile biter). Bu yüzden oyuncunun tercetleri, sonları gerçekten kafiyeli Longfellow dizelerinden kurulur. | §3.4 |
 | Anma | Bölüm 1'de tek anı vardır: `inf05.paolo_francesca`. Kararsızlar hiç anılamaz (III 49). Limbo'dakiler zaten anılıyor (IV 76–78). | §3.5 |
 | Erdemler | Dört kardinal erdem +1'lik adımlarla büyür. Kaynakları diyalog seçimleri ve bekçilerin **nasıl** geçildiğidir. | §3.6 |
-| "What Dante did" | Her diyalog seçiminden sonra bir kart çıkar. Kanto V'teki kartlar kanto sonuna ertelenir. | §2.11 |
+| "What Dante did" | Her diyalog seçiminden sonra bir kart çıkar. Kanto V'in merkez sahnesindeki iki kart (`inf05.c3`, `inf05.c4`) kanto sonuna ertelenir. | §2.11 |
 | Biçim | Markdown ve YAML ön bilgi. Oyun içeriği ` ```script ` bloklarında durur. Örnek ID'ler: `inf05.s6.b3`, `inf05.c4`, `flag:inf05.verdict_pity`. | §2 |
 
 ### 0.4 On altın kural
@@ -111,7 +111,7 @@ Böylece "I" diyen anlatım her zaman Longfellow'dur, "he" diyen anlatım her za
    - Terazi simgesi bir an kıpırdar (Kanto III'ten itibaren).
    - Güven değişimi sayıyla değil, Vergilius'un duruşu ve mesafesiyle gösterilir.
    - Kazanılan söz, kart animasyonuyla Kitap'a uçar.
-6. **"What Dante did" kartı.** Seçimin sonuçları oynandıktan sonra kenardan bir not kartı kayar. Başlığı "What Dante did"dir; oyuncu Dante'yle aynı şeyi seçtiyse "As Dante did" olur. Kartta 1–6 Longfellow dizesi, atıf ve tek cümlelik sade bir not vardır. E ile kapanır. Bazı kartlar kanto sonuna ertelenir (`timing=deferred`).
+6. **"What Dante did" kartı.** Seçimin sonuçları oynandıktan sonra kenardan bir not kartı kayar. Başlığı "What Dante did"dir; oyuncu Dante'yle aynı şeyi seçtiyse "As Dante did" olur. Kartta 1–6 Longfellow dizesi, atıf ve en çok iki kısa cümlelik sade bir not vardır. E ile kapanır. Bazı kartlar kanto sonuna ertelenir (`timing=deferred`).
 7. **Kanto sonu.** Bayılmayla biten kantolarda (III, V) ekran beyaza ya da kızıla, sonra siyaha döner ve kitap kapanır.
 8. **Kolofon** (son sahne, `@mode: colophon`). Kitap yeniden açılır. Sol sayfada kantonun son dizesi tek başına durur: terza rima her kantoyu tek bir dizeyle bitirir (her kanto 3n+1 dizedir). Sağ sayfada "In this canto" başlığı altında oyuncunun seçimleri ve Dante'ninkiler (ertelenmiş kartlar burada açılır), kazanılan sözler ve köken dizeleri, anılar, Codex sayfaları ve terazi listelenir. "Turn the page" ile sonraki kantoya geçilir. Kolofonla birlikte kantonun tam Longfellow metni Kitap'ta açılır.
 9. **Uyanış.** Önceki kanto bayılmayla bittiyse yeni kantonun epigrafı uyanış dizesidir (IV 1–3). Sayfa çevrilince kısa bir sinematikle oynanışa geçilir. Bu, GDD'nin 2. açık sorusu için önerimizdir.
@@ -142,7 +142,7 @@ SEÇİM (kenar boşluğu)               "WHAT DANTE DID" KARTI
              ┌──────────────────┐   ╭─ What Dante did ──────────────╮
              │ ▸ <seçenek a>    │   │ <1–6 Longfellow dizesi>       │
              │   <seçenek b>    │   │                   <atıf>      │
-             │   <seçenek c>    │   │ <tek cümlelik sade not>       │
+             │   <seçenek c>    │   │ <kısa sade not>               │
              └──────────────────┘   ╰─────────────────────── [E] ───╯
 ```
 
@@ -200,7 +200,7 @@ Her dosya YAML ön bilgiyle başlar. Bütün alanlar zorunludur. Boş listeler `
 | `characters` | liste | Konuşmacı ID'leri (§4.8) | `[DANTE, VIRGIL, CHARON]` |
 | `mechanics` | liste | Mekanik sözlüğünden (§7.0) | `[crowd_flow, swarm]` |
 | `choices` | liste | Dosyadaki bütün seçimler | `[inf03.c1, inf03.c2, inf03.c3]` |
-| `words` | liste | Bu kantoda **ilk kez** verilen sözler, koşullular dahil | `[Stay, Desire]` |
+| `words` | liste | Bu kantoda **ilk kez** verilen sözler, koşullular dahil. Mühür açan `word:` etkileri (IV'teki `word:Hope`) yazılmaz. | `[Stay, Desire]` |
 | `memories` | liste | | `[]` |
 | `codex` | liste | | `[inf03.gate, inf03.charon]` |
 | `flags_set` | liste | Bu dosyanın kaldırdığı bayraklar | `[inf03.left_hope]` |
@@ -270,7 +270,7 @@ ID: inf03.gate
 - **Sahne** (`## [inf03.s2] The Air Without a Star`): tek bir mekânda geçen kesintisiz bir zaman dilimidir. Başlıktaki İngilizce ad, Kitap'ın içindekiler listesinde görünür.
 - **Vuruş** (`### [inf03.s2.b4] Misericord and Justice`): bir sunum ya da etkileşim birimidir. Her vuruşun altında tam olarak bir ` ```script ` bloğu bulunur.
 - `s0` her kantoda açılış sayfasıdır ve tek vuruşu vardır (`s0.b1`). Son sahne kolofondur (`@mode: colophon`).
-- **Sahne ID'leri §7'de bağlayıcıdır.** Yazar gerekirse en sona yeni bir sahne ekleyebilir; yeni sahne bir sonraki boş numarayı alır.
+- **Sahne ID'leri §7'de bağlayıcıdır.** Yazar gerekirse yeni bir sahne ekleyebilir; yeni sahne bir sonraki boş numarayı alır (Kanto I'de `inf01.s10`). Kolofon her zaman dosyanın son sahnesidir; yeni sahne dosyada kolofondan önce durur. Sahnelerin oynanış sırası da dosyadaki sıradır.
 - **Vuruş ID'leri yazarındır.** 1'den başlayarak sırayla verilir. Dosya `review` durumuna geçtikten sonra hiçbir ID yeniden numaralandırılmaz. Araya eklenen vuruş, sahnenin bir sonraki boş numarasını alır. Oynanış sırası dosyadaki sıradır, numaraların sırası değildir.
 - **Elmas kuralı:** Dallar aynı sahnenin sonunda omurgaya geri döner. Hiçbir dal bir omurga vuruşunu atlayamaz.
 
@@ -300,13 +300,15 @@ Script bloğundaki her satır aşağıdaki türlerden biridir. Boş satırlar yo
 
 **Konuşmacı satırı** şu kalıba uyar: `^([A-Z][A-Z_]*)(?: \(([a-z-]+)\))?: (.+)$`. Konuşmacı §4.8'deki listeden olmalıdır. Parantez içindeki etiket portreyi ve ses tonunu seçer. Etiketler kapalı bir listedir: `afraid`, `gentle`, `stern`, `weeping`, `pale`, `whisper`, `shout`, `awed`, `ashamed`, `sad`, `firm`, `quiet`, `wry`.
 
+**Ayrılmış kelimeler.** Konuşmacı kalıbı `NARRATION: …` gibi satırlara da uyar. Bu yüzden ayrıştırıcı bir satırı önce aşağıdaki kelimelerle dener, konuşmacı kalıbını en son uygular. Bu kelimeler konuşmacı ID'si olamaz: `NARRATION`, `PAGE`, `GLOSS`, `HINT`, `HINT-SHORT`, `BARK`, `DO`, `CAM`, `SFX`, `EFFECTS`, `PROMPT`, `NOTE`, `QUOTE`, `IF`, `ELSE`, `END`, `CHOICE`, `OPTION`, `REVEAL`, `GOTO`, `SAPMA`, `EKLEME` ve Codex/anı alanları (`ID`, `TAB`, `TITLE`, `RELATED`, `NAME`, `KIND`).
+
 **`DO` etiketleri.** `DO` satırı, programcı için makinece okunan şu etiketleri taşıyabilir:
 
 - `{event:<id>}`: programcının yayacağı oynanış olayı. Sistemik seçimler bu olayları dinler.
 - `{checkpoint}`: kontrol noktası; Vergilius'un beklediği taş bank (GDD 2.4).
 - `{tutorial:<ad>}`: öğretici ipucu. Adlar: `move`, `dash`, `talk`, `follow`, `read`, `compose`, `verse`, `chain`, `shelter`.
 
-**`CAM` fiilleri** kapalı bir listedir: `cut`, `fade-in`, `fade-out`, `pan`, `zoom-in`, `zoom-out`, `shake`, `hold`, `follow`, `white-out`, `engrave` (renkli sahne Doré gravürüne döner), `unengrave` (gravürden renge dönüş), `page-turn`.
+**`CAM` fiilleri** kapalı bir listedir. Satır biçimi `CAM: <fiil>` ya da `CAM: <fiil> — <Türkçe açıklama>`dır. Fiiller: `cut`, `fade-in`, `fade-out`, `pan`, `zoom-in`, `zoom-out`, `shake`, `hold`, `follow`, `white-out`, `engrave` (renkli sahne Doré gravürüne döner), `unengrave` (gravürden renge dönüş), `page-turn`.
 
 ### 2.6 Longfellow alıntısı: QUOTE
 
@@ -320,7 +322,7 @@ GLOSS: Misericord is an old word for mercy. Neither mercy nor justice will have 
 
 - **Başlık:** `QUOTE <SES> (<Kitap> <Roma rakamı>, <ilk>–<son>)`. Tek dize için: `(Inferno III, 9)`.
 - **Ses:** `POET` (şiirin anlatıcısı), `INSCRIPTION` (kapı yazısı) ya da şiirde o sözleri söyleyen karakterin ID'si. Ses kimin konuştuğunu gösterir. Bir karakterin dizesi başka bir karaktere verilemez.
-- **Dizeler** `> ` ile başlar ve kaynakla harfi harfine aynıdır. Kelimeler, noktalama, büyük harf, yazım, tırnak işaretleri ve kaynaktaki tuhaflıklar (§6.6) olduğu gibi kalır.
+- **Dizeler** `> ` ile başlar ve kaynakla harfi harfine aynıdır. Kelimeler, noktalama, büyük harf, yazım, tırnak işaretleri ve kaynaktaki tuhaflıklar (§6.6) olduğu gibi kalır. Blok, `> ` ile başlamayan ilk satırda biter.
 - **Kısaltma** yalnızca şu yollarla yapılır:
   1. Dizeler bütün olarak alınır.
   2. Bir dizenin bir parçası alınır ve kesilen yere `…` konur. Kesilmeyen uçta metin dizeyle aynı başlar ya da aynı biter.
@@ -372,6 +374,7 @@ değişken  := pity | justice | heart | pity@<günah> | justice@<günah> | trust
            | virtue:prudence | virtue:justice | virtue:fortitude | virtue:temperance
            | resolve | grace
 işleç     := >= | <= | > | < | == | !=
+tamsayı   := -?[0-9]+                      eksi olabilir: heart<=-3
 ```
 
 Örnek:
@@ -394,31 +397,41 @@ END IF
 ### 2.9 Seçimler
 
 ```text
-CHOICE <seçim-id> <ağırlık> [systemic] "<kayıt başlığı (EN)>"
-PROMPT: <isteğe bağlı; kitabın sesiyle, EN>
-OPTION a [<seçenek metni>] [requires: <koşul>] [when: <koşul> | when: else]
+CHOICE <seçim-id> <ağırlık> "<kayıt başlığı (EN)>"
+PROMPT: <kitabın sesiyle, EN>
+OPTION a [<seçenek metni>]
 <bu seçeneğe özel satırlar>
 EFFECTS: <etkiler>
-OPTION b [<seçenek metni>]
+OPTION b [<seçenek metni>] requires: <koşul>
 <…>
-REVEAL canon=<a | a,b | all | none> timing=<immediate | deferred>
+REVEAL canon=<harfler> timing=<immediate | deferred>
 QUOTE <SES> (<atıf>)
 > <dize>
-NOTE: <tek cümle, EN>
+NOTE: <EN, en çok 160 karakter>
 END CHOICE
 ```
 
-Dosyada girinti kullanılmaz. Bir `OPTION` satırından sonraki satırlar, bir sonraki `OPTION`, `REVEAL` ya da `END CHOICE` satırına kadar o seçeneğe aittir.
+Sistemik seçim aynı iskeleti şu satırlarla kullanır:
+
+```text
+CHOICE <seçim-id> <ağırlık> systemic "<kayıt başlığı (EN)>"
+OPTION a [<etiket>] when: <koşul>
+OPTION b [<etiket>] when: else
+```
+
+**Gösterim.** `<…>` doldurulacak yerdir. Köşeli parantezler (`[` `]`) seçenek metninin dosyada gerçekten yazılan sınırlarıdır; seçenek metni `]` içermez. Kayıt başlığı çift tırnak içindedir ve kendisi çift tırnak içermez. `<harfler>`: `all`, `none` ya da virgülle ayrılmış, boşluksuz seçenek harfleri (`a`, `a,b`). `PROMPT` satırı isteğe bağlıdır; varsa `CHOICE` satırının hemen altındadır. `requires:` yalnızca diyalog seçimlerinde, `when:` yalnızca sistemik seçimlerde kullanılır. `REVEAL` grubu diyalog seçimlerinde zorunlu, sistemik seçimlerde isteğe bağlıdır.
+
+Dosyada girinti kullanılmaz. Bir `OPTION` satırından sonraki satırlar, bir sonraki `OPTION`, `REVEAL` ya da `END CHOICE` satırına kadar o seçeneğe aittir. Seçimler iç içe yazılmaz. `OPTION`, `REVEAL` ve `END CHOICE` satırları bir `IF` bloğunun içinde olamaz; seçenek gizlemek için `requires:` kullanılır.
 
 Kurallar:
 
 - Bir seçimde **2–3 seçenek** olur. Harfler `a`'dan başlayarak sırayla gider. `requires:` ile bazı seçenekler gizlenebilir, ama her durumda en az iki seçenek görünür.
-- **Seçenek metni** en çok 48 karakterdir. İki biçimi vardır: emir kipinde kısa bir eylem (`[Grieve with him.]`) ya da çift tırnak içinde Dante'nin söyleyeceği cümle (`["Lead me out of this misery."]`). Tırnaklı seçenek seçilince, aynı cümle Dante'nin balonu olarak da gösterilir.
+- **Seçenek metni** en çok 48 karakterdir. İki biçimi vardır: emir kipinde kısa bir eylem (`[Grieve with him.]`) ya da çift tırnak içinde Dante'nin söyleyeceği cümle (`["Lead me out of this misery."]`). Tırnaklı seçenek seçilince, aynı cümle Dante'nin balonu olarak da gösterilir. Sistemik seçeneklerin metni menüde görünmez; Kitap'taki kayıt için geçmiş zamanda kısa bir etikettir (`[Held his ground]`).
 - Seçenek metninde sistem terimi ve sayı yazılmaz (L16).
 - `END CHOICE`'tan sonraki satırlar herkes için devam eder.
-- Seçenek içinde `GOTO` kullanılabilir. Hedef aynı sahnede olmalıdır ve dallar sahne sonunda birleşir.
+- Seçenek içinde `GOTO` kullanılabilir. Hedef aynı sahnede olmalıdır ve dallar sahne sonunda birleşir. `GOTO` o seçeneğin son satırıdır; `timing=immediate` kart, atlamadan hemen önce çıkar.
 - Diyalog seçimlerinde süre sınırı yoktur.
-- **Sistemik seçim** (`systemic`) menü göstermez; oyunun nasıl oynandığını ölçer. Her seçeneğin bir `when:` koşulu vardır; koşulu ilk doğru olan seçenek seçilir, son seçenek `when: else` olur. Sistemik bir seçim isteğe bağlı bir vuruştaysa hiç çözülmeyebilir; o zaman o seçime dair `choice:` yüklemleri yanlıştır. Sistemik seçimlerde REVEAL isteğe bağlıdır.
+- **Sistemik seçim** (`systemic`) menü göstermez; oyunun nasıl oynandığını ölçer. Her seçeneğin bir `when:` koşulu vardır; koşulu ilk doğru olan seçenek seçilir, son seçenek `when: else` olur. Sistemik seçim, akış `CHOICE` satırına ulaştığında bir kez değerlendirilir; bu yüzden ölçtüğü oynanışın ardından yazılır. `event:<id>` yüklemi, olay aynı sahnede `CHOICE` satırından önce yayıldıysa doğrudur. Sistemik bir seçim isteğe bağlı bir vuruştaysa hiç çözülmeyebilir; o zaman o seçime dair `choice:` yüklemleri yanlıştır. Sistemik seçimlerde REVEAL isteğe bağlıdır.
 
 **Ağırlıklar ve izin verilen büyüklükler**
 
@@ -428,11 +441,11 @@ Kurallar:
 | `major` | ±2 | ±1 | +1 | ±1 | Kantonun ana seçimi. Her kantoda en az bir `major` ya da `centre` bulunur. |
 | `centre` | ±3 | ±1 | +1 | ±1 | Bölümün merkezi. Bölüm 1'de yalnızca `inf05.c4`. |
 
-Erdem +2 ve güven ±2 yalnızca baş yazarın onayıyla verilir. Bir seçimin ağırlığı, büyüklüklerin yanı sıra anlatıdaki ağırlığını da gösterir: yalnızca bayrak kaldıran bir seçim de `major` olabilir.
+Tablodaki değerler üst sınırdır. Kalp sütunu terazinin dengesinin (`heart`) en çok ne kadar oynayacağını gösterir; token'daki N her zaman artıdır (`pity+2@limbo` dengeyi +2, `justice+2@limbo` −2 oynatır). Erdem +2 ve güven ±2 yalnızca baş yazarın onayıyla verilir. Bir seçimin ağırlığı, büyüklüklerin yanı sıra anlatıdaki ağırlığını da gösterir: yalnızca bayrak kaldıran bir seçim de `major` olabilir.
 
 ### 2.10 Etki sözlüğü
 
-`EFFECTS:` satırı, virgülle ayrılmış token'lardan oluşur. Token'lar yazıldığı sırayla uygulanır.
+`EFFECTS:` satırı, virgül ve tek boşlukla (`, `) ayrılmış token'lardan oluşur; bir token'ın içinde boşluk yoktur. N her zaman artı bir tamsayıdır; işaret token'ın içindedir (`trust-1`). Token'lar yazıldığı sırayla uygulanır.
 
 | Token | Anlamı | Örnek |
 |---|---|---|
@@ -446,7 +459,7 @@ Erdem +2 ve güven ±2 yalnızca baş yazarın onayıyla verilir. Bir seçimin a
 | `memory:<id>` | Anıyı ekler. | `memory:inf05.paolo_francesca` |
 | `codex:<id>` | Codex kaydını açar. | `codex:inf03.charon` |
 | `flag:<id>` | Bayrağı kalıcı olarak kaldırır (true). | `flag:inf03.left_hope` |
-| `resolve+N`, `resolve-N`, `grace+N`, `grace-N` | Kaynaklar. N 1–3 birimdir; 1 birim, çubuğun %10'udur. | `resolve-1` |
+| `resolve+N`, `resolve-N`, `grace+N`, `grace-N` | Kaynaklar. N 1–3 birimdir; 1 birim, çubuğun başlangıç uzunluğunun %10'udur. | `resolve-1` |
 | `gracemax+1` | Lütuf üst sınırını bir birim artırır (GDD 4.2). | `gracemax+1` |
 | `unlock:<özellik>` | Bir sistemi ya da arayüzü açar: `book`, `words`, `verse`, `compose`, `heart`, `codex`, `remembrance`, `chain` | `unlock:heart` |
 
@@ -456,6 +469,7 @@ Kurallar:
 - Bir ruha yönelik her kalp etkisi günah etiketi taşır. Bölüm 1'in etiketleri `limbo` ve `lust`'tır (§3.1).
 - Bayraklar indirilmez. "Olmadı" bilgisi, bayrağın yokluğudur.
 - Bir codex kaydı, söz ya da anı, her oynanış yolunda en çok bir kez verilir.
+- Senaryodaki `resolve-N`, Resolve'u 1 birimin altına indirmez; senaryolu bir etki bayılmaya yol açmaz. Bölüm 1'deki bayılmalar omurgadadır (III, V).
 
 ### 2.11 "What Dante did": REVEAL
 
@@ -564,7 +578,7 @@ lines: "1–136"
 epigraph: "Inferno III, 1–3"
 closing: "Inferno III, 136"
 characters: [DANTE, VIRGIL, NEUTRAL, GREAT_REFUSAL, SOUL, CHARON]
-mechanics: [inscription, darkness, heart, crowd_flow, swarm, hold_ground, guardian, quake, faint]
+mechanics: [inscription, fear, darkness, heart, crowd_flow, swarm, hold_ground, guardian, quake, faint]
 choices: [inf03.c1, inf03.c2, inf03.c3]
 words: [Stay, Desire]
 memories: []
@@ -751,7 +765,7 @@ Bölüm 1 seçim envanteri (bağlayıcı):
 
 ### 3.3 Vergilius'un güveni (Trust)
 
-- `trust`, 0–10 arasında bir tamsayıdır. Vergilius'un ilk sözüyle (I 67) **4** olarak başlar ve her değişimde 0–10 arasına kırpılır.
+- `trust`, 0–10 arasında bir tamsayıdır. Vergilius'un ilk sözüyle (I 67) **4** olarak başlar ve her değişimde 0–10 arasına kırpılır. Motor değeri oyunun başında 4 olarak kurar; I 67'den önce güveni değiştiren bir şey yoktur.
 - **+1:** Vergilius'un açık öğüdüne uymak, bir bekçi karşısında sözü ona bırakmak, onuru ona vermek.
 - **−1:** Açık öğüdüne karşı gitmek. Bu seçenekler de oyuncuya bir şey kazandırmalıdır: bir deneyim, bir bayrak, bir bilgi. Güven kaybı ceza değildir, ilişkinin rengidir.
 - Bir kantoda güvenin net değişimi en çok ±2'dir.
@@ -761,7 +775,7 @@ Bölüm 1 seçim envanteri (bağlayıcı):
   - Wayward: Q ipuçları tek ve kısa bir satırdır. Vergilius bir adım önde yürür ve daha az bekler.
   - Hiçbir durumda Vergilius Dante'yi terk etmez. Güven ilerlemeyi kilitlemez.
 - **Gösterim:** Sayı yoktur. Güven Vergilius'un yürüme mesafesinden, duruşundan ve Kitap'taki kenar notlarından okunur.
-- **Bölüm 1'deki güven olayları:** `inf01.c4=b` +1, `inf02.c2=b` +1, `inf03.c1=a` +1, `inf03.c2=a` +1, `inf03.c2=b` −1, `inf04.c2=c` +1, umudun geri verilmesi (IV, koşullu) +1, `inf05.c2=a` +1. Bölüm sonunda güven 3 ile 10 arasındadır; yani Wayward eşiğine Bölüm 1'de inilemez. Bu eşik sonraki bölümler içindir.
+- **Bölüm 1'deki güven olayları:** `inf01.c4=b` +1, `inf02.c2=b` +1, `inf03.c1=a` +1, `inf03.c2=a` +1, `inf03.c2=b` −1, `inf04.c2=c` +1, umudun geri verilmesi (IV, koşullu) +1, `inf05.c2=a` +1. Bölüm boyunca güven 3'ün altına inmez (en düşük değer, `inf03.c1=b` ve `inf03.c2=b` ile Kanto III sonundaki 3'tür); bölüm sonunda 4 ile 10 arasındadır. Yani Wayward eşiğine Bölüm 1'de inilemez. Bu eşik sonraki bölümler içindir.
 
 ### 3.4 Sözler ve terza rima
 
@@ -777,11 +791,11 @@ Söz, oyuncunun şiirin içinden topladığı tek bir İngilizce kelimedir. Her 
 
 #### 3.4.2 Kurallar
 
-1. **Söz köken dizesinde geçer ve tercihen dizenin son kelimesidir** (kafiye yeri). Bölüm 1'deki bütün sözler son kelimedir. Böylece oyuncunun tercetleri, sonları gerçekten kafiyeli Longfellow dizelerinden kurulur (§3.4.5).
+1. **Söz köken dizesinde geçer ve tercihen dizenin son kelimesidir** (kafiye yeri). Bölüm 1'deki bütün sözler son kelimedir; yalnızca Wall'un dizesi kelimenin çoğuluyla ("walls") biter. Böylece oyuncunun tercetleri, sonları gerçekten kafiyeli Longfellow dizelerinden kurulur (§3.4.5).
 2. Köken dizesi, sözü veren kantodadır.
 3. Her söz oyunda tektir. Söz tablosu (§3.4.6) tek doğru kaynaktır. Yazar söz uyduramaz; yeni bir söz gerekiyorsa baş yazara önerir.
 4. Bir kanto 2–4 yeni söz verir; en çok biri koşulludur. İlerleme için gereken sözler koşulsuzdur.
-5. **Söz okunarak toplanır.** Köken dizesi ekrandayken (dize balonunda ya da sayfada) kelime parlar ve oyuncu E ile onu alır. Yük sözleri kendiliğinden yapışır. Söz kartı her durumda köken dizesini gösterir; bu yüzden bir söz sahnede gösterilmeyen bir dizeden de gelebilir (`Pity` ve `Judgment` böyledir).
+5. **Söz okunarak toplanır.** Köken dizesi ekrandayken (dize balonunda ya da sayfada) kelime parlar ve oyuncu E ile onu alır. Söz alınmadan dize balonu, sayfa ya da kart kapanmaz; `EFFECTS: word:` etkisi E'ye basıldığı anda uygulanır. Böylece koşulsuz bir söz kaçırılamaz. Yük sözleri kendiliğinden yapışır. Söz kartı her durumda köken dizesini gösterir; bu yüzden bir söz sahnede gösterilmeyen bir dizeden de gelebilir (`Pity` ve `Judgment` böyledir).
 6. Mühürlü söz (`seal:`) Kitap'ta gri görünür ve tercette kullanılamaz; `word:` ile açılır. Yük sözü `shed:` ile kalıcı olarak bırakılır.
 7. Köken dizesi sözü veren vuruşta bir `QUOTE` bloğunda gösteriliyorsa, yazar `EFFECTS: word:<Söz>` satırını o bloğun hemen ardına yazar. Dize sahnede gösterilmiyorsa (`Pity`, `Judgment`) kart onu kendisi gösterir. Söz diyalogda açıklanmaz; kart kendini anlatır.
 
@@ -801,9 +815,9 @@ Bir tercetin etkisini **ortadaki** sözün kategorisi belirler.
 
 #### 3.4.4 Kafiye aileleri
 
-- Aile etiketi, sözün vurgulu son hecesinin sesini yazar: `-ay`, `-ire`, `-ove` … Etiket yazımı değil sesi gösterir ve ailenin ilk kaydedilen sözünün yazımını taşır.
+- Aile etiketi, sözün vurgulu son hecesinin sesini yazar: `-ay`, `-ire`, `-ove` … Etiket yazımı değil sesi gösterir; çoğu zaman ailenin ilk kaydedilen sözünün yazımını taşır. İstisna `-ow`dur (Go): `-o` yazımı *to*, *do* gibi kafiyesiz kelimeleri de kapsardı.
 - Aynı aileden iki farklı söz kafiyelidir. Bir söz kendisiyle kafiye yapmaz.
-- Hiç ortağı olmayan söz (`Judgment` gibi) **kapatıcıdır**: yalnızca ortada durabilir ve zinciri bitirir.
+- Kafiye ailesi olmayan söz (`Judgment`) **kapatıcıdır**: yalnızca ortada durabilir ve zinciri bitirir. Ailesinde henüz tek olan sözler (Love, Hope, Go, Light, Wall, Peace, Pity) Bölüm 1'de pratikte aynı biçimde davranır, ama kapatıcı değildir; ortakları sonraki kantolarda gelir.
 
 | Aile | Bölüm 1 üyeleri | Not |
 |---|---|---|
@@ -826,7 +840,7 @@ Bu bölüm yazarlara sistemin mantığını, tasarımcıya bir başlangıç mode
 - **Tercet** üç yuvadır: **A · B · A**. Dış yuvalardaki iki söz aynı ailedendir ve birbirinden farklıdır. Ortadaki söz başka bir ailedendir. Yük ve mühürlü sözler yerleştirilemez.
 - **Etki** ortadaki sözün kategorisidir; ortadaki söz "tercetin kalbi"dir. Dış sözlerden ortadakiyle aynı kategoride olan her biri etkiyi bir kademe güçlendirir.
 - **Zincir (terza rima):** Bir sonraki tercetin dış sözleri, önceki tercetin ortasındaki sözle kafiyelidir. Bu, Dante'nin *aba bcb cdc* örgüsüdür. Zincir, tercetleri tek bir dizi hâlinde ve artan bir bonusla oynatır. Bir zincirde hiçbir söz iki kez geçmez. Zincir Kanto IV'te açılır (`unlock:chain`).
-- **Koda:** Her kanto tek bir dizeyle biter. Oyuncu da bir terceti ya da zinciri, son tercetin ortasındaki sözle kafiyeli ve zincirde kullanılmamış tek bir sözle kapatabilir. Koda, kendi kategorisinin "mühür" versiyonunu tetikler.
+- **Koda:** Her kanto tek bir dizeyle biter. Oyuncu da bir terceti ya da zinciri, son tercetin ortasındaki sözle kafiyeli ve zincirde kullanılmamış tek bir sözle kapatabilir. Koda, kendi kategorisinin güçlendirilmiş "kapanış" versiyonunu tetikler (`seal:` ve mühürlü sözlerle ilgisi yoktur). Koda zincirle birlikte açılır (`unlock:chain`).
 - **Okunuşu (cento):** Kitap her terceti, sözlerin köken dizeleriyle gösterir. Sözler kafiye yerinde durduğu için tercet gerçekten kafiyeli okunur ve baştan sona Longfellow'dur. Bölüm 1'in sonunda kurulabilecek iki tercetlik bir zincir şöyle okunur (Fire · Way · Desire / Away · Love · Stay):
 
 ```cento
@@ -968,7 +982,7 @@ Bu tablo Araf ve Cennet tasarlanırken kesinleşir. Bölüm 1 yazarları için a
 | `inf01.motive_gate` | bayrak | Araf IX, Petrus'un anahtarları | Kapıda fazladan bir konuşma |
 | `inf03.asked_neutral` | bayrak | Araf XVIII, koşan tembeller | Koşanlar Dante için bir kez yavaşlar. |
 | `inf03.left_hope`, `inf04.hope_returned` | bayrak | Araf XXX 49–51, Vergilius'un gidişi | Kitap'taki `Hope` kartı veda anında parlar. |
-| `inf02.doubt_proud`, `inf04.sixth_proud` | bayrak sayısı 1 / 2 | Araf XI–XIII, kibir terası (XIII 136–138) | Birinci terasta taşın ağırlığı artar. |
+| `inf02.doubt_proud`, `inf04.sixth_proud` | bayrak sayısı 1 / 2 | Araf X–XII, kibir terası; Dante kendi kibrini XIII 136–138'de itiraf eder | Birinci terasta taşın ağırlığı artar. |
 | `memory:inf05.paolo_francesca` | anı | Araf XXVI, Cennet IX | Fazladan bir konuşma |
 | `pity@limbo`, `justice@limbo` | ≥2 | Cennet XIX–XX, Kartal ve Ripheus | Dante'nin sorusu ve onun çerçevesi |
 | Erdem kademeleri | kademe | Araf I 22–24, dört yıldız | Yıldızların parlaklığı |
@@ -1030,14 +1044,14 @@ Bir yazar yalnızca kendi önekiyle ID üretir. Başka bir kantonun bayrağını
 | `inf01.motive_escape` | `inf01.c4=a` | IV s1 | — | Dante kaçmak istedi. IV'teki uyanışta: kaçmak istedikçe daha derine iniyor. |
 | `inf01.motive_gate` | `inf01.c4=b` | III s1 | Araf IX | Petrus'un kapısını görmek istedi. III'te: "This is not the gate you promised me." |
 | `inf01.motive_souls` | `inf01.c4=c` | III s2, V s5 | — | Kayıp ruhları görmek istedi. V'te Vergilius: "You asked to see them." |
-| `inf02.doubt_proud` | `inf02.c1=c` | IV s4 | Araf XI–XIII | Kuşkusunu bir şairin gururuyla söyledi. |
+| `inf02.doubt_proud` | `inf02.c1=c` | IV s4 | Araf X–XIII | Kuşkusunu bir şairin gururuyla söyledi. |
 | `inf02.courage_beatrice` | `inf02.c2=a` | IV s6–s7, V s6 | Araf XXVII | Cesareti Beatrice'in gözyaşlarından geldi. |
 | `inf02.courage_virgil` | `inf02.c2=b` | IV s6–s7 | Araf XXVII | Cesareti Vergilius'un sözünden geldi. |
 | `inf02.courage_ladies` | `inf02.c2=c` | IV s6–s7 | Araf IX | Cesareti üç Hanım'dan geldi. |
-| `inf03.left_hope` | `inf03.c1=b` | III s1, IV s2 | Araf XXX | Umudunu kapıda bıraktı. |
+| `inf03.left_hope` | `inf03.c1=b` | III s1, IV s2, IV s6–s7 (§2.8'deki örnek) | Araf XXX | Umudunu kapıda bıraktı. |
 | `inf03.asked_neutral` | `inf03.c2=b` | — | Araf XVIII | Bir Kararsız'ın adını sordu. |
 | `inf04.hope_returned` | IV s2 (koşullu) | — | Araf XXX | Vergilius umudu geri verdi. |
-| `inf04.sixth_proud` | `inf04.c2=a` | — | Araf XI–XIII | Altıncı şair olmayı gururla kabul etti. |
+| `inf04.sixth_proud` | `inf04.c2=a` | — | Araf X–XIII | Altıncı şair olmayı gururla kabul etti. |
 | `inf05.verdict_pity` | `inf05.c4=a` | — | VI, Araf XXVI–XXVII, Cennet IX | Francesca için ağladı. |
 | `inf05.verdict_justice` | `inf05.c4=b` | — | VI, Araf XXVI–XXVII | Francesca'dan yüz çevirdi. |
 
@@ -1064,7 +1078,7 @@ Bu liste en az kümedir; yazar kendi önekiyle kayıt ekleyebilir.
 | IV | `inf04.limbo`, `inf04.noble_castle` (places); `inf04.harrowing` (lore); `inf04.virgil_limbo`, `inf04.homer`, `inf04.horace`, `inf04.ovid`, `inf04.lucan`, `inf04.heroes`, `inf04.thinkers`, `inf04.aristotle`, `inf04.socrates`, `inf04.plato`, `inf04.avicenna`, `inf04.averroes`, `inf04.saladin` (souls) |
 | V | `inf05.second_circle` (places); `inf05.order_of_hell`, `inf05.galeotto` (lore); `inf05.minos`, `inf05.semiramis`, `inf05.dido`, `inf05.cleopatra`, `inf05.helen`, `inf05.achilles`, `inf05.paris`, `inf05.tristan`, `inf05.francesca`, `inf05.paolo` (souls) |
 
-Kanto sınırını aşan `RELATED` bağları: `inf04.virgil_limbo` ile `inf01.virgil`; `inf04.heroes` ile `inf02.aeneas_paul` ve `inf01.greyhound` (Camilla iki kantoda da geçer); `inf05.paolo` ile `inf05.francesca`.
+Kanto sınırını aşan `RELATED` bağları: `inf04.virgil_limbo` ile `inf01.virgil`; `inf04.heroes` ile `inf02.aeneas_paul` ve `inf01.greyhound` (Camilla iki kantoda da geçer). Kanto içinde zorunlu bağ: `inf05.paolo` ile `inf05.francesca`.
 
 ### 4.6 Anılar
 
@@ -1084,6 +1098,8 @@ Kanto sınırını aşan `RELATED` bağları: `inf04.virgil_limbo` ile `inf01.vi
 
 ### 4.8 Konuşmacılar
 
+Konuşmacı ID'leri kanto öneki taşımaz ve oyun genelinde tektir. Adaş kişiler ayırt edici bir ek alır: buradaki `BRUTUS`, Tarquinius'u kovan Brutus'tur (IV 127); Inferno XXXIV'teki Brutus başka bir ID alacaktır. Ayrılmış kelimeler (§2.5) konuşmacı ID'si olamaz.
+
 | ID | Kim | Konuşma izni |
 |---|---|---|
 | `DANTE` | Oynanan Dante | Modern ve Longfellow |
@@ -1100,6 +1116,8 @@ Kanto sınırını aşan `RELATED` bağları: `inf04.virgil_limbo` ile `inf01.vi
 | `POET`, `INSCRIPTION` | Şiirin anlatıcısı, kapı yazısı | Yalnızca `QUOTE` sesi |
 
 ### 4.9 Olaylar (sistemik seçimler için)
+
+Bu tablo yalnızca sistemik seçimlerin dinlediği olayları listeler. Yazar başka oynanış olaylarını da kendi önekiyle tanımlayabilir (§2.5'teki `inf03.banner_turned` gibi).
 
 | Olay | Ne zaman yayılır |
 |---|---|
@@ -1217,7 +1235,7 @@ NARRATION: She was all hunger and no flesh. With every step she took, he lost on
 ### 5.6 Beatrice (`BEATRICE`)
 
 - **Rol:** Dante'nin sevdiği, ölmüş kadın. Cennet'ten Limbo'ya iner ve Vergilius'tan Dante'yi kurtarmasını ister. Bölüm 1'de yalnızca Vergilius'un anlatısında görünür (II 52–126). Cennet'te rehber olacaktır (GDD 7).
-- **Ses:** Işıklı, yumuşak ve kararlı. Korkusuzdur (II 88–93). Gözyaşını gizlemez (II 116).
+- **Ses:** Işıklı, yumuşak ve kararlı. Korkusuzdur (II 88–93). Sözünü bitirince ağlar ve parlayan gözlerini öte yana çevirir; Vergilius'u hızlandıran bu gözyaşlarıdır (II 115–117).
 - **Kurallar:** Bölüm 1'de **yalnızca Longfellow** konuşur; tek bir modern cümlesi yoktur. Anlatı sayfalarında ışıkla çizilir. Kanto I'de adı geçmez; Vergilius ondan yalnızca "daha layık bir ruh" diye söz eder (I 122) ve oyun da adını orada söylemez.
 - **Örnek (kitabın sesiyle):** Modern repliği olmayan karakterler için örnek satır, onları anlatan `NARRATION` satırıdır.
 
@@ -1233,11 +1251,11 @@ NARRATION: She came down into the dark of Limbo, and the dark did not touch her.
 
 ### 5.7 Lucia (`LUCIA`)
 
-- **Rol:** Soylu Hanım'ın elçisi; Beatrice'i Dante'ye yardıma gönderir. "Zalim olan her şeyin düşmanı"dır. Araf IX'da yeniden görünecek ve Dante'yi uykusunda taşıyacaktır.
+- **Rol:** Soylu Hanım'ın (Meryem) elçisi. Hanım onu çağırıp Dante'yi ona emanet eder (II 97–99); Lucia da Rahel'in yanında oturan Beatrice'e koşar ve onu Dante'nin yardımına gönderir (II 100–108). Yardım zinciri böyle kurulur: Hanım, Lucia, Beatrice, Vergilius. "Zalim olan her şeyin düşmanı"dır. Araf IX'da yeniden görünecek ve Dante'yi uykusunda taşıyacaktır.
 - **Ses ve kurallar:** Yalnızca Longfellow. Anlatı sayfasında hızla hareket eden bir ışık figürüdür.
 
 ```script
-NARRATION: Lucia hurried across Heaven to where Beatrice sat, as if the cry had reached her first.
+NARRATION: Sent by the Lady, Lucia hurried across Heaven to where Beatrice sat beside Rachel.
 ```
 
 > Lucia, foe of all that cruel is, / Hastened away, and came unto the place / Where I was sitting with the ancient Rachel. (Inferno II, 100–102)
@@ -1502,7 +1520,7 @@ EKLEME: Minos'un mahkemesi bir tahmin oyunu olarak oynanır; ruhların itiraflar
 | EKLEME | II s6 | Vergilius'un ilk terceti öğretmesi (GDD 4.0) |
 | EKLEME | III s3, s6 | Kalabalık, arı sürüleri ve kürek darbeleri (oynanış) |
 | EKLEME | IV s3 | "Ruhlardan orman"ın sessiz ve yol açan bir kalabalık olarak görselleştirilmesi |
-| EKLEME | IV s4 | Dante'nin zinciri şairlerin arasında bulması (terza rima Dante'nin buluşudur) |
+| EKLEME | IV s4 | Dört şairin modern selam balonları (IV 97–98'de konuşurlar ama sözleri aktarılmaz); Dante'nin zinciri şairlerin arasında bulması (terza rima Dante'nin buluşudur) |
 | EKLEME | IV s7 | Limbo figürlerinin tek balonluk konuşmaları; Vergilius ile Aeneas'ın bakışması |
 | EKLEME | V s2 | Minos'un mahkemesi (tahmin oyunu) ve adsız ruhların itirafları |
 
@@ -1576,7 +1594,7 @@ Her kanto için şunlar verilmiştir: ön bilginin temel değerleri, Türkçe ö
 | `move`, `dash`, `talk` | Hareket, atılma, konuşma | GDD 2.2 | I |
 | `follow` | Vergilius'un takibi | GDD 2.5 | I+ |
 | `fear` | Korku bölgelerinde Resolve azalır | GDD 2.3 | I, III, V |
-| `darkness` | Görüş daralır | `VisionModifier` | I, III, V |
+| `darkness` | Görüş daralır | `VisionModifier` | I, III, IV, V |
 | `look_back` | Tuşu basılı tutunca geriye bakmak (I 22–27) | — | I |
 | `chase` | Kaçış sekansı | — | I |
 | `hold_ground` | Kükreme ya da emir anında kıpırdamama ölçümü | yeni | I, III |
@@ -1594,6 +1612,8 @@ Her kanto için şunlar verilmiştir: ön bilginin temel değerleri, Türkçe ö
 | `remembrance`, `chain` | Anma sekmesi, tercet zinciri | yeni | IV |
 | `judgement_game` | Minos'un mahkemesi | yeni | V |
 | `wind_field`, `shelter`, `wind_lull` | Rüzgâr şeritleri, kayalık sığınak, senaryolu dinme (V 96) | `WindField` | V |
+
+**Kalıcı mekanikler.** `move`, `dash`, `talk`, `follow`, `compose`, `verse`, `heart`, `remembrance` ve `chain` açıldıktan sonra her kantoda çalışır; `mechanics` listesinde yalnızca öğretildikleri ya da öne çıktıkları kantoda yazılırlar. Diğer bütün mekanikler yalnızca listelendikleri kantoda etkindir.
 
 **Süre notu:** Süre hedefleri okuma süresini de kapsar. Bölüm 1'in toplamı 44–63 dakikadır. GDD'deki M0 dikey kesiti için ("10 dakikalık demo") Kanto I ve V'in kısa kurgusu ayrıca planlanır; bu belge tam sürümü tanımlar.
 
@@ -1700,7 +1720,7 @@ EFFECTS: unlock:book
 | `inf02.s7` | The Deep and Savage Way | 141–142 | cinematic | Vergilius yürür, Dante girer. | — |
 | `inf02.s8` | Colophon | 142 | colophon | Kapanış II 142 | — |
 
-**Çapa dizeleri:** II 7–9, 32, 45, 70–72, 88–90, 116, 139–140, 142.
+**Çapa dizeleri:** II 7–9, 45, 70–72, 88–90, 116, 139–140, 142. (II 31–33, `inf02.c1`'in kartındadır; II 133–135, `inf02.c2`'nin kartındadır.)
 
 **Seçimler**
 
@@ -1727,7 +1747,7 @@ CHOICE inf02.c2 major "What gives Dante courage"
 PROMPT: Three ladies of Heaven cared for him, and his guide had come at once.
 OPTION a [Think of her tears.]
 EFFECTS: grace+1, flag:inf02.courage_beatrice
-OPTION b [Trust the one who came.]
+OPTION b [Believe the one who came.]
 EFFECTS: trust+1, flag:inf02.courage_virgil
 OPTION c [Think of the three ladies.]
 EFFECTS: virtue:fortitude+1, flag:inf02.courage_ladies
@@ -1755,7 +1775,7 @@ DO: J ile ilk tercet atılır; yamaçtaki taşı yuvarlar ve iniş yolunu açar.
 **Yazar notları**
 
 - Beatrice, Lucia ve soylu Hanım yalnızca Longfellow konuşur; modern replikleri yoktur. Soylu Hanım (Meryem) yüzüyle gösterilmez, yalnızca ışık olarak görünür. Rahel'in yalnızca adı geçer.
-- Anlatıdaki iç içe tırnaklar kaynaktaki gibi kalır (§6.6). Ses ataması: Beatrice'in sözleri `BEATRICE`, Lucia'nınkiler `LUCIA`, gerisi `VIRGIL`. Meryem'in sözleri (II 98–99) `BEATRICE` sesindedir, çünkü onları Beatrice aktarır.
+- Anlatıdaki iç içe tırnaklar kaynaktaki gibi kalır (§6.6). Ses ataması: Beatrice'in sözleri `BEATRICE`, Lucia'nınkiler `LUCIA`, gerisi `VIRGIL`. Meryem'in sözleri (II 98–99) `BEATRICE` sesindedir: Meryem sessizdir (§4.8) ve sözlerini Beatrice aktarır. Lucia'nın sözlerini de Beatrice aktarır, ama Lucia kendi sesiyle konuşur (§6.5'teki onaylı EKLEME).
 - II 55'teki "where" kaynakta böyledir; düzeltme.
 - Anlatı sayfalarını en çok sekiz sayfada tut; her sayfada en çok 6 dize olsun.
 - Söz toplama mekaniği burada öğretilir: dizede parlayan kelimeye E ile basılır.
@@ -1763,7 +1783,7 @@ DO: J ile ilk tercet atılır; yamaçtaki taşı yuvarlar ve iniş yolunu açar.
 ### 7.3 Kanto III — The Gate (Kapı)
 
 `id: inf03` · `location: "Ante-Inferno"` · `lines: "1–136"` · `epigraph: "Inferno III, 1–3"` · `closing: "Inferno III, 136"` · `playtime: "8–12"`
-`mechanics: [inscription, darkness, heart, crowd_flow, swarm, hold_ground, guardian, quake, faint]`
+`mechanics: [inscription, fear, darkness, heart, crowd_flow, swarm, hold_ground, guardian, quake, faint]`
 
 **Özet.** Cehennem kapısının yazısı okunur. Vergilius, Dante'ye kuşkuyu ve korkaklığı bırakmasını söyler ve onu elinden tutar. Yıldızsız havada Kararsızlar koşmaktadır: hiç taraf tutmamış ruhlar, durmadan dönen bir bayrağın ardından koşar ve arılar onları sokar. Akheron kıyısında geçmek için toplanmış ruhlar vardır. Kharon gelir, yaşayan Dante'yi reddeder ve Vergilius'un sözüyle susar. Ruhlar yaprak gibi kayığa dökülür. Deprem, rüzgâr ve kızıl bir ışık gelir; Dante bayılır.
 
@@ -1891,7 +1911,7 @@ QUOTE POET (Inferno IV, 100–102)
 > And more of honour still, much more, they did me,
 > In that they made me one of their own band;
 > So that the sixth was I, 'mid so much wit.
-NOTE: He accepted, and wrote it down with plain pride. On the mountain, later, pride will weigh on him.
+NOTE: He accepted, and wrote it down with plain pride. Later, on the mountain of Purgatory, he would feel that pride weigh on him.
 END CHOICE
 ```
 
@@ -1907,7 +1927,7 @@ DO: Words ekranında iki tercet yan yana açılır; ilk tercetin ortası ikincin
 EFFECTS: unlock:chain
 ```
 
-**Okunan bayraklar:** `inf01.motive_escape` (s1; öneri: `DANTE: I wanted to escape. I only keep falling deeper.` ve `VIRGIL: Down is the way out. Trust it.`), `inf03.left_hope` (s2), `inf02.doubt_proud` (s4; `inf04.c2=a` seçilirse öneri: `VIRGIL (wry): A poet, not a saint. You said so yourself.`), `inf02.courage_beatrice`, `inf02.courage_virgil`, `inf02.courage_ladies` (s6–s7; §2.8'deki örnek).
+**Okunan bayraklar:** `inf01.motive_escape` (s1; öneri: `DANTE: I wanted to escape. I only keep falling deeper.` ve `VIRGIL: Down is the way out. Trust it.`), `inf03.left_hope` (s2; ayrıca s6–s7'de §2.8'deki örnek), `inf02.doubt_proud` (s4; `inf04.c2=a` seçilirse öneri: `VIRGIL (wry): A poet, not a saint. You said so yourself.`), `inf02.courage_beatrice`, `inf02.courage_virgil`, `inf02.courage_ladies` (s6–s7; §2.8'deki örnek).
 
 **Yazar notları**
 
@@ -1920,7 +1940,7 @@ EFFECTS: unlock:chain
 ### 7.5 Kanto V — The Infernal Hurricane (Cehennem Kasırgası)
 
 `id: inf05` · `location: "The Second Circle"` · `lines: "1–142"` · `epigraph: "Inferno V, 31–33"` · `closing: "Inferno V, 142"` · `playtime: "12–16"`
-`mechanics: [guardian, judgement_game, darkness, wind_field, shelter, wind_lull, talk, faint]`
+`mechanics: [guardian, judgement_game, fear, darkness, wind_field, shelter, wind_lull, talk, heart, faint]`
 
 **Özet.** İkinci çemberin girişinde Minos hırlar. Ruhların itiraflarını dinler ve kuyruğunu dolayarak her birini yerine gönderir. Dante'yi görünce onu uyarır; Vergilius aynı sözle onu susturur. Işığın olmadığı yerde hiç durmayan bir kasırga, tutkularına yenilenleri savurur. Vergilius aşk yüzünden ölen ünlü gölgeleri gösterir. Dante, birlikte uçan iki ruhla konuşmak ister: Francesca ve Paolo. Francesca aşkın onları nasıl ele geçirdiğini ve Lancelot'u okurken nasıl öpüştüklerini anlatır. Paolo ağlar; Dante acımadan bayılır. Bölüm 1'in merkezi bu sahnedir.
 
@@ -1932,7 +1952,7 @@ EFFECTS: unlock:chain
 | `inf05.s3` | The Hurricane | 25–51 | play | Işığı olmayan yer (V 28): karanlık. `wind_field` ve `shelter`: atılma, rüzgâra karşı ilerlemenin tek yoludur. Sığırcıklar ve turnalar (V 40–49) sürüler hâlinde geçer. Dante sorar (V 50–51). | `codex:inf05.second_circle` |
 | `inf05.s4` | The Shades of Love | 52–72 | play | Vergilius adlandırır: Semiramis, Dido, Kleopatra, Helen, Akhilleus, Paris, Tristan (V 52–69). Geçen gölgeye E ile bakılınca Codex açılır. Sahne şu dizeyle kapanır: *Pity prevailed, and I was nigh bewildered.* (Inferno V, 72) | `codex:inf05.semiramis`, `codex:inf05.dido`, `codex:inf05.cleopatra`, `codex:inf05.helen`, `codex:inf05.achilles`, `codex:inf05.paris`, `codex:inf05.tristan` |
 | `inf05.s5` | The Two Who Go Together | 73–96 | dialogue | Dante sorar (V 73–75). Vergilius'un öğüdü (V 76–78). Dante seslenir (V 79–81). Kumrular (V 82–87). Francesca'nın selamı (V 88–96); "peace" burada toplanır (V 92). V 96'da rüzgâr gerçekten durur (`wind_lull`). `inf01.motive_souls` okunur. | `word:Peace`, `codex:inf05.francesca`, `codex:inf05.paolo` |
-| `inf05.s6` | Francesca | 97–138 | dialogue | Ravenna (V 97–99). Üç kez "Love" (V 100–107); art arda en çok 12 dize. V 108. Dante başını eğer (V 109–111). `inf05.c3`. Dante'nin sorusu: acıma yolunda V 116–120, adalet yolunda V 118–120. Francesca: daha büyük acı yok (V 121–126). Okuma ve öpücük (V 127–138). `inf05.c4`. | `codex:inf05.galeotto`, `inf05.c3`, `inf05.c4` |
+| `inf05.s6` | Francesca | 97–138 | dialogue | Ravenna (V 97–99). Üç kez "Love" (V 100–107); art arda en çok 12 dize. V 108. Dante başını eğer (V 109–111). `inf05.c3`. Dante'nin sorusu: `inf05.c3=a` ise V 116–120, `inf05.c3=b` ise V 118–120. Francesca: daha büyük acı yok (V 121–126). Okuma ve öpücük (V 127–138). `inf05.c4`. | `codex:inf05.galeotto`, `inf05.c3`, `inf05.c4` |
 | `inf05.s7` | As a Dead Body Falls | 139–141 | cinematic | Paolo ağlar, Dante düşer. Dize gösterilmez; REVEAL kartına ve kolofona saklanır. Sahne yalnızca `CAM`, `DO` ve tek bir `NARRATION` ile kurulur. | — |
 | `inf05.s8` | Colophon | 142 | colophon | `@chapter_end: ch1`. Sol sayfada V 142. Ertelenmiş kartlar (`inf05.c3`, `inf05.c4`) açılır; `inf05.c4` kartındaki "pity" kelimesi parlar ve herkese verilir. Ardından bölüm özeti. | `word:Pity` |
 
@@ -2038,7 +2058,7 @@ Doğru cevaplar sırasıyla: 2, 3, 4, 5, 6, 7, 8, 9. Minos tahminden sonra kuyru
 - Seçenekler Francesca'yı ne aklamalı ne aşağılamalı.
 - Minos, mini oyunda konuşmaz; yalnızca V 16–20'yi söyler.
 - `inf05.c3` ve `inf05.c4` kartları ertelenir: merkez sahne, kartlarla bölünmez.
-- **M0 dikey kesiti:** Kanto V, Kanto I'den hemen sonra da oynanabilmelidir. II–IV bayrakları yoksa `ELSE` dalları oynar. Programcı M0 profilinde `verse`, `compose`, `heart` ve `codex` kilitlerini açar ve Way, Love, Away sözlerini verir.
+- **M0 dikey kesiti:** Kanto V, Kanto I'den hemen sonra da oynanabilmelidir. II–IV bayrakları yoksa `ELSE` dalları oynar. Programcı M0 profilinde `verse`, `compose`, `heart`, `codex` ve `remembrance` kilitlerini açar, eksikse Way, Love ve Away sözlerini verir ve `Fear` yükünü bırakır (`shed:Fear`). Böylece Kanto V'e her oyuncu Kanto IV sonundaki durumla girer (§4.4).
 
 ---
 
