@@ -1,0 +1,192 @@
+# Inferno — Canto II (Longfellow translation, 1867; public domain)
+# Format: <line number> | <verse>. Line numbers count verse lines only.
+
+  1 | Day was departing, and the embrowned air
+  2 | Released the animals that are on earth
+  3 | From their fatigues; and I the only one
+
+  4 | Made myself ready to sustain the war,
+  5 | Both of the way and likewise of the woe,
+  6 | Which memory that errs not shall retrace.
+
+  7 | O Muses, O high genius, now assist me!
+  8 | O memory, that didst write down what I saw,
+  9 | Here thy nobility shall be manifest!
+
+ 10 | And I began: "Poet, who guidest me,
+ 11 | Regard my manhood, if it be sufficient,
+ 12 | Ere to the arduous pass thou dost confide me.
+
+ 13 | Thou sayest, that of Silvius the parent,
+ 14 | While yet corruptible, unto the world
+ 15 | Immortal went, and was there bodily.
+
+ 16 | But if the adversary of all evil
+ 17 | Was courteous, thinking of the high effect
+ 18 | That issue would from him, and who, and what,
+
+ 19 | To men of intellect unmeet it seems not;
+ 20 | For he was of great Rome, and of her empire
+ 21 | In the empyreal heaven as father chosen;
+
+ 22 | The which and what, wishing to speak the truth,
+ 23 | Were stablished as the holy place, wherein
+ 24 | Sits the successor of the greatest Peter.
+
+ 25 | Upon this journey, whence thou givest him vaunt,
+ 26 | Things did he hear, which the occasion were
+ 27 | Both of his victory and the papal mantle.
+
+ 28 | Thither went afterwards the Chosen Vessel,
+ 29 | To bring back comfort thence unto that Faith,
+ 30 | Which of salvation's way is the beginning.
+
+ 31 | But I, why thither come, or who concedes it?
+ 32 | I not Aeneas am, I am not Paul,
+ 33 | Nor I, nor others, think me worthy of it.
+
+ 34 | Therefore, if I resign myself to come,
+ 35 | I fear the coming may be ill-advised;
+ 36 | Thou'rt wise, and knowest better than I speak."
+
+ 37 | And as he is, who unwills what he willed,
+ 38 | And by new thoughts doth his intention change,
+ 39 | So that from his design he quite withdraws,
+
+ 40 | Such I became, upon that dark hillside,
+ 41 | Because, in thinking, I consumed the emprise,
+ 42 | Which was so very prompt in the beginning.
+
+ 43 | "If I have well thy language understood,"
+ 44 | Replied that shade of the Magnanimous,
+ 45 | "Thy soul attainted is with cowardice,
+
+ 46 | Which many times a man encumbers so,
+ 47 | It turns him back from honoured enterprise,
+ 48 | As false sight doth a beast, when he is shy.
+
+ 49 | That thou mayst free thee from this apprehension,
+ 50 | I'll tell thee why I came, and what I heard
+ 51 | At the first moment when I grieved for thee.
+
+ 52 | Among those was I who are in suspense,
+ 53 | And a fair, saintly Lady called to me
+ 54 | In such wise, I besought her to command me.
+
+ 55 | Her eyes where shining brighter than the Star;
+ 56 | And she began to say, gentle and low,
+ 57 | With voice angelical, in her own language:
+
+ 58 | 'O spirit courteous of Mantua,
+ 59 | Of whom the fame still in the world endures,
+ 60 | And shall endure, long-lasting as the world;
+
+ 61 | A friend of mine, and not the friend of fortune,
+ 62 | Upon the desert slope is so impeded
+ 63 | Upon his way, that he has turned through terror,
+
+ 64 | And may, I fear, already be so lost,
+ 65 | That I too late have risen to his succour,
+ 66 | From that which I have heard of him in Heaven.
+
+ 67 | Bestir thee now, and with thy speech ornate,
+ 68 | And with what needful is for his release,
+ 69 | Assist him so, that I may be consoled.
+
+ 70 | Beatrice am I, who do bid thee go;
+ 71 | I come from there, where I would fain return;
+ 72 | Love moved me, which compelleth me to speak.
+
+ 73 | When I shall be in presence of my Lord,
+ 74 | Full often will I praise thee unto him.'
+ 75 | Then paused she, and thereafter I began:
+
+ 76 | 'O Lady of virtue, thou alone through whom
+ 77 | The human race exceedeth all contained
+ 78 | Within the heaven that has the lesser circles,
+
+ 79 | So grateful unto me is thy commandment,
+ 80 | To obey, if 'twere already done, were late;
+ 81 | No farther need'st thou ope to me thy wish.
+
+ 82 | But the cause tell me why thou dost not shun
+ 83 | The here descending down into this centre,
+ 84 | From the vast place thou burnest to return to.'
+
+ 85 | 'Since thou wouldst fain so inwardly discern,
+ 86 | Briefly will I relate,' she answered me,
+ 87 | 'Why I am not afraid to enter here.
+
+ 88 | Of those things only should one be afraid
+ 89 | Which have the power of doing others harm;
+ 90 | Of the rest, no; because they are not fearful.
+
+ 91 | God in his mercy such created me
+ 92 | That misery of yours attains me not,
+ 93 | Nor any flame assails me of this burning.
+
+ 94 | A gentle Lady is in Heaven, who grieves
+ 95 | At this impediment, to which I send thee,
+ 96 | So that stern judgment there above is broken.
+
+ 97 | In her entreaty she besought Lucia,
+ 98 | And said, "Thy faithful one now stands in need
+ 99 | Of thee, and unto thee I recommend him."
+
+100 | Lucia, foe of all that cruel is,
+101 | Hastened away, and came unto the place
+102 | Where I was sitting with the ancient Rachel.
+
+103 | "Beatrice" said she, "the true praise of God,
+104 | Why succourest thou not him, who loved thee so,
+105 | For thee he issued from the vulgar herd?
+
+106 | Dost thou not hear the pity of his plaint?
+107 | Dost thou not see the death that combats him
+108 | Beside that flood, where ocean has no vaunt?"
+
+109 | Never were persons in the world so swift
+110 | To work their weal and to escape their woe,
+111 | As I, after such words as these were uttered,
+
+112 | Came hither downward from my blessed seat,
+113 | Confiding in thy dignified discourse,
+114 | Which honours thee, and those who've listened to it.'
+
+115 | After she thus had spoken unto me,
+116 | Weeping, her shining eyes she turned away;
+117 | Whereby she made me swifter in my coming;
+
+118 | And unto thee I came, as she desired;
+119 | I have delivered thee from that wild beast,
+120 | Which barred the beautiful mountain's short ascent.
+
+121 | What is it, then?  Why, why dost thou delay?
+122 | Why is such baseness bedded in thy heart?
+123 | Daring and hardihood why hast thou not,
+
+124 | Seeing that three such Ladies benedight
+125 | Are caring for thee in the court of Heaven,
+126 | And so much good my speech doth promise thee?"
+
+127 | Even as the flowerets, by nocturnal chill,
+128 | Bowed down and closed, when the sun whitens them,
+129 | Uplift themselves all open on their stems;
+
+130 | Such I became with my exhausted strength,
+131 | And such good courage to my heart there coursed,
+132 | That I began, like an intrepid person:
+
+133 | "O she compassionate, who succoured me,
+134 | And courteous thou, who hast obeyed so soon
+135 | The words of truth which she addressed to thee!
+
+136 | Thou hast my heart so with desire disposed
+137 | To the adventure, with these words of thine,
+138 | That to my first intent I have returned.
+
+139 | Now go, for one sole will is in us both,
+140 | Thou Leader, and thou Lord, and Master thou."
+141 | Thus said I to him; and when he had moved,
+
+142 | I entered on the deep and savage way.

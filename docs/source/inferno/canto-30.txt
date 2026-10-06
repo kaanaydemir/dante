@@ -1,0 +1,200 @@
+# Inferno — Canto XXX (Longfellow translation, 1867; public domain)
+# Format: <line number> | <verse>. Line numbers count verse lines only.
+
+  1 | 'Twas at the time when Juno was enraged,
+  2 | For Semele, against the Theban blood,
+  3 | As she already more than once had shown,
+
+  4 | So reft of reason Athamas became,
+  5 | That, seeing his own wife with children twain
+  6 | Walking encumbered upon either hand,
+
+  7 | He cried: "Spread out the nets, that I may take
+  8 | The lioness and her whelps upon the passage;"
+  9 | And then extended his unpitying claws,
+
+ 10 | Seizing the first, who had the name Learchus,
+ 11 | And whirled him round, and dashed him on a rock;
+ 12 | And she, with the other burthen, drowned herself;--
+
+ 13 | And at the time when fortune downward hurled
+ 14 | The Trojan's arrogance, that all things dared,
+ 15 | So that the king was with his kingdom crushed,
+
+ 16 | Hecuba sad, disconsolate, and captive,
+ 17 | When lifeless she beheld Polyxena,
+ 18 | And of her Polydorus on the shore
+
+ 19 | Of ocean was the dolorous one aware,
+ 20 | Out of her senses like a dog she barked,
+ 21 | So much the anguish had her mind distorted;
+
+ 22 | But not of Thebes the furies nor the Trojan
+ 23 | Were ever seen in any one so cruel
+ 24 | In goading beasts, and much more human members,
+
+ 25 | As I beheld two shadows pale and naked,
+ 26 | Who, biting, in the manner ran along
+ 27 | That a boar does, when from the sty turned loose.
+
+ 28 | One to Capocchio came, and by the nape
+ 29 | Seized with its teeth his neck, so that in dragging
+ 30 | It made his belly grate the solid bottom.
+
+ 31 | And the Aretine, who trembling had remained,
+ 32 | Said to me: "That mad sprite is Gianni Schicchi,
+ 33 | And raving goes thus harrying other people."
+
+ 34 | "O," said I to him, "so may not the other
+ 35 | Set teeth on thee, let it not weary thee
+ 36 | To tell us who it is, ere it dart hence."
+
+ 37 | And he to me: "That is the ancient ghost
+ 38 | Of the nefarious Myrrha, who became
+ 39 | Beyond all rightful love her father's lover.
+
+ 40 | She came to sin with him after this manner,
+ 41 | By counterfeiting of another's form;
+ 42 | As he who goeth yonder undertook,
+
+ 43 | That he might gain the lady of the herd,
+ 44 | To counterfeit in himself Buoso Donati,
+ 45 | Making a will and giving it due form."
+
+ 46 | And after the two maniacs had passed
+ 47 | On whom I held mine eye, I turned it back
+ 48 | To look upon the other evil-born.
+
+ 49 | I saw one made in fashion of a lute,
+ 50 | If he had only had the groin cut off
+ 51 | Just at the point at which a man is forked.
+
+ 52 | The heavy dropsy, that so disproportions
+ 53 | The limbs with humours, which it ill concocts,
+ 54 | That the face corresponds not to the belly,
+
+ 55 | Compelled him so to hold his lips apart
+ 56 | As does the hectic, who because of thirst
+ 57 | One tow'rds the chin, the other upward turns.
+
+ 58 | "O ye, who without any torment are,
+ 59 | And why I know not, in the world of woe,"
+ 60 | He said to us, "behold, and be attentive
+
+ 61 | Unto the misery of Master Adam;
+ 62 | I had while living much of what I wished,
+ 63 | And now, alas! a drop of water crave.
+
+ 64 | The rivulets, that from the verdant hills
+ 65 | Of Cassentin descend down into Arno,
+ 66 | Making their channels to be cold and moist,
+
+ 67 | Ever before me stand, and not in vain;
+ 68 | For far more doth their image dry me up
+ 69 | Than the disease which strips my face of flesh.
+
+ 70 | The rigid justice that chastises me
+ 71 | Draweth occasion from the place in which
+ 72 | I sinned, to put the more my sighs in flight.
+
+ 73 | There is Romena, where I counterfeited
+ 74 | The currency imprinted with the Baptist,
+ 75 | For which I left my body burned above.
+
+ 76 | But if I here could see the tristful soul
+ 77 | Of Guido, or Alessandro, or their brother,
+ 78 | For Branda's fount I would not give the sight.
+
+ 79 | One is within already, if the raving
+ 80 | Shades that are going round about speak truth;
+ 81 | But what avails it me, whose limbs are tied?
+
+ 82 | If I were only still so light, that in
+ 83 | A hundred years I could advance one inch,
+ 84 | I had already started on the way,
+
+ 85 | Seeking him out among this squalid folk,
+ 86 | Although the circuit be eleven miles,
+ 87 | And be not less than half a mile across.
+
+ 88 | For them am I in such a family;
+ 89 | They did induce me into coining florins,
+ 90 | Which had three carats of impurity."
+
+ 91 | And I to him: "Who are the two poor wretches
+ 92 | That smoke like unto a wet hand in winter,
+ 93 | Lying there close upon thy right-hand confines?"
+
+ 94 | "I found them here," replied he, "when I rained
+ 95 | Into this chasm, and since they have not turned,
+ 96 | Nor do I think they will for evermore.
+
+ 97 | One the false woman is who accused Joseph,
+ 98 | The other the false Sinon, Greek of Troy;
+ 99 | From acute fever they send forth such reek."
+
+100 | And one of them, who felt himself annoyed
+101 | At being, peradventure, named so darkly,
+102 | Smote with the fist upon his hardened paunch.
+
+103 | It gave a sound, as if it were a drum;
+104 | And Master Adam smote him in the face,
+105 | With arm that did not seem to be less hard,
+
+106 | Saying to him: "Although be taken from me
+107 | All motion, for my limbs that heavy are,
+108 | I have an arm unfettered for such need."
+
+109 | Whereat he answer made: "When thou didst go
+110 | Unto the fire, thou hadst it not so ready:
+111 | But hadst it so and more when thou wast coining."
+
+112 | The dropsical: "Thou sayest true in that;
+113 | But thou wast not so true a witness there,
+114 | Where thou wast questioned of the truth at Troy."
+
+115 | "If I spake false, thou falsifiedst the coin,"
+116 | Said Sinon; "and for one fault I am here,
+117 | And thou for more than any other demon."
+
+118 | "Remember, perjurer, about the horse,"
+119 | He made reply who had the swollen belly,
+120 | "And rueful be it thee the whole world knows it."
+
+121 | "Rueful to thee the thirst be wherewith cracks
+122 | Thy tongue," the Greek said, "and the putrid water
+123 | That hedges so thy paunch before thine eyes."
+
+124 | Then the false-coiner: "So is gaping wide
+125 | Thy mouth for speaking evil, as 'tis wont;
+126 | Because if I have thirst, and humour stuff me
+
+127 | Thou hast the burning and the head that aches,
+128 | And to lick up the mirror of Narcissus
+129 | Thou wouldst not want words many to invite thee."
+
+130 | In listening to them was I wholly fixed,
+131 | When said the Master to me: "Now just look,
+132 | For little wants it that I quarrel with thee."
+
+133 | When him I heard in anger speak to me,
+134 | I turned me round towards him with such shame
+135 | That still it eddies through my memory.
+
+136 | And as he is who dreams of his own harm,
+137 | Who dreaming wishes it may be a dream,
+138 | So that he craves what is, as if it were not;
+
+139 | Such I became, not having power to speak,
+140 | For to excuse myself I wished, and still
+141 | Excused myself, and did not think I did it.
+
+142 | "Less shame doth wash away a greater fault,"
+143 | The Master said, "than this of thine has been;
+144 | Therefore thyself disburden of all sadness,
+
+145 | And make account that I am aye beside thee,
+146 | If e'er it come to pass that fortune bring thee
+147 | Where there are people in a like dispute;
+
+148 | For a base wish it is to wish to hear it."

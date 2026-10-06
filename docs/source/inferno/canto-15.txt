@@ -1,0 +1,168 @@
+# Inferno — Canto XV (Longfellow translation, 1867; public domain)
+# Format: <line number> | <verse>. Line numbers count verse lines only.
+
+  1 | Now bears us onward one of the hard margins,
+  2 | And so the brooklet's mist o'ershadows it,
+  3 | From fire it saves the water and the dikes.
+
+  4 | Even as the Flemings, 'twixt Cadsand and Bruges,
+  5 | Fearing the flood that tow'rds them hurls itself,
+  6 | Their bulwarks build to put the sea to flight;
+
+  7 | And as the Paduans along the Brenta,
+  8 | To guard their villas and their villages,
+  9 | Or ever Chiarentana feel the heat;
+
+ 10 | In such similitude had those been made,
+ 11 | Albeit not so lofty nor so thick,
+ 12 | Whoever he might be, the master made them.
+
+ 13 | Now were we from the forest so remote,
+ 14 | I could not have discovered where it was,
+ 15 | Even if backward I had turned myself,
+
+ 16 | When we a company of souls encountered,
+ 17 | Who came beside the dike, and every one
+ 18 | Gazed at us, as at evening we are wont
+
+ 19 | To eye each other under a new moon,
+ 20 | And so towards us sharpened they their brows
+ 21 | As an old tailor at the needle's eye.
+
+ 22 | Thus scrutinised by such a family,
+ 23 | By some one I was recognised, who seized
+ 24 | My garment's hem, and cried out, "What a marvel!"
+
+ 25 | And I, when he stretched forth his arm to me,
+ 26 | On his baked aspect fastened so mine eyes,
+ 27 | That the scorched countenance prevented not
+
+ 28 | His recognition by my intellect;
+ 29 | And bowing down my face unto his own,
+ 30 | I made reply, "Are you here, Ser Brunetto?"
+
+ 31 | And he: "May't not displease thee, O my son,
+ 32 | If a brief space with thee Brunetto Latini
+ 33 | Backward return and let the trail go on."
+
+ 34 | I said to him: "With all my power I ask it;
+ 35 | And if you wish me to sit down with you,
+ 36 | I will, if he please, for I go with him."
+
+ 37 | "O son," he said, "whoever of this herd
+ 38 | A moment stops, lies then a hundred years,
+ 39 | Nor fans himself when smiteth him the fire.
+
+ 40 | Therefore go on; I at thy skirts will come,
+ 41 | And afterward will I rejoin my band,
+ 42 | Which goes lamenting its eternal doom."
+
+ 43 | I did not dare to go down from the road
+ 44 | Level to walk with him; but my head bowed
+ 45 | I held as one who goeth reverently.
+
+ 46 | And he began: "What fortune or what fate
+ 47 | Before the last day leadeth thee down here?
+ 48 | And who is this that showeth thee the way?"
+
+ 49 | "Up there above us in the life serene,"
+ 50 | I answered him, "I lost me in a valley,
+ 51 | Or ever yet my age had been completed.
+
+ 52 | But yestermorn I turned my back upon it;
+ 53 | This one appeared to me, returning thither,
+ 54 | And homeward leadeth me along this road."
+
+ 55 | And he to me: "If thou thy star do follow,
+ 56 | Thou canst not fail thee of a glorious port,
+ 57 | If well I judged in the life beautiful.
+
+ 58 | And if I had not died so prematurely,
+ 59 | Seeing Heaven thus benignant unto thee,
+ 60 | I would have given thee comfort in the work.
+
+ 61 | But that ungrateful and malignant people,
+ 62 | Which of old time from Fesole descended,
+ 63 | And smacks still of the mountain and the granite,
+
+ 64 | Will make itself, for thy good deeds, thy foe;
+ 65 | And it is right; for among crabbed sorbs
+ 66 | It ill befits the sweet fig to bear fruit.
+
+ 67 | Old rumour in the world proclaims them blind;
+ 68 | A people avaricious, envious, proud;
+ 69 | Take heed that of their customs thou do cleanse thee.
+
+ 70 | Thy fortune so much honour doth reserve thee,
+ 71 | One party and the other shall be hungry
+ 72 | For thee; but far from goat shall be the grass.
+
+ 73 | Their litter let the beasts of Fesole
+ 74 | Make of themselves, nor let them touch the plant,
+ 75 | If any still upon their dunghill rise,
+
+ 76 | In which may yet revive the consecrated
+ 77 | Seed of those Romans, who remained there when
+ 78 | The nest of such great malice it became."
+
+ 79 | "If my entreaty wholly were fulfilled,"
+ 80 | Replied I to him, "not yet would you be
+ 81 | In banishment from human nature placed;
+
+ 82 | For in my mind is fixed, and touches now
+ 83 | My heart the dear and good paternal image
+ 84 | Of you, when in the world from hour to hour
+
+ 85 | You taught me how a man becomes eternal;
+ 86 | And how much I am grateful, while I live
+ 87 | Behoves that in my language be discerned.
+
+ 88 | What you narrate of my career I write,
+ 89 | And keep it to be glossed with other text
+ 90 | By a Lady who can do it, if I reach her.
+
+ 91 | This much will I have manifest to you;
+ 92 | Provided that my conscience do not chide me,
+ 93 | For whatsoever Fortune I am ready.
+
+ 94 | Such handsel is not new unto mine ears;
+ 95 | Therefore let Fortune turn her wheel around
+ 96 | As it may please her, and the churl his mattock."
+
+ 97 | My Master thereupon on his right cheek
+ 98 | Did backward turn himself, and looked at me;
+ 99 | Then said: "He listeneth well who noteth it."
+
+100 | Nor speaking less on that account, I go
+101 | With Ser Brunetto, and I ask who are
+102 | His most known and most eminent companions.
+
+103 | And he to me: "To know of some is well;
+104 | Of others it were laudable to be silent,
+105 | For short would be the time for so much speech.
+
+106 | Know them in sum, that all of them were clerks,
+107 | And men of letters great and of great fame,
+108 | In the world tainted with the selfsame sin.
+
+109 | Priscian goes yonder with that wretched crowd,
+110 | And Francis of Accorso; and thou hadst seen there
+111 | If thou hadst had a hankering for such scurf,
+
+112 | That one, who by the Servant of the Servants
+113 | From Arno was transferred to Bacchiglione,
+114 | Where he has left his sin-excited nerves.
+
+115 | More would I say, but coming and discoursing
+116 | Can be no longer; for that I behold
+117 | New smoke uprising yonder from the sand.
+
+118 | A people comes with whom I may not be;
+119 | Commended unto thee be my Tesoro,
+120 | In which I still live, and no more I ask."
+
+121 | Then he turned round, and seemed to be of those
+122 | Who at Verona run for the Green Mantle
+123 | Across the plain; and seemed to be among them
+
+124 | The one who wins, and not the one who loses.

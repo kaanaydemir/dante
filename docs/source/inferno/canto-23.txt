@@ -1,0 +1,200 @@
+# Inferno — Canto XXIII (Longfellow translation, 1867; public domain)
+# Format: <line number> | <verse>. Line numbers count verse lines only.
+
+  1 | Silent, alone, and without company
+  2 | We went, the one in front, the other after,
+  3 | As go the Minor Friars along their way.
+
+  4 | Upon the fable of Aesop was directed
+  5 | My thought, by reason of the present quarrel,
+  6 | Where he has spoken of the frog and mouse;
+
+  7 | For 'mo' and 'issa' are not more alike
+  8 | Than this one is to that, if well we couple
+  9 | End and beginning with a steadfast mind.
+
+ 10 | And even as one thought from another springs,
+ 11 | So afterward from that was born another,
+ 12 | Which the first fear within me double made.
+
+ 13 | Thus did I ponder: "These on our account
+ 14 | Are laughed to scorn, with injury and scoff
+ 15 | So great, that much I think it must annoy them.
+
+ 16 | If anger be engrafted on ill-will,
+ 17 | They will come after us more merciless
+ 18 | Than dog upon the leveret which he seizes,"
+
+ 19 | I felt my hair stand all on end already
+ 20 | With terror, and stood backwardly intent,
+ 21 | When said I: "Master, if thou hidest not
+
+ 22 | Thyself and me forthwith, of Malebranche
+ 23 | I am in dread; we have them now behind us;
+ 24 | I so imagine them, I already feel them."
+
+ 25 | And he: "If I were made of leaded glass,
+ 26 | Thine outward image I should not attract
+ 27 | Sooner to me than I imprint the inner.
+
+ 28 | Just now thy thoughts came in among my own,
+ 29 | With similar attitude and similar face,
+ 30 | So that of both one counsel sole I made.
+
+ 31 | If peradventure the right bank so slope
+ 32 | That we to the next Bolgia can descend,
+ 33 | We shall escape from the imagined chase."
+
+ 34 | Not yet he finished rendering such opinion,
+ 35 | When I beheld them come with outstretched wings,
+ 36 | Not far remote, with will to seize upon us.
+
+ 37 | My Leader on a sudden seized me up,
+ 38 | Even as a mother who by noise is wakened,
+ 39 | And close beside her sees the enkindled flames,
+
+ 40 | Who takes her son, and flies, and does not stop,
+ 41 | Having more care of him than of herself,
+ 42 | So that she clothes her only with a shift;
+
+ 43 | And downward from the top of the hard bank
+ 44 | Supine he gave him to the pendent rock,
+ 45 | That one side of the other Bolgia walls.
+
+ 46 | Ne'er ran so swiftly water through a sluice
+ 47 | To turn the wheel of any land-built mill,
+ 48 | When nearest to the paddles it approaches,
+
+ 49 | As did my Master down along that border,
+ 50 | Bearing me with him on his breast away,
+ 51 | As his own son, and not as a companion.
+
+ 52 | Hardly the bed of the ravine below
+ 53 | His feet had reached, ere they had reached the hill
+ 54 | Right over us; but he was not afraid;
+
+ 55 | For the high Providence, which had ordained
+ 56 | To place them ministers of the fifth moat,
+ 57 | The power of thence departing took from all.
+
+ 58 | A painted people there below we found,
+ 59 | Who went about with footsteps very slow,
+ 60 | Weeping and in their semblance tired and vanquished.
+
+ 61 | They had on mantles with the hoods low down
+ 62 | Before their eyes, and fashioned of the cut
+ 63 | That in Cologne they for the monks are made.
+
+ 64 | Without, they gilded are so that it dazzles;
+ 65 | But inwardly all leaden and so heavy
+ 66 | That Frederick used to put them on of straw.
+
+ 67 | O everlastingly fatiguing mantle!
+ 68 | Again we turned us, still to the left hand
+ 69 | Along with them, intent on their sad plaint;
+
+ 70 | But owing to the weight, that weary folk
+ 71 | Came on so tardily, that we were new
+ 72 | In company at each motion of the haunch.
+
+ 73 | Whence I unto my Leader: "See thou find
+ 74 | Some one who may by deed or name be known,
+ 75 | And thus in going move thine eye about."
+
+ 76 | And one, who understood the Tuscan speech,
+ 77 | Cried to us from behind: "Stay ye your feet,
+ 78 | Ye, who so run athwart the dusky air!
+
+ 79 | Perhaps thou'lt have from me what thou demandest."
+ 80 | Whereat the Leader turned him, and said: "Wait,
+ 81 | And then according to his pace proceed."
+
+ 82 | I stopped, and two beheld I show great haste
+ 83 | Of spirit, in their faces, to be with me;
+ 84 | But the burden and the narrow way delayed them.
+
+ 85 | When they came up, long with an eye askance
+ 86 | They scanned me without uttering a word.
+ 87 | Then to each other turned, and said together:
+
+ 88 | "He by the action of his throat seems living;
+ 89 | And if they dead are, by what privilege
+ 90 | Go they uncovered by the heavy stole?"
+
+ 91 | Then said to me: "Tuscan, who to the college
+ 92 | Of miserable hypocrites art come,
+ 93 | Do not disdain to tell us who thou art."
+
+ 94 | And I to them: "Born was I, and grew up
+ 95 | In the great town on the fair river of Arno,
+ 96 | And with the body am I've always had.
+
+ 97 | But who are ye, in whom there trickles down
+ 98 | Along your cheeks such grief as I behold?
+ 99 | And what pain is upon you, that so sparkles?"
+
+100 | And one replied to me: "These orange cloaks
+101 | Are made of lead so heavy, that the weights
+102 | Cause in this way their balances to creak.
+
+103 | Frati Gaudenti were we, and Bolognese;
+104 | I Catalano, and he Loderingo
+105 | Named, and together taken by thy city,
+
+106 | As the wont is to take one man alone,
+107 | For maintenance of its peace; and we were such
+108 | That still it is apparent round Gardingo."
+
+109 | "O Friars," began I, "your iniquitous. . ."
+110 | But said no more; for to mine eyes there rushed
+111 | One crucified with three stakes on the ground.
+
+112 | When me he saw, he writhed himself all over,
+113 | Blowing into his beard with suspirations;
+114 | And the Friar Catalan, who noticed this,
+
+115 | Said to me: "This transfixed one, whom thou seest,
+116 | Counselled the Pharisees that it was meet
+117 | To put one man to torture for the people.
+
+118 | Crosswise and naked is he on the path,
+119 | As thou perceivest; and he needs must feel,
+120 | Whoever passes, first how much he weighs;
+
+121 | And in like mode his father-in-law is punished
+122 | Within this moat, and the others of the council,
+123 | Which for the Jews was a malignant seed."
+
+124 | And thereupon I saw Virgilius marvel
+125 | O'er him who was extended on the cross
+126 | So vilely in eternal banishment.
+
+127 | Then he directed to the Friar this voice:
+128 | "Be not displeased, if granted thee, to tell us
+129 | If to the right hand any pass slope down
+
+130 | By which we two may issue forth from here,
+131 | Without constraining some of the black angels
+132 | To come and extricate us from this deep."
+
+133 | Then he made answer: "Nearer than thou hopest
+134 | There is a rock, that forth from the great circle
+135 | Proceeds, and crosses all the cruel valleys,
+
+136 | Save that at this 'tis broken, and does not bridge it;
+137 | You will be able to mount up the ruin,
+138 | That sidelong slopes and at the bottom rises."
+
+139 | The Leader stood awhile with head bowed down;
+140 | Then said: "The business badly he recounted
+141 | Who grapples with his hook the sinners yonder."
+
+142 | And the Friar: "Many of the Devil's vices
+143 | Once heard I at Bologna, and among them,
+144 | That he's a liar and the father of lies."
+
+145 | Thereat my Leader with great strides went on,
+146 | Somewhat disturbed with anger in his looks;
+147 | Whence from the heavy-laden I departed
+
+148 | After the prints of his beloved feet.
