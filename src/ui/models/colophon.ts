@@ -45,7 +45,7 @@ export function colophonWordRows(words: readonly WordChange[]): WordChange[] {
 export function colophonBlocks(spec: ColophonSpec): SummaryBlock[] {
   const blocks: SummaryBlock[] = [{ kind: 'heading', text: 'In this canto' }];
   if (spec.choices.length > 0) {
-    blocks.push({ kind: 'subheading', text: 'What you chose, and what Dante did' });
+    blocks.push({ kind: 'subheading', text: 'Your choices, and Dante’s' });
     for (const row of spec.choices) blocks.push(choiceBlock(row));
   }
   const words = colophonWordRows(spec.words);

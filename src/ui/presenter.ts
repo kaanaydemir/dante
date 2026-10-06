@@ -519,6 +519,8 @@ class Presenter implements StoryPresenter, InputHandler {
       if (reading) {
         await bp.spread.turn();
       } else {
+        // Over the world: the book on a dark table, the world dimmed behind it.
+        if (!inBook) bp.showCurtain(0.82);
         bp.spread.clear();
         await bp.spread.open(true);
       }
@@ -538,7 +540,7 @@ class Presenter implements StoryPresenter, InputHandler {
           else await bp.spread.turn();
           this.stage = 'reading';
         } else {
-          await bp.spread.close(!fast);
+          await Promise.all([bp.spread.close(!fast), bp.hideCurtain(fast ? 0 : 300)]);
           this.stage = 'none';
         }
         el.settle();
@@ -1273,7 +1275,7 @@ class Presenter implements StoryPresenter, InputHandler {
       const blocks = colophonBlocks(spec);
       const pages = this.summaryPages(blocks);
       // Left page: the canto's last line, alone (bible §1.3.8).
-      bp.spread.folios(`${spec.canticleLabel} · ${spec.cantoLabel}`, 'IN THIS CANTO');
+      bp.spread.folios(`${spec.canticleLabel} · ${spec.cantoLabel}`, '');
       renderSummaryPage(bp, 'left', [], { closing: spec.closing });
       let page = 0;
       renderSummaryPage(bp, 'right', this.pick(blocks, pages[0]), {});

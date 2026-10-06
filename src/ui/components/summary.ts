@@ -171,8 +171,14 @@ export function renderSummaryPage(bp: BookPageApi, side: PageSide, blocks: reado
   if (opts.closing !== undefined) {
     const q = opts.closing;
     if (!q) return;
-    const px = Math.round(theme.size('verse') * 1.12);
-    const style = textStyle(theme, 'verse', { px, color: theme.colors.ink, align: 'center' });
+    // The last line stands alone: as large as fits on one line (never below 20 px).
+    let px = Math.round(theme.size('verse') * 1.15);
+    let style = textStyle(theme, 'verse', { px, color: theme.colors.ink, align: 'center' });
+    const widest = (): number => Math.max(...q.lines.map((l) => measurer(style)(l)));
+    while (px > 20 && widest() > width) {
+      px -= 1;
+      style = textStyle(theme, 'verse', { px, color: theme.colors.ink, align: 'center' });
+    }
     const m = measureVerseLines(q.lines, { maxWidth: width, style, px });
     const top = Math.round((box.y0 + box.y1) / 2 - m.height / 2 - 20);
     const lx = Math.max(box.x0, Math.round((box.x0 + box.x1) / 2 - m.width / 2));
