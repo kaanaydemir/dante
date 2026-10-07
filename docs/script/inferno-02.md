@@ -52,7 +52,7 @@ Kanto bir **yürüyüş konuşması** olarak kuruldu. Dante ile Vergilius akşam
 - Kalp yoktur (İncil §3.1: Kanto I–II'de karşılaşılan ruh yok). Bu kantoda hiçbir `pity` ya da `justice` etkisi yazılmadı.
 - Güvenin bu kantodaki net değişimi en çok +1'dir (`inf02.c2=b`).
 - Okunan sayaçlar: `virtue:temperance` (s1; parsın önünde şafağı bekleyen oyuncu) ve `virtue:fortitude` (s3; aslanın önünde kıpırdamayan oyuncu). Bu noktada iki sayaç da yalnızca Kanto I'den gelebilir. Başka kantonun bayrağı okunmaz: §4.3'te Kanto II hiçbir bayrağın okuyucusu değildir.
-- Sözler: Go (II 70) ve Away (II 116). İkisi de s4'ün resimli sayfalarında, dizede parlar ve E ile alınır. Söz toplama burada öğretilir (`{tutorial:read}`, s4.b4).
+- Sözler: Go (II 70) ve Away (II 116). İkisi de s4'ün resimli sayfalarında, dizede parlar ve E ile alınır. Söz toplama Kanto I'de öğretildi (`inf01.s1.b4`, Way); burada ilk kez bir kitap sayfasında yapılır, bu yüzden `{tutorial:read}` istemi s4.b4'te bir hatırlatma olarak yinelenir.
 - Kilitler: `unlock:compose`, `unlock:verse` (s6).
 - Codex: İncil §4.5'teki altı kayıt ve bir ek kayıt (`inf02.invocation`, Musalara yakarış). Hepsi Codex Kanto IV'te açılana kadar sessizce birikir.
 
@@ -64,7 +64,7 @@ Kanto bir **yürüyüş konuşması** olarak kuruldu. Dante ile Vergilius akşam
 | `inf02_overlook` | Patikanın ilk çıkıntısı; Dante burada durur ve konuşmaya başlar |
 | `inf02_switchback` | Patikanın dönemeci; Aeneas ve Pavlus, `inf02.c1` |
 | `inf02_dusk_path` | Alacakaranlık patikası; gölgeler ve isteksiz yürüyüş |
-| `inf02_bench` | Patikanın kenarındaki yassı taş (kontrol noktası); anlatı ve cesaret |
+| `inf02_bench` | Patikanın kenarındaki yassı taş (kontrol noktası); Dante'nin taşa varışı (s3.b3), anlatı ve cesaret |
 | `inf02_fallen_stone` | Geçidin ağzını kapatan kaya; ilk tercet |
 | `inf02_gorge` | Geçidin içi, "the deep and savage way" |
 
@@ -75,7 +75,7 @@ Kanto bir **yürüyüş konuşması** olarak kuruldu. Dante ile Vergilius akşam
 | `inf02.dante_rises` | Oturan Dante'yi oyuncu ayağa kaldırdığında (herhangi bir hareket tuşu ya da E) |
 | `inf02.stone_moved` | Ortasında Love olan (Force) bir tercet kayaya değdiğinde |
 
-**Sessizlikler.** Vergilius iki yerde bilerek susar: isteksiz yürüyüşte (s2.b4) ve Dante'nin ayağa kalkmasını beklerken (s5.b1). Bu vuruşlarda `HINT` yoktur; Q'ya basan oyuncu cevap alamaz. Vergilius'un II 43–126 arasındaki konuşması şiirde kesintisizdir. Dante o sürede tek söz söylemez, oyunda da söylemez; tepkileri yalnızca sayfanın kenarındaki portresinde görünür.
+**Sessizlikler.** Vergilius iki yerde bilerek susar: Dante kuşkusunu söylerken ve ardından gelen isteksiz yürüyüşte (bütün s2; şiirde de Vergilius'un cevabı ancak II 43'te gelir) ve Dante'nin ayağa kalkmasını beklerken (s5.b1). Bu iki sahnede hiç `HINT` yoktur; Q'ya basan oyuncu cevap alamaz. Motor bir `HINT`'i yalnızca sahne başında siler; s2'nin herhangi bir vuruşuna yazılacak bir ipucu s2.b4'ün sessiz yürüyüşüne de taşınır. Aynı kural yüzünden taşa yürüyüş s3'ün içinde tutuldu (s3.b3): s3.b2'deki ipucu yürüyüş boyunca geçerli kalır. Vergilius'un II 43–126 arasındaki konuşması şiirde kesintisizdir. Dante o sürede tek söz söylemez, oyunda da söylemez; tepkileri yalnızca sayfanın kenarındaki portresinde görünür.
 
 **Süre.** Yaklaşık 110 dize, otuza yakın modern satır, üç kısa yürüyüş ve bir tercet bulmacası: 6–9 dakika.
 
@@ -126,6 +126,7 @@ END IF
 
 ```script
 @mode: play
+EKLEME: Akşam yamaçtan iniş ve konuşmanın patikadaki duraklara bölünmesi şiirde yok; I 136'daki yürüyüşün sürmesidir. Vergilius'un asıl hareketi (II 141) kantonun sonunda korunur. | Dayanak: Inferno I, 136 ve II, 40
 DO: Vergilius patikadan aşağı yürür, oyuncu onu izler. Işık her adımda biraz daha azalır, gölgeler uzar. Takip, Kanto I'de öğretildiği gibi çalışır.
 HINT: Walk behind me, down the slope. Night comes quickly on this hill.
 HINT-SHORT: Behind me, down the slope.
@@ -169,9 +170,8 @@ DO: Vergilius cevap vermez; dinler. Başıyla patikayı gösterir: konuşurken d
 
 ```script
 @mode: play
-DO: Vergilius yavaş adımlarla iner ve Dante'nin hızına uyar. Patika kıvrılarak dönemece iner.
-HINT: Say what troubles you. We can walk while you say it.
-HINT-SHORT: Walk, and say it.
+// Vergilius Dante konuşurken susar ve sözünü kesmez: bu sahnede HINT yoktur. Bir HINT sahne sonuna kadar geçerli kalır ve s2.b4'ün sessiz yürüyüşünde Q'ya cevap verirdi.
+DO: Vergilius yavaş adımlarla iner ve Dante'nin hızına uyar. Patika kıvrılarak dönemece iner; yol tektir, Vergilius önde yürür.
 BARK VIRGIL: Go on. I am listening.
 SFX: çakıl, rüzgârın yön değiştirmesi
 ```
@@ -267,7 +267,7 @@ GLOSS: The emprise is the enterprise: the journey. By thinking it over, he used 
 
 ## [inf02.s3] The Rebuke
 
-Vergilius geri döner ve sitemini şiirin kendi sözleriyle yapar (II 43–48; çapa dizesi II 45). İki kısa modern cümle onu oyuncunun yaptıklarına bağlar: II 48'in hemen ardından gelen cümle oyuncunun gölgelerle ne yaptığına, II 49–51'in ardından gelen cümle kuşkusunu nasıl söylediğine (`inf02.c1`) cevap verir. Vergilius yargılamaz; Dante'yi gördüğü şeyle yüzleştirir. Sonra anlatmak için oturur. Gölge cümlesinde öncelik sırası: gölgeye yürüyen oyuncu, sonra aslanın önünde kıpırdamamış oyuncu (`virtue:fortitude`), sonra herkes.
+Vergilius geri döner ve sitemini şiirin kendi sözleriyle yapar (II 43–48; çapa dizesi II 45). İki kısa modern cümle onu oyuncunun yaptıklarına bağlar: II 48'in hemen ardından gelen cümle oyuncunun gölgelerle ne yaptığına, II 49–51'in ardından gelen cümle kuşkusunu nasıl söylediğine (`inf02.c1`) cevap verir. Vergilius yargılamaz; Dante'yi gördüğü şeyle yüzleştirir. Sonra anlatmak için oturur; oyuncu taşa kendisi yürür (s3.b3). Gölge cümlesinde öncelik sırası: gölgeye yürüyen oyuncu, sonra aslanın önünde kıpırdamamış oyuncu (`virtue:fortitude`), sonra herkes.
 
 ### [inf02.s3.b1] Cowardice
 
@@ -307,10 +307,21 @@ VIRGIL (quiet): Sit with me a moment. You should hear it the way I heard it.
 
 ```script
 @mode: play
+EKLEME: Vergilius'un patikanın kenarındaki taşa oturup Dante'yi yanına çağırması şiirde yok; kantonun en uzun konuşması güvenli, oturaklı bir okuma anında geçsin diye (GDD 1.2). | Dayanak: Inferno II, 49–51
 DO: Vergilius patikanın kenarındaki yassı taşa (inf02_bench) yürür ve oturur; yanında bir kişilik yer bırakır. {checkpoint}
 HINT: Sit here by me, on the stone. Then listen.
 HINT-SHORT: Sit by me.
 SFX: gece böcekleri başlar; rüzgâr diner
+```
+
+### [inf02.s3.b3] Room on the Stone
+
+Taşa yürüyüş bu sahnede kalır, çünkü motor `HINT`'i yalnızca sahne başında siler: s3.b2'deki ipucu yürüyüş boyunca Q ile alınabilir. Bu vuruş olmasaydı s4 hemen başlar ve ipucu oyuncu daha yürümeden silinirdi. Oyuncu taşa varınca sahne biter; anlatı, oyuncu Vergilius'a E ile seslenince başlar (s4.b1). Oyuncu taşa varmadan Vergilius'a seslenirse bu vuruş atlanır ve anlatı yine başlar.
+
+```script
+@mode: play
+@trigger: enter:inf02_bench
+DO: Dante taşın yanına varır. Vergilius başını kaldırır ve yanındaki boş yere bakar; bir şey söylemez.
 ```
 
 ## [inf02.s4] Why Virgil Came
@@ -369,7 +380,7 @@ QUOTE BEATRICE (Inferno II, 58–63)
 > A friend of mine, and not the friend of fortune,
 > Upon the desert slope is so impeded
 > Upon his way, that he has turned through terror,
-GLOSS: Mantua was Virgil's city. A friend, but no friend of fortune: he loved her for herself, and luck was never on his side.
+GLOSS: Mantua was Virgil's city. Dante was her friend for her own sake, not for any gain. Some read it as: luck was never on his side.
 ```
 
 ### [inf02.s4.b3] Too Late
@@ -439,7 +450,7 @@ QUOTE BEATRICE (Inferno II, 94–99)
 > In her entreaty she besought Lucia,
 > And said, "Thy faithful one now stands in need
 > Of thee, and unto thee I recommend him."
-GLOSS: The poem does not name the gentle Lady. Readers have always understood her to be the Virgin Mary. Her pity breaks the hard judgment.
+GLOSS: The poem does not name the gentle Lady. Readers have long understood her to be the Virgin Mary. Her pity breaks the hard judgment.
 EFFECTS: codex:inf02.gentle_lady
 ```
 
@@ -471,8 +482,8 @@ QUOTE LUCIA (Inferno II, 106–108)
 > Dost thou not hear the pity of his plaint?
 > Dost thou not see the death that combats him
 > Beside that flood, where ocean has no vaunt?"
-GLOSS: In Canto I, Dante's first words were a cry for pity. Here Lucia asks Beatrice whether she cannot hear it.
-NARRATION: No one ever ran from harm as fast as she came down, she said, trusting his words to do the rest.
+GLOSS: His plaint: his weeping. The flood is a torrent wilder than the sea itself; readers often take it as the turmoil of sin he was caught in.
+NARRATION: No one ever ran from harm as fast as she came down, she said, trusting Virgil's words to do the rest.
 DO: Sayfanın resmi: Beatrice yüzünü öte yana çevirir; ışıktan bir gözyaşı kâğıda düşer ve mürekkebi hafifçe dağıtır. Gözyaşı düştüğü anda dizedeki "away" kelimesi parlar.
 QUOTE VIRGIL (Inferno II, 115–117)
 > After she thus had spoken unto me,
@@ -511,7 +522,9 @@ SFX: sessizlik; yalnızca gece böcekleri
 
 Kitap kapandıktan sonra bir sessizlik. Vergilius susar ve bekler; Dante'yi ayağa oyuncu kaldırır. Çiçek benzetmesi (II 127–132) taşın çevresindeki gerçek gece çiçekleriyle gösterilir: Dante doğrulurken çiçekler açılır. Benzetmenin son dizesi ("That I began, like an intrepid person:") seçimin kapısıdır: Dante'nin ilk sözünü oyuncu seçer, kart şiirdeki teşekkürü açar (II 133–135). Ardından herkes için II 136–140 gelir (çapa dizeleri 139–140).
 
-Üç seçenek de dürüsttür ve Dante'nin karakterindedir; hiçbiri "doğru cevap" değildir. Yankılar küçüktür ve sayı göstermez: (a) çiyde bir ışık ve bir birim Grace; (b) Vergilius'un yaklaşması (güven, mesafe ve duruşla gösterilir); (c) geçidin üstünde üç yıldız (Fortitude). Üç yıldız, Araf I'deki dört yıldızın sessiz bir habercisidir; hiçbir yerde açıklanmaz.
+Üç seçenek de dürüsttür ve Dante'nin karakterindedir; hiçbiri "doğru cevap" değildir. Yankılar küçüktür ve sayı göstermez: (a) çiyde bir ışık ve bir birim Grace; (b) Vergilius'un yaklaşması (güven, mesafe ve duruşla gösterilir); (c) geçidin üstünde üç yıldız (Fortitude). Üç yıldız, Araf VIII'de akşam, sabahın dört yıldızının yerine yükselen üç yıldızın sessiz bir habercisidir (Purgatorio VIII, 89–93); hiçbir yerde açıklanmaz.
+
+Seçenek (a)'nın portresi bilerek ağlamaz (`quiet`): hemen önceki dize Dante'nin "like an intrepid person" konuşmaya başladığını söyler. Gözyaşı Beatrice'indir; Dante'ye geçen cesarettir.
 
 ### [inf02.s5.b1] The Night Flowers
 
@@ -543,7 +556,7 @@ CAM: zoom-out — Dante ayakta, Vergilius'la yüz yüze
 CHOICE inf02.c2 major "What gives Dante courage"
 PROMPT: Three ladies of Heaven cared for him, and his guide had come at once.
 OPTION a [Think of her tears.]
-DANTE (weeping): She wept for me. She came all the way down into the dark, and she wept for me.
+DANTE (quiet): She wept for me. She came all the way down into the dark, and she wept for me.
 DO: Açılmış çiçeklerin taçyapraklarında çiy taneleri ışır. HUD'daki Grace damlası bir birim dolar.
 EFFECTS: grace+1, flag:inf02.courage_beatrice
 OPTION b [Believe the one who came.]
