@@ -34,14 +34,14 @@ import type {
   StoryLibrary,
   StoryPresenter,
 } from '../runtime/contracts';
-import type { CantoId, CantoScript, DoStmt, EventId, PlaceId, SpeakerId, Statement, Trigger } from '../story/types';
+import type { CantoId, CantoScript, DoStmt, EventId, PlaceId, Scene, SpeakerId, Statement, Trigger } from '../story/types';
 import { tryServices } from '../app/services';
 import { ensureCantoTextures, generateTextures } from '../art/textures';
 import { Player, FEET } from '../entities/player';
 import { Companion } from '../entities/virgil';
 import { getLevel } from '../levels/_framework/registry';
 import { createGenericLevel, emptyLevel } from '../levels/_framework/generic';
-import { planGenericLevel, virgilOnStage, type GenericLayout } from '../levels/_framework/layout';
+import { placesOfBeat, planGenericLevel, virgilOnStage, type GenericLayout } from '../levels/_framework/layout';
 import { Ambience } from './ambience';
 import { WorldCamera } from './camera';
 import { registerExtras, type Interactable, type InteractableDef, type MechanicHooks, type VerseCast, type WorldExtras } from './extras';
@@ -488,9 +488,14 @@ export class World implements LevelHostWorld {
 
     if (this.pendingSceneSync) {
       this.pendingSceneSync = false;
-      if (!beat.place && info.scene.number > 0 && !this.restoredCheckpoint) {
-        const home = this.plan?.sceneHome[info.scene.id] ?? null;
-        if (home && this.tracker.has(home) && !this.isPlayerIn(home) && !this.firstSceneOfCanto(info)) this.teleport(home);
+      const ahead = this.checkpointAhead(info.scene);
+      if (!beat.place && info.scene.number > 0 && (!this.restoredCheckpoint || ahead)) {
+        if (this.firstSceneOfCanto(info)) {
+          if (ahead) this.toCantoStart();
+        } else {
+          const home = this.plan?.sceneHome[info.scene.id] ?? null;
+          if (home && this.tracker.has(home) && !this.isPlayerIn(home)) this.teleport(home);
+        }
       }
     }
 
@@ -545,8 +550,66 @@ export class World implements LevelHostWorld {
 
   setArmed(armed: readonly ArmedBeat[]): void {
     this.armed = armed;
+    this.syncSceneOnArm();
     this.markers.set(armed, (id) => this.tracker.get(id));
     this.applyArmed();
+  }
+
+  /**
+   * A jump (or a continue without a checkpoint in this canto) that lands on a
+   * scene whose first beat waits for Dante somewhere (`enter:` / `talk:`):
+   * he starts at that scene's place instead of the canto's first one.
+   */
+  private syncSceneOnArm(): void {
+    if (!this.pendingSceneSync || !this.dante || !this.plan || !this.script) return;
+    const cursor = this.armed.find((a) => a.cursor);
+    if (!cursor || cursor.nextScene) return;
+    const t = cursor.trigger;
+    if (t.kind !== 'enter' && t.kind !== 'talk') return;
+    const scene = this.script.scenes.find((s) => s.id === cursor.scene);
+    if (!scene || scene.beats[0]?.id !== cursor.beat) return;
+    // A continue wakes at its checkpoint, unless that lies beyond everything this scene uses (a jump back).
+    const ahead = this.checkpointAhead(scene);
+    if (this.restoredCheckpoint && !ahead) return;
+    this.pendingSceneSync = false;
+    const first = this.script.scenes.find((s) => s.number > 0);
+    if (first?.id === scene.id) {
+      if (ahead) this.toCantoStart();
+      return;
+    }
+    const home = this.plan.sceneHome[scene.id] ?? (t.kind === 'enter' ? t.place : null);
+    if (home && this.tracker.has(home) && !this.isPlayerIn(home)) this.teleport(home);
+  }
+
+  /**
+   * The restored checkpoint lies past every place the scene uses (levels run
+   * left to right): the story was sent back (a jump), so the checkpoint is not
+   * where this scene can be played from.
+   */
+  private checkpointAhead(scene: Scene): boolean {
+    const dante = this.dante;
+    if (!this.restoredCheckpoint || !dante) return false;
+    let right = Number.NEGATIVE_INFINITY;
+    for (const beat of scene.beats) {
+      for (const id of placesOfBeat(beat)) {
+        const p = this.tracker.get(id);
+        if (p) right = Math.max(right, p.x + p.w);
+      }
+    }
+    return Number.isFinite(right) && dante.x > right + 16;
+  }
+
+  /** Dante back at the canto's start (beside Virgil). */
+  private toCantoStart(): void {
+    const dante = this.dante;
+    const start = this.host?.start;
+    if (!dante || !start) return;
+    const spot = this.freeSpot(start.x, start.y);
+    dante.teleport(spot.x, spot.y);
+    this.companion?.placeNear(dante.x, dante.y);
+    this.camera.follow(dante.actor);
+    this.camera.cam.centerOn(dante.x, dante.y - 16);
+    this.updatePlaces();
   }
 
   private applyArmed(): void {

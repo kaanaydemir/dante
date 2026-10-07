@@ -21,7 +21,7 @@ unlocks: [words, book]
 playtime: "8–12"
 writer: "Claude"
 status: draft
-version: "0.1"
+version: "0.2"
 ---
 
 # Inferno I — The Dark Wood
@@ -32,7 +32,7 @@ Kanto I oyunun ilk on dakikası ve kitabın ilk sayfasıdır. Üç işi var. Bir
 
 1. **Dante'nin ilk sözü bir yakarıştır.** Oyuncunun Dante'si ormanda, yamaçta ve üç hayvanın önünde tek kelime söylemez. Duyduğumuz tek ses şiirin anlatıcısıdır (`POET`). Dante'nin ağzından çıkan ilk söz, şiirdeki ilk sözüdür: *"Have pity on me," unto him I cried,* (Inferno I, 65). Terazi henüz yoktur (III'te açılır), ama "pity" kelimesi oyunda ilk kez Dante'nin kendisi için yalvarırken duyulur.
 2. **Kenar boşluğu rehberle dolar.** Vergilius gelene kadar Q tuşu boş bir kenar boşluğu açar ve s0–s5 arasında hiçbir alıntının `GLOSS` notu yoktur. İlk `GLOSS`, Vergilius'un kendi dizesindedir (I 70–72). Okur rehbersiz okumanın nasıl bir şey olduğunu yaşar; rehber gelince kitabın kenarı konuşmaya başlar.
-3. **Önce oyna, sonra oku.** Üç yerde oyuncu şiirin bir hareketini kendi eliyle yapar ve dize ardından gelir: geriye bakmak (I 22–27, isteğe bağlı), kurdu Vergilius'a göstermek (I 88–90) ve Vergilius'un ardından yürümek (I 136). Sonuncusu sahnede yazılmaz; oyuncu onu yürüdükten sonra kolofonun sol sayfasında, tek başına okur.
+3. **Önce oyna, sonra oku.** Dört yerde oyuncu şiirin bir hareketini kendi eliyle yapar ve dize ardından gelir: geriye bakmak (I 22–27, isteğe bağlı), gölgeye seslenmek (I 65–66), kurdu Vergilius'a göstermek (I 88–90) ve Vergilius'un ardından yürümek (I 136). Sonuncusu sahnede yazılmaz; oyuncu onu yürüdükten sonra kolofonun sol sayfasında, tek başına okur.
 4. **Üç hayvan, üç ölçüm, tek yokuş.** Pars sabrı (`inf01.c1`), aslan yiğitliği (`inf01.c2`), dişi kurt sağduyuyu (`inf01.c3`) ölçer. Hiçbiri yazıyla öğretilmez; oyuncu kendisi keşfeder. Üç sistemik seçimin "What Dante did" kartları kolofona ertelenir: üç hayvan tek bir tırmanış ve tek bir düşüştür, kartlarla bölünmemelidir.
 5. **Güneşin sustuğu yer bir ses tasarımıdır.** Dişi kurdun her adımında şafağın sesleri katman katman eksilir: kuşlar, rüzgâr, çakıllar, en son nefes. I 60 tam sessizlikte okunur. Vergilius bu sessizliğin içinden, "uzun sessizlikten kısılmış" (I 63) çatlak bir dize balonuyla gelir.
 6. **Boş bank, dolu bank.** Oyunun ilk kontrol noktası yamacın dibinde boş bir taş banktır (s2). Kanto, Vergilius'un ilk kez bir bankta oturup Dante'yi beklemesiyle kapanır (s8). Bu karşıtlık hiçbir yerde söylenmez.
@@ -42,19 +42,62 @@ Kanto I oyunun ilk on dakikası ve kitabın ilk sayfasıdır. Üç işi var. Bir
 | Sahne | Süre (dk) | Oyuncu ne yapar | Verilenler |
 |---|---|---|---|
 | s0 | 0,2 | Sayfayı çevirir | — |
-| s1 | 2–2,5 | Yürür, korkunun içinden geçer, ilk sözünü alır, ormandan atılarak çıkar | Fear, Way; `unlock:words`; `inf01.dark_wood` |
+| s1 | 1,5–2 | Yürür, korkunun içinden geçer, ilk sözünü alır, ormandan atılarak çıkar | Fear, Way; `unlock:words`; `inf01.dark_wood` |
 | s2 | 1–1,5 | Tepeye bakar, isterse geriye bakar, bankta dinlenir, tırmanır | `inf01.sunlit_hill` |
-| s3 | 1–1,5 | Parsla karşılaşır; geçmeye çalışır ya da şafağı bekler | Hope; `inf01.first_morning`, `inf01.panther`; `inf01.c1` |
-| s4 | 1 | Aslanın hamlelerinden atılarak kaçar; kükremede kıpırdar ya da durur | `inf01.lion`; `inf01.c2` |
-| s5 | 1,5–2 | Kurt tarafından geri itilir; yeniden tırmanır ya da aşağıdaki gölgeye yürür | `inf01.she_wolf`; `inf01.c3` |
-| s6 | 2 | Gölgeye yaklaşıp seslenir, Vergilius'u dinler, Love'ı alır, kurdu gösterir | Love; `inf01.virgil` |
-| s7 | 1,5–2 | Kehaneti dinler, iki yol arasında yürür, yolculuk teklifini dinler | `inf01.greyhound` |
-| s8 | 1,5 | Yolculuğun nedenini seçer, Vergilius'un ardından yürür | `inf01.c4` |
-| s9 | 0,5 | Kolofonu okur | `unlock:book` |
+| s3 | 1 | Parsla karşılaşır; geçmeye çalışır ya da şafağı bekler | Hope; `inf01.first_morning`, `inf01.panther`; `inf01.c1` |
+| s4 | 0,5–1 | Aslanın hamlelerinden atılarak kaçar; kükremede kıpırdar ya da durur | `inf01.lion`; `inf01.c2` |
+| s5 | 1–1,5 | Kurt tarafından geri itilir; yeniden tırmanır ya da aşağıdaki gölgeye yürür | `inf01.she_wolf`; `inf01.c3` |
+| s6 | 1,5–2 | Gölgeye yaklaşıp seslenir, Vergilius'u dinler, Love'ı alır, kurdu gösterir | Love; `inf01.virgil` |
+| s7 | 1–1,5 | Kehaneti dinler, iki yol arasında yürür, yolculuk teklifini dinler | `inf01.greyhound` |
+| s8 | 1–1,5 | Yolculuğun nedenini seçer, Vergilius'un ardından yürür | `inf01.c4` |
+| s9 | 0,3–0,5 | Kolofonu okur | `unlock:book` |
+| **Toplam** | **9–12,5** | Her dizeyi okuyan ve geriye bakan bir ilk oynayış üst sınırdadır; ön bilgideki 8–12 hedefi korunur. Okumanın yaklaşık yarısı çapa dizeleridir; kısaltma gerekirse aşağıdaki M0 listesinden başlanır. | |
 
-**Kanto boyunca geçerli kurallar.** Resolve 1 birimin altına inmez ve bayılma yoktur; bölümün bayılmaları III ve V'te omurgadadır. Codex kayıtları sessizce birikir ve Kanto IV'te görünür (§2.12). Duraklatma menüsünde kolofona kadar yalnızca Words sekmesi vardır. Bu kanto hiçbir bayrak okumaz; bu yüzden `IF` bloğu yoktur.
+**Seçimler ve izleri**
 
-**M0 kısa kurgusu için** atlanabilecek vuruşlar: `s1.b3`, `s2.b2` (zaten isteğe bağlı), `s5.b4` (zaten koşullu) ve `s7.b2`. Omurga vuruşları ve dört seçim kalmalıdır.
+| Seçim | Seçenek | Etki | Bu kantoda | Sonra |
+|---|---|---|---|---|
+| `inf01.c1` (sistemik) | a · Waited for the dawn | `virtue:temperance+1` | Kolofonda kart (`canon=none`, I 34–36) | II s1'deki anlatım ("That morning he had waited…"); Temperance kademesi |
+| | b · Slipped past her | — | Kolofonda kart | II s1'in `ELSE` anlatımı |
+| `inf01.c2` (sistemik) | a · Held his ground | `virtue:fortitude+1` | Kolofonda kart (`canon=none`, I 44–45) | II s3'te Vergilius'un sitemi ("…before a living lion."); Fortitude kademesi |
+| | b · Ran from the roar | `resolve-1` | Kolofonda kart | — |
+| `inf01.c3` (sistemik) | a · Turned to the stranger | `virtue:prudence+1` | Kolofonda kart (`canon=a`, I 52–54) | Prudence kademesi |
+| | b · Climbed until thrown down | — | Kolofonda kart | — |
+| `inf01.c4` (major) | a · "Lead me out of this misery." | `virtue:prudence+1`, `flag:inf01.motive_escape` | Vergilius'un cevabı | IV s1 ("Down is the way out.") |
+| | b · "Lead me to Saint Peter's gate." | `trust+1`, `flag:inf01.motive_gate` | Vergilius bir adım yaklaşır | III s1 ("This is not the gate you promised me."); Araf IX |
+| | c · "Show me the ones you spoke of." | `grace+1`, `flag:inf01.motive_souls` | Vergilius'un cevabı | III s2 ve V s5 ("You asked…") |
+
+Güvenin bu kantodaki net değişimi en çok +1'dir (`inf01.c4=b`). Kalp yoktur.
+
+**Programcı için: yerler ve olaylar**
+
+| Yer (`@place` / `enter:`) | Ne |
+|---|---|
+| `inf01_wood` | Karanlık orman (s1.b1–b4): korku bölgeleri, en karanlık geçit, eski taş döşeme |
+| `inf01_wood_edge` | Ormanın kenarı (s1.b5): ardından akan gölge, dikenler arasındaki dar açıklık. Vuruş oyuncu buraya yürüyünce başlar. |
+| `inf01_valley_end` | Vadinin sonu (s2.b1–b2): ilk açık gök; geriye bakma yalnızca burada |
+| `inf01_slope` | Yamacın dibi (s2.b3): boş taş bank, ilk kontrol noktası |
+| `inf01_slope_lower` | Yamacın alt yarısı (s3): pars ve şafak. Sahne oyuncu buraya tırmanınca başlar. |
+| `inf01_slope_upper` | Yamacın üst yarısı (s4–s5.b4): aslan, sonra dişi kurt ve düşüşler. Sahne oyuncu buraya tırmanınca başlar. |
+| `inf01_shade` | Vadinin gölgeye döndüğü dip (s5.b5–s7.b2): güneşin sustuğu yer, Vergilius |
+| `inf01_other_road` | Batıda, tepenin omzunu dolanan gölgeli patikanın başı (s7.b3–s8.b1) |
+| `inf01_hillside_path` | Patika (s8.b2): takip öğreticisi, Vergilius'un oturduğu bank |
+
+| Olay | Ne zaman yayılır |
+|---|---|
+| `inf01.looked_back` | s2.b1: vadinin sonunda R (gamepad: RB) basılı tutulup geriye bakılınca. İsteğe bağlı b2'yi açar. |
+| `inf01.waited_dawn` | s3.b1: ışık parsa ulaşmadan, parsa yaklaşmadan 8 saniye hareketsiz kalınınca ya da yokuş aşağı geri çekilince |
+| `inf01.held_ground` | s4.b1: bir kükremenin tamamı boyunca ne yürünüp ne atılınca |
+| `inf01.turned_to_guide` | s5.b3: ilk düşüşten sonra aşağıdaki biçime yürününce |
+| `inf01.climbed_again` | s5.b3: ilk düşüşten sonra yeniden tırmanılınca. b4'ü açar. |
+| `inf01.reached_shadow` | s5.b3–b4: Dante biçimin önüne varınca, her yolda (kararsız kalan oyuncuyu kurt iter). b5'i açar. |
+
+- s1.b2, s1.b3 ve s1.b4 tetikleyicisizdir (`auto`). Seviye, her birinin ilk `DO` satırında Dante'nin o noktaya (çukur, geçit, taş döşemenin bittiği yer) varmasını beklemelidir; yoksa üç orman dizesi art arda açılır.
+- Seviye kancaları `DO` satırlarının sırasına bağlıdır (`onDo(i)`, `src/levels/_framework/chapter1/inf01.ts`). Kancalı vuruşlarda `DO` satırı eklenir, silinir ya da yer değiştirirse seviye de güncellenmelidir.
+
+**Kanto boyunca geçerli kurallar.** Resolve 1 birimin altına inmez ve bayılma yoktur; bölümün bayılmaları III ve V'te omurgadadır. Codex kayıtları sessizce birikir ve Kanto IV'te görünür (§2.12). Duraklatma menüsünde kolofona kadar yalnızca Words sekmesi (ve her zaman açık olan ayarlar) vardır. Bu kanto hiçbir bayrak okumaz; bu yüzden `IF` bloğu yoktur.
+
+**M0 kısa kurgusu için** atlanabilecek vuruşlar: `s1.b3`, `s2.b2` (zaten isteğe bağlı), `s5.b4` (zaten koşullu) ve `s7.b2`. Omurga vuruşları ve dört seçim kalmalıdır. `s1.b3` atlanırsa `codex:inf01.dark_wood` etkisi s1.b4'ün `EFFECTS` satırına taşınmalıdır.
 
 ## [inf01.s0] Opening page
 
@@ -115,6 +158,7 @@ SFX: Kart Dante'ye yapışırken tek, boğuk bir kalp vuruşu.
 
 ```script
 @mode: play
+EKLEME: Ormanın en karanlık yerinin iç içe geçmiş korku bölgeleri ve daralan görüşle oynanması şiirde yok; ormanın acılığının oyunlaştırılmasıdır. | Dayanak: Inferno I, 7
 DO: Ormanın en karanlık yeri. İki korku bölgesi iç içe geçer; aralarında dar ve kıvrımlı bir geçit vardır. Görüş halkası 3 karoya iner. Geçidin ortasında dize balonu açılır.
 QUOTE POET (Inferno I, 7–9)
 > So bitter is it, death is little more;
@@ -145,6 +189,7 @@ DO: Way kartı kitap simgesine uçarken ardında soluk bir ışık izi bırakır
 ```script
 @mode: play
 @place: inf01_wood_edge
+@trigger: enter:inf01_wood_edge
 EKLEME: Dante'nin ardından akan karanlık ve atılma öğreticisi şiirde yok; korkunun oyunlaştırılmasıdır. | Dayanak: Inferno I, 25 (Dante'nin ruhu hâlâ kaçmaktadır)
 DO: Ormanın kenarına yaklaşıldıkça gövdelerin arasından gri bir alacakaranlık görünür. Arkada karanlık koyulaşır ve Dante'ye doğru akmaya başlar: kenarı dalgalı, sessiz bir gölge (chase). Gölgeye değen Dante'nin Resolve'u hızla azalır.
 DO: Son düzlükte sık dikenler arasında dar bir açıklık vardır. Gölge yaklaşınca "Dash" istemi belirir; atılma kısa bir dokunulmazlık verir ve Dante'yi dikenlerin arasından geçirir. {tutorial:dash}
@@ -163,6 +208,7 @@ Vadinin bittiği yer. Oyuncu ilk kez gökyüzünü görür ve ilk kez korkusu az
 @mode: play
 @place: inf01_valley_end
 @ambience: Açık hava; seyrek, kuru otlar arasında hafif rüzgâr. Çok uzaktan ilk kuş sesleri.
+EKLEME: Tepedeki ışığa bakarken Resolve'un dolması şiirde yok; korkunun biraz yatışmasının oyunlaştırılmasıdır. | Dayanak: Inferno I, 19–21
 DO: Dante orman kenarındaki çıplak, taşlık zemine sendeleyerek çıkar ve durur. Gök hâlâ gece mavisidir ama kuzeyde, yukarıda, bir şey aydınlanmaktadır.
 QUOTE POET (Inferno I, 13–15)
 > But after I had reached a mountain's foot,
@@ -181,7 +227,7 @@ QUOTE POET (Inferno I, 19–21)
 > Then was the fear a little quieted
 > That in my heart's lake had endured throughout
 > The night, which I had passed so piteously.
-DO: Dante'nin arkasında, orman kenarında "Hold [E] — Look back" istemi belirir. İstem isteğe bağlıdır ve hiçbir ödül vermez. Oyuncu E'yi basılı tutarsa {event:inf01.looked_back} yayılır ve b2 oynar. Oyuncu yamaca girerse (inf01_slope) istem söner ve b2 atlanır.
+DO: Dante'nin arkasında, orman kenarında "Hold [R] — Look back" istemi belirir (gamepad: RB; GDD 2.2). İstem isteğe bağlıdır ve hiçbir ödül vermez. Oyuncu R'yi basılı tutarsa {event:inf01.looked_back} yayılır ve b2 oynar. Oyuncu yamaca girerse (inf01_slope) istem söner ve b2 atlanır.
 ```
 
 ### [inf01.s2.b2] Looking Back
@@ -190,7 +236,7 @@ DO: Dante'nin arkasında, orman kenarında "Hold [E] — Look back" istemi belir
 @mode: play
 @trigger: event:inf01.looked_back
 EKLEME: Geriye bakma etkileşimi, I 22–27'deki benzetmenin oyunlaştırılmasıdır; isteğe bağlıdır ve ödülsüzdür. | Dayanak: Inferno I, 22–27
-DO: Dante yavaşça döner; kamera omzunun üstünden ormana bakar. Gövdelerin arasındaki karanlık siyah bir su gibi kıpırdar. Oyuncu E'yi bıraksa da dize sonuna kadar oynar.
+DO: Dante yavaşça döner; kamera omzunun üstünden ormana bakar. Gövdelerin arasındaki karanlık siyah bir su gibi kıpırdar. Oyuncu R'yi bıraksa da dize sonuna kadar oynar.
 QUOTE POET (Inferno I, 22–27)
 > And even as he, who, with distressful breath,
 > Forth issued from the sea upon the shore,
@@ -212,12 +258,12 @@ SFX: Ormandan dalga sesi değil, nefese benzeyen alçak bir uğultu gelir; dize 
 EKLEME: Boş taş bank (ilk kontrol noktası) şiirde yok; Dante'nin yamaçta dinlenmesini oyunlaştırır. | Dayanak: Inferno I, 28
 DO: Yamacın dibinde yosun tutmuş, boş bir taş bank durur. Yanından geçmek kaydı alır; "[E] Rest" ile üstüne oturan Dante'nin Resolve'u tamamen dolar. {checkpoint}
 // Bank boştur. Vergilius geldikten sonra her kontrol noktasında o bekleyecek. Bu karşıtlık oyunda hiçbir yerde söylenmez.
-DO: Dante bankın yanından ayrılıp yamaca adım atınca dize balonu açılır.
+DO: Dante bankın yanından ayrılıp yamaca adım atınca dize balonu açılır. Oyuncu bankta dinlenmeden geçtiyse Dante önce bankın yanında durur, ellerini dizlerine dayayıp bir an soluklanır; dize ondan sonra açılır. Böylece I 28 her yolda doğru kalır.
 QUOTE POET (Inferno I, 28–30)
 > After my weary body I had rested,
 > The way resumed I on the desert slope,
 > So that the firm foot ever was the lower.
-DO: Yamaç tırmanışı. Zemin dik, kuru ve çakıllıdır. Yukarı yürüyüş yavaştır: Dante her adımda ağırlığını alttaki ayağına verir. Atılma yokuş yukarı kısadır. Yamaç yer yer alçak taş setlerle basamaklanır; oyuncu en az eğimli yolu kendisi bulur.
+DO: Yamaç tırmanışı. Zemin dik, kuru ve çakıllıdır. Yukarı yürüyüş yavaştır: Dante her adımda ağırlığını alttaki ayağına verir. Atılma yokuş yukarı kısadır. Yamaç yer yer alçak taş setlerle basamaklanır; oyuncu en az eğimli yolu kendisi bulur. Tırmanış, oyuncu yamacın alt yarısına (inf01_slope_lower) girince biter; s3 orada başlar.
 SFX: Ayağın altından kayan çakıllar; tepeden gelen, gittikçe çoğalan kuş sesleri.
 ```
 
@@ -230,6 +276,7 @@ SFX: Ayağın altından kayan çakıllar; tepeden gelen, gittikçe çoğalan ku�
 ```script
 @mode: play
 @place: inf01_slope_lower
+@trigger: enter:inf01_slope_lower
 @music: Kuru, hızlı bir el davulu; yalnızca pars göründüğü sürece.
 EKLEME: Parsın Dante'nin önünde dans etmesi ve şafağı beklemenin ölçülmesi şiirde yok; hayvanların nasıl geçildiği ölçülür. | Dayanak: Inferno I, 31–43
 DO: Tırmanışın başladığı yerde kayaların arasından benekli bir hayvan sıçrar ve Dante'nin önüne iner.
@@ -241,7 +288,7 @@ DO: Pars saldırmaz ve zarar görmez. Hep Dante ile tepe arasında kalır: Dante
 NARRATION: The panther did not strike. She only stayed in front of him, wherever he turned.
 DO: Bu sırada şafak yamaçtan aşağı iner. Tepenin altın ışığı geniş ve görünür bir çizgi hâlinde, yaklaşık 25 saniyede parsın bulunduğu yere ulaşır.
 NARRATION: Above them, the light was coming down the mountain.
-DO: Oyuncu ışık parsa ulaşmadan önce, parsa yaklaşmadan yamaçta toplam en az 8 saniye hareketsiz kalırsa ya da yokuş aşağı geri çekilirse {event:inf01.waited_dawn} yayılır. Geçmeyi denemeye devam eden oyuncu için de şafak gelir.
+DO: Oyuncu ışık parsa ulaşmadan önce, parsa yaklaşmadan yamaçta toplam en az 8 saniye hareketsiz kalırsa ya da yokuş aşağı geri çekilirse {event:inf01.waited_dawn} yayılır. Geçmeyi denemeye devam eden oyuncu için de şafak gelir. Vuruş, ışık parsa ulaşınca biter (en geç yaklaşık 25 saniye).
 SFX: Pars her sıçradığında kısa, ritmik bir hırıltı; pençelerin taşa değmesi.
 ```
 
@@ -251,6 +298,7 @@ Hope, parsın derisinin güneşte parladığı anda toplanır: şiirde umudu ver
 
 ```script
 @mode: play
+EKLEME: Parsın şafakla birlikte kayalara çekilip yolu açması şiirde yok; şiir Dante'nin parsı nasıl geçtiğini söylemez, yalnızca saatin ve mevsimin ona umut verdiğini söyler. | Dayanak: Inferno I, 37–43
 DO: Işık parsa ulaşır. Benekleri güneşte kıvılcım gibi parlar. Pars bir an durur, başını ışığa çevirir ve yamacın yanındaki kayalara doğru süzülür. Yol açılır. Kontrol birkaç saniye kilitlenir.
 QUOTE POET (Inferno I, 37–40)
 > The time was the beginning of the morning,
@@ -287,6 +335,7 @@ Umut uzun sürmez. Şiirde I 44, I 43'teki umudu "but" ile keser; oyunda da asla
 ```script
 @mode: play
 @place: inf01_slope_upper
+@trigger: enter:inf01_slope_upper
 @music: Davul dönmez. Yerine gövdeyi titreten, çok alçak bir drone.
 EKLEME: Aslanın hamleleri ve kükremesinde kıpırdamamanın ölçülmesi şiirde yok; şiirde aslan Dante'nin üstüne geliyormuş gibi görünür. | Dayanak: Inferno I, 44–48
 DO: Dante yamacın üst yarısına varınca rüzgâr bir anda durur. Kuşlar susar.
@@ -298,8 +347,8 @@ QUOTE POET (Inferno I, 46–48)
 DO: Aslan yolun üst ucundadır ve zarar görmez. Deseni üç adımdır: (1) başı yukarıda, yolun bir yanından öbür yanına yürür; (2) kükrer: görünür bir korku dalgası halka hâlinde yayılır, otları yatırır ve havayı titretir, dalga geçerken Resolve azalır (fear); (3) Dante'ye düz bir çizgide atılır. Hamle çizgisi bir an önceden yerde toz olarak belirir.
 DO: Kükreme kuralı (hold_ground): Dalga geçerken yürüyen ya da atılan Dante paniğe kapılır ve korku iki kat işler. Kıpırdamayan Dante ayaklarını yere basar; dalga onun çevresinden yarılarak geçer ve yarı etkiyle işler. Kural hiçbir yerde yazılmaz; oyuncu ilk kükremede görür.
 DO: Hamle kuralı (chase): Hamle çizgisinden yana atılmak hamleyi boşa çıkarır. Temas Dante'yi yokuş aşağı savurur ve Resolve'dan 1 birim alır. Aslan Dante'ye ne dişini ne pençesini geçirir.
-DO: İlk kükreme biter bitmez şu şerit gelir:
-NARRATION: Wherever he ran, the roar ran with him.
+DO: İlk kükreme biter bitmez şu şerit gelir. Şerit oyuncunun ne yaptığından bağımsız olarak doğrudur ve kuralı yalnızca sezdirir.
+NARRATION: The lion's roar laid the grass flat as it passed. Only the stones held still.
 DO: Aslan iki kez kükrer ve üç kez hamle eder. Oyuncu bir kükremenin tamamı boyunca ne yürür ne atılırsa {event:inf01.held_ground} yayılır.
 SFX: Kükreme önce bir sessizlikle gelir, sonra yerden yükselen derin bir titreşimle. Gamepad titrer (erişilebilirlik ayarıyla kapatılabilir).
 ```
@@ -346,10 +395,10 @@ CAM: zoom-in — kurdun gözleri; sonra Dante'nin yüzü
 ```script
 @mode: play
 EKLEME: Kurdun Dante'yi adım adım geri itmesi kazanılamaz bir sekans olarak oynanır; düşüşler ve aşağıdaki biçim oyunlaştırmadır. | Dayanak: Inferno I, 52–61
-DO: Kurt yolun ortasına iner ve Dante'ye doğru yavaş, düzenli adımlarla yürür (push_back). Kurdun her adımında Dante bir adım geri kayar; yukarı basmak onu yalnızca yerinde tutar. Atılma onu kurdun yanından geçirmez: kurt her seferinde önüne çıkar.
+DO: Kurt yolun ortasına iner ve Dante'ye doğru yavaş, düzenli adımlarla yürür (push_back). Kurdun her adımında Dante bir adım geri kayar. Yukarı basmak hiçbir zaman yol kazandırmaz; en çok, iki adım arasında Dante'yi olduğu yerde tutar. Atılma onu kurdun yanından geçirmez: kurt her seferinde önüne çıkar.
 DO: Kurt Dante'ye dokunmaz; yalnızca yürür. Yaklaştıkça Dante ağırlaşır: yürüme hızı her adımda biraz düşer. Resolve azalır ama 1 birimin altına inmez.
 DO: Kurdun her adımında şafağın seslerinden bir katman eksilir: önce kuşlar, sonra rüzgâr, sonra çakıllar. Kitap simgesindeki Hope kartı her adımda titrer (yalnızca görsel; sözün durumu değişmez).
-DO: İlk düşüş: Kurt son bir adım atar; Dante sendeler ve bir taş setin altına yuvarlanır. Kurt yukarıda durur ve bekler.
+DO: İlk düşüş (öneri: kurdun beşinci adımında): Kurt son bir adım atar; Dante sendeler ve bir taş setin altına yuvarlanır. Kurt yukarıda durur ve bekler.
 DO: Aşağıda, vadinin gölgeye döndüğü yerde, kıpırdamayan bir insan biçimi belirir. Yüzü seçilmez; yalnızca dimdik duruşu ve soluk bir giysinin kenarı görünür.
 ```
 
@@ -357,7 +406,7 @@ DO: Aşağıda, vadinin gölgeye döndüğü yerde, kıpırdamayan bir insan bi�
 
 ```script
 @mode: play
-DO: Oyuncu serbesttir. Yukarıda kurt bekler, aşağıda biçim bekler. Hiçbir istem, ok ya da ses yön göstermez.
+DO: Oyuncu serbesttir. Yukarıda kurt bekler, aşağıda biçim bekler. Hiçbir istem, ok ya da ses yön göstermez. Oyuncu hiçbir yöne gitmezse (öneri: 45 saniye) kurt yeniden iner ve onu adım adım biçimin önüne kadar iter; turned_to_guide ve climbed_again yayılmaz, b4 atlanır.
 DO: Oyuncu yeniden tırmanmak yerine aşağıdaki biçime doğru yürürse {event:inf01.turned_to_guide} yayılır. Kurt onun ardından iner ve onu adım adım biçimin önüne kadar iter. Dante biçimin önüne varınca {event:inf01.reached_shadow} yayılır; b4 atlanır.
 DO: Oyuncu yeniden yukarı tırmanırsa {event:inf01.climbed_again} yayılır ve b4 oynar.
 ```
@@ -369,7 +418,7 @@ DO: Oyuncu yeniden yukarı tırmanırsa {event:inf01.climbed_again} yayılır ve
 @trigger: event:inf01.climbed_again
 DO: İkinci tırmanış. Kurt yine iner ve yine adım adım iter. İkinci düşüş Dante'yi öncekinden daha aşağıya bırakır. Aşağıdaki biçim yerinden kıpırdamaz.
 NARRATION: He climbed again. She came down to meet him, one slow step at a time.
-DO: Oyuncu şimdi aşağıya yürürse kurt onu biçimin önüne kadar iter. Üçüncü kez tırmanırsa kurt hiç durmadan iter ve Dante'yi vadinin dibine, biçimin önüne kadar indirir. Her iki durumda da Dante biçimin önüne varınca {event:inf01.reached_shadow} yayılır.
+DO: Oyuncu şimdi aşağıya yürürse ya da yerinde kalırsa kurt onu biçimin önüne kadar iter. Üçüncü kez tırmanırsa kurt hiç durmadan iter ve Dante'yi vadinin dibine, biçimin önüne kadar indirir. Her iki durumda da Dante biçimin önüne varınca {event:inf01.reached_shadow} yayılır.
 // inf01.turned_to_guide bu vuruşta yayılmaz: §4.9'a göre olay yalnızca ilk düşüşten hemen sonraki dönüşü ölçer.
 ```
 
@@ -398,7 +447,7 @@ QUOTE POET (Inferno I, 52–54)
 > She brought upon me so much heaviness,
 > With the affright that from her aspect came,
 > That I the hope relinquished of the height.
-NOTE: He gave up hope of the summit. As she drove him down, someone appeared before him, and he turned to him.
+NOTE: He gave up hope of the summit. As she drove him down, a figure appeared before him, and Dante cried out to him for help.
 END CHOICE
 ```
 
@@ -426,7 +475,7 @@ DO: Bu andan sonra kontrol noktalarında Vergilius bekler. {checkpoint}
 ```script
 @mode: play
 EKLEME: Dante'nin seslenmesi konuşma öğreticisi olarak oynanır. | Dayanak: Inferno I, 64–66
-DO: Oyuncu kontrolü geri alır. Biçim yerinden kıpırdamaz. Dante ona yaklaşınca "[E] Call to him" istemi belirir. {tutorial:talk}
+DO: Oyuncu kontrolü geri alır. Biçim yerinden kıpırdamaz. Dante ona yaklaşınca "[E] Call to him" istemi belirir; dize E'ye basılınca gelir. Oyuncu uzun süre seslenmezse (öneri: 60 saniye) Dante kendiliğinden seslenir. {tutorial:talk}
 // Dante oyunun başından beri tek kelime söylemedi. İlk sözü, şiirdeki ilk sözüdür: bir acıma yakarışı (§3.1). Terazi III'te açılır; burada etki yoktur.
 QUOTE DANTE (Inferno I, 65–66)
 > "Have pity on me," unto him I cried,
@@ -479,6 +528,7 @@ QUOTE DANTE (Inferno I, 82–84)
 > "O, of the other poets honour and light,
 > Avail me the long study and great love
 > That have impelled me to explore thy volume!
+GLOSS: Avail me: let them help me now. Dante pleads his long study of Virgil's book, and his love for it.
 EFFECTS: word:Love
 DO: Love kartı kitap simgesine uçarken bir an küçük, açık bir kitap biçimini alır.
 QUOTE DANTE (Inferno I, 85–87)
@@ -493,7 +543,7 @@ DO: Vergilius cevap vermez; yalnızca başını hafifçe eğer. Bu, oyunda bir g
 ```script
 @mode: play
 EKLEME: Dante'nin kurdu göstermesi bir etkileşim olarak oynanır; oyuncu korktuğu şeye dönüp bakmak zorundadır. | Dayanak: Inferno I, 88–90
-DO: Yamacın ortasında kurt bir aşağı bir yukarı yürür. Dante yamaca, kurda dönünce "[E] Show him the beast" istemi belirir. Oyuncu Dante'yi kurda çevirmeden sahne ilerlemez; Vergilius bekler.
+DO: Yamacın ortasında kurt bir aşağı bir yukarı yürür. Dante yamaca, kurda dönünce "[E] Show him the beast" istemi belirir. Oyuncu Dante'yi kurda çevirip E'ye basmadan sahne ilerlemez; Vergilius bekler. Oyuncu uzun süre dönmezse (öneri: 60 saniye) Dante kendiliğinden kurda döner ve dize gelir.
 QUOTE DANTE (Inferno I, 88–90)
 > Behold the beast, for which I have turned back;
 > Do thou protect me from her, famous Sage,
@@ -504,28 +554,28 @@ SFX: Kalp atışı hızlanır; gamepad dize boyunca kalp ritminde titrer (erişi
 
 ## [inf01.s7] Another Road
 
-Vergilius'un uzun konuşması (I 91–129) iki `QUOTE` bloğuyla verilir: başka yol (I 91–93) ve yolculuk teklifi (I 112–117). Kurdun doğası, Tazı kehaneti, Araf, "daha layık ruh" ve Vergilius'un kendi yasağı modern köprülerle gelir. Kehanetin tam metni Codex'e gider. Vergilius burada ilk kez modern konuşur: kısa, sıcak ve kesin cümlelerle. Beatrice'in adı geçmez; Vergilius ondan yalnızca "her" diye söz eder. Kendi dışlanmışlığını yakınmadan, bir gerçeği söyler gibi söyler; bu hüzün Kanto IV'te doruğa çıkacak.
+Vergilius'un uzun konuşması (I 91–129) iki `QUOTE` bloğuyla verilir: başka yol (I 91–93) ve yolculuk teklifi (I 112–117). Kurdun doğası, Tazı kehaneti, Araf, "daha layık ruh" ve Vergilius'un kendi yasağı modern köprülerle gelir. Kehanetin dizeleri (I 101–105) Codex'e gider; tamamı kolofondan sonra Kitap'taki tam kantoda okunur. Şiirde Dante bu konuşmayı hiç kesmez, yalnızca ağlar (I 92). Oyunda iki kısa soru sorar (s7.b1, EKLEME): kurdu hiç kimsenin geçip geçemeyeceğini ve Tazı'nın kim olduğunu. İkinci sorunun cevabı kehaneti çözmez. Vergilius burada ilk kez modern konuşur: kısa, sıcak ve kesin cümlelerle. Beatrice'in adı geçmez; Vergilius ondan yalnızca "her" diye söz eder. Kendi dışlanmışlığını yakınmadan, bir gerçeği söyler gibi söyler; bu hüzün Kanto IV'te doruğa çıkacak.
 
 ### [inf01.s7.b1] Another Road
 
 ```script
 @mode: dialogue
 @music: Çok alçak, tek bir yaylı. Tazı vinyetinde kısa bir boru sesi.
+EKLEME: Tazı kehaneti kısa bir gravür vinyetiyle gösterilir; vinyet tazının kim olduğunu ima etmez. Dante'nin araya giren iki kısa sorusu şiirde yok (Vergilius I 91–129'u kesintisiz söyler); uzun konuşmayı modern köprülere böler ve kehaneti çözmeye çalışmaz. | Dayanak: Inferno I, 92 ve 100–111
 QUOTE VIRGIL (Inferno I, 91–93)
 > "Thee it behoves to take another road,"
 > Responded he, when he beheld me weeping,
 > "If from this savage place thou wouldst escape;
 GLOSS: Behoves is an old word for "is needful". Virgil means the hill cannot be climbed this way.
-VIRGIL (gentle): She lets no one pass. She wears down all who try, and the more she eats, the hungrier she grows.
+VIRGIL (gentle): She lets no one pass. She harries all who try until she destroys them, and the more she eats, the hungrier she grows.
 DANTE (afraid): Then no one will ever get past her?
-VIRGIL (quiet): One will. A hound who hungers only for wisdom, love and virtue. He will hunt her back into Hell.
-EKLEME: Tazı kehaneti kısa bir gravür vinyetiyle gösterilir; vinyet tazının kim olduğunu ima etmez. | Dayanak: Inferno I, 100–111
+VIRGIL (quiet): Not until the Greyhound comes. He will hunger only for wisdom, love and virtue, and he will hunt her back into Hell.
 CAM: engrave — arka plandaki geniş ova bir Doré gravürüne döner: şehirler, ırmaklar ve aralarında koşan iki karaltı, bir tazı ve bir kurt
 DO: Vinyet üç saniye sürer. Tazının yüzü hiç görünmez; yalnızca koşan bir siluettir. Kurt şehirden şehre kaçar ve gravürün alt kenarındaki karanlığa düşer.
 CAM: unengrave
 EFFECTS: codex:inf01.greyhound
 DANTE (quiet): Who is he?
-VIRGIL (quiet): That is not mine to say. Only that he will come.
+VIRGIL (quiet): I cannot name him. I can tell you only that he will come.
 ```
 
 ### [inf01.s7.b2] Two Roads
@@ -533,10 +583,10 @@ VIRGIL (quiet): That is not mine to say. Only that he will come.
 ```script
 @mode: play
 EKLEME: İki yol arasındaki serbest yürüyüş ve Vergilius'un uyarısı şiirde yok. | Dayanak: Inferno I, 91–96
-DO: Oyuncu kontrolü geri alır. Yukarıda tepe güneşte parlar; yamacın ortasında kurt dolaşır, aslan yolun üst ucunda bekler. Vergilius vadinin batı ucunda, tepenin omzunu dolanıp aşağı inen dar ve gölgeli bir patikanın başında durur.
-DO: Oyuncu yamaca, kurda doğru yürürse kurdun nefesi yükselir, korku bölgesi başlar ve Vergilius arkadan seslenir:
+DO: Oyuncu kontrolü geri alır. Yukarıda tepe güneşte parlar; yamacın ortasında kurt dolaşır, aslan yolun üst ucunda bekler. Vergilius vadinin batı ucunda, tepenin omzunu dolanıp aşağı inen dar ve gölgeli bir patikanın başında durur. Kontrol geri gelir gelmez Dante'nin başı bir an tepeye, güneşe döner; Vergilius'un sesi onu oradan çağırır.
+// BARK akışta koşulsuz oynar (runner onu sırası gelince gösterir); bu yüzden tepkiye değil, Dante'nin tepeye bakışına bağlandı.
 BARK VIRGIL: Not that way. That way is hers.
-DO: Oyuncu yine de tırmanırsa kurt yolun ortasına iner ve Dante'yi geri iter. Ceza yoktur; Vergilius aynı yerde bekler.
+DO: Oyuncu yine de yamaca, kurda doğru yürürse kurdun nefesi yükselir ve korku bölgesi başlar; kurt yolun ortasına iner ve Dante'yi yavaşça geri iter. Ceza yoktur; Vergilius patikanın başında bekler.
 HINT: The hill is closed to us now. Our road goes around it, and down.
 HINT-SHORT: Around the hill, and down.
 ```
@@ -558,20 +608,19 @@ QUOTE VIRGIL (Inferno I, 112–117)
 GLOSS: The eternal place is Hell. Readers differ on the second death: damnation itself, or a death the damned beg for, to end their pain.
 VIRGIL: After that, you will see souls who burn and are content, because one day they hope to rise.
 VIRGIL (quiet): If you would climb higher still, a soul worthier than I will lead you. I will leave you with her.
-VIRGIL (quiet): I cannot go there. I lived outside the law of the Emperor who reigns above, and his city is closed to me.
+VIRGIL (quiet): I cannot take you there. I lived outside the law of the Emperor who reigns above, and he wills that none enter his city through me.
 VIRGIL (quiet): He rules everywhere, but that city is his own. Happy is the one he calls to it.
 ```
 
 ## [inf01.s8] The Motive
 
-Kantonun ana seçimi. Şiirde Dante üçünü birden ister: kaçmayı, Aziz Petrus'un kapısını görmeyi ve kayıp ruhları görmeyi (I 130–135). Oyuncu birini seçer; kart, Dante'nin üçünü de istediğini gösterir (`canon=all`, başlık her durumda "As Dante did"). Seçilen neden üç ayrı bayrak olarak III, IV ve V'e taşınır. Vergilius'un her seçeneğe verdiği kısa cevap, o bayrağın ileride nasıl yankılanacağını sezdirir ama hiçbir seçeneği yargılamaz. Güven değişimi (b) sayıyla değil, Vergilius'un bir adım yaklaşmasıyla gösterilir.
+Kantonun ana seçimi. Şiirde Dante, Vergilius'un sözü biter bitmez yakarır ve üçünü birden ister: kaçmayı, Aziz Petrus'un kapısını görmeyi ve kayıp ruhları görmeyi (I 130–135). Bu yüzden seçimden önce modern bir konuşma yoktur, yalnızca kısa bir anlatım şeridi vardır: Dante son bir kez tepeye bakar ve rehberine döner. Şerit, kayıttan devam eden oyuncuya da (kayıt noktası sahne başıdır) seçimin bağlamını verir. Oyuncu birini seçer; kart, Dante'nin üçünü de istediğini gösterir (`canon=all`, başlık her durumda "As Dante did"). Seçilen neden üç ayrı bayrak olarak III, IV ve V'e taşınır. Vergilius'un her seçeneğe verdiği kısa cevap, o bayrağın ileride nasıl yankılanacağını sezdirir ama hiçbir seçeneği yargılamaz. Güven değişimi (b) sayıyla değil, Vergilius'un bir adım yaklaşmasıyla gösterilir.
 
 ### [inf01.s8.b1] What Dante Asked
 
 ```script
 @mode: dialogue
-DANTE (quiet): You would walk all of that with me?
-VIRGIL (gentle): All of it. But you must want the road yourself. Tell me why you would go.
+NARRATION: Dante looked once more at the sunlit hill. Then he turned to his guide.
 CHOICE inf01.c4 major "Why Dante goes"
 PROMPT: The long road lay before him. He had to say what he wanted from it.
 OPTION a ["Lead me out of this misery."]
@@ -656,7 +705,7 @@ TITLE: The Mount Delectable
 QUOTE VIRGIL (Inferno I, 77–78)
 > Why climb'st thou not the Mount Delectable,
 > Which is the source and cause of every joy?"
-NOTE: In the poem a hill rises where the dark valley ends, its shoulders already lit by the sun. Dante tries to climb it straight out of the wood, and three beasts drive him back. Virgil offers him a longer road instead. Readers have long seen the hill as the happy life, which no one reaches by his own strength alone.
+NOTE: In the poem a hill rises where the dark valley ends, its shoulders lit by the sun, which Dante, like the astronomers of his day, counts among the planets. Three beasts bar his climb, and the last drives him back. Virgil offers him a longer road instead. Readers have long seen the hill as the happy life, which no one reaches by his own strength alone.
 RELATED: inf01.dark_wood, inf01.she_wolf
 ```
 
@@ -669,7 +718,7 @@ QUOTE POET (Inferno I, 37–40)
 > And up the sun was mounting with those stars
 > That with him were, what time the Love Divine
 > At first in motion set those beauteous things;
-NOTE: In the poem the sun rises among the same stars that were with it when divine love first set the world turning. Medieval tradition held that the world was created in spring, with the sun in Aries. Readers traditionally date the journey to Easter week of the year 1300.
+NOTE: In the poem the sun rises among the same stars that were with it when divine love first set the heavens moving. Medieval tradition held that the world was created in spring, with the sun in Aries. Readers traditionally date the journey to Easter week of the year 1300.
 RELATED: inf01.panther
 ```
 
@@ -704,7 +753,7 @@ QUOTE VIRGIL (Inferno I, 97–99)
 > And has a nature so malign and ruthless,
 > That never doth she glut her greedy will,
 > And after food is hungrier than before.
-NOTE: The third beast, and the one Dante cannot pass. In the poem she drives him back toward the dark, step by step, until he gives up hope of the summit. Virgil says that she lets no one by, and that she will rule until the Greyhound comes. Readers have long seen her as greed: a hunger that is never satisfied.
+NOTE: The third beast, and the one Dante cannot pass. In the poem she drives him back toward the dark, step by step, until he gives up hope of the summit. Virgil says that she lets no one pass, and that many more beasts will mate with her before the Greyhound comes. Readers have long seen her as greed: a hunger that is never satisfied.
 RELATED: inf01.greyhound, inf01.panther, inf01.lion
 ```
 
@@ -737,7 +786,7 @@ RELATED: inf01.she_wolf, inf04.heroes
 **Kapanış notu: sapmalar, eklemeler ve baş yazara açık sorular**
 
 - **SAPMA: yok.** Omurga olduğu gibi duruyor: orman, vadinin sonu, güneşli tepe, sırasıyla üç hayvan, kurdun Dante'yi geri itmesi, Vergilius'un gelişi ve kendini tanıtması, başka yol, Tazı kehaneti, yolculuk teklifi, Dante'nin isteği ve son dize: *Then he moved on, and I behind him followed.* (Inferno I, 136). Şiirde susan hiçbir karaktere söz verilmedi: hayvanlar sessiz, Beatrice'in adı geçmiyor, Vergilius'un dizeleri başka bir sese verilmedi. Dante'nin s6'ya kadar susması da bir sapma değil, şiire sadakattir: şiirde de yolcu Dante'nin ilk sözü I 65'tir.
-- **EKLEME'ler** (her biri kendi vuruşunda not edildi): uyanış ve hareket öğreticisi (s1.b1); sözün bıraktığı ışık izi (s1.b4); ardından akan karanlık ve atılma (s1.b5); geriye bakma (s2.b2, onaylı); boş taş bank (s2.b3); parsın dansı ve şafağı bekleme (s3.b1, onaylı); aslanın hamleleri ve kükreme (s4.b1, onaylı); kurdun geri itmesi ve aşağıdaki biçim (s5.b2, onaylı); güneşin sustuğu yerin gerçek sessizliği (s5.b5); seslenme öğreticisi (s6.b2); kurdu gösterme (s6.b5); Tazı vinyeti (s7.b1); iki yol (s7.b2); takip öğreticisi (s8.b2).
+- **EKLEME'ler** (her biri kendi vuruşunda not edildi): uyanış ve hareket öğreticisi (s1.b1); korku bölgeleri (s1.b2); en karanlık geçit (s1.b3); sözün bıraktığı ışık izi (s1.b4); ardından akan karanlık ve atılma (s1.b5); ışığa bakarken yatışan korku (s2.b1); geriye bakma (s2.b2, onaylı); boş taş bank (s2.b3); parsın dansı ve şafağı bekleme (s3.b1, onaylı); parsın şafakla çekilmesi (s3.b2, onaylı "hayvanların nasıl geçildiği" kapsamında); aslanın hamleleri ve kükreme (s4.b1, onaylı); kurdun geri itmesi ve aşağıdaki biçim (s5.b2, onaylı); güneşin sustuğu yerin gerçek sessizliği (s5.b5); seslenme öğreticisi (s6.b2); kurdu gösterme (s6.b5); Tazı vinyeti ve Dante'nin Vergilius'un konuşmasına giren iki kısa sorusu (s7.b1); iki yol (s7.b2); takip öğreticisi (s8.b2).
 - **Onay bekleyen biçim kararları:**
   1. Üç sistemik seçime (`inf01.c1`–`c3`) isteğe bağlı birer REVEAL eklendi ve kolofona ertelendi (§2.9 izin verir). Bağlayıcı ID, harf ve etkiler değişmedi. Kanon: c1 `none` (I 34–36), c2 `none` (I 44–45), c3 `a` (I 52–54). Üç dize de sahnede gösterilmiyor (§2.11, "Tekrar etme").
   2. I 136 s8'de oynanıyor, metni yalnızca kolofonda çıkıyor; §7.1'deki "Ardından I 136" önerisinden bu yönde ayrılıyor. Gerekçe: dize iki kez görünmesin; oyuncu dizeyi önce yürüsün, sonra okusun.
@@ -745,3 +794,5 @@ RELATED: inf01.she_wolf, inf04.heroes
   4. s0–s5'te hiçbir alıntıda GLOSS yok ve Q boş bir kenar açıyor; ilk GLOSS Vergilius'un dizesinde (s6.b3). Bu dizelerin açıklamaları Codex'te.
   5. İncil'deki aslan örneği ("The lion came straight at him, head high, starving.") kullanılmadı: I 46–48 aynı sahnede gösterildiği için §6.2'ye aykırı olurdu.
   6. Kanto II'yle süreklilik: Kanto I, yamaçtaki patikada güneş batıya kayarken biter; akşam Kanto II'nin açılışına bırakıldı.
+  7. Vergilius'un görünüşü bölüm içinde tutarsız: bu dosya ve hazır sprite (`src/art/figures/virgil.ts`) soluk gri-mavi bir pelerin ve solmuş bir defne çelengi tanımlıyor; Kanto IV (s2) ise Limbo'daki tek rengi "Vergilius'un pelerininin soluk kırmızısı" diye anlatıyor. Biri seçilmeli; bu dosya değiştirilmedi.
+- **Sürüm 0.2 (editör geçişi).** Kimlikler, bayraklar, olaylar, yerler, söz ve seçim kimlikleri ile bütün Longfellow alıntıları aynen kaldı; kancalı vuruşlarda `DO` satırlarının sayısı ve sırası korundu. Değişenler: geriye bakma tuşu E'den R'ye (GDD 2.2 ve motorla uyum); s1.b5, s3.b1 ve s4.b1'e `enter:` tetikleyicisi (yürüyüş ve tırmanış artık ışınlanmayla atlanmıyor); aslan şeridi (koşmayan oyuncu için de doğru); kurdun doğası ve Tazı (s7.b1) ile Vergilius'un yasağı (s7.b3) şiire daha yakın; s8.b1'deki uydurma ön konuşma yerine kısa bir anlatım şeridi; c3 kartının notu; üç Codex notunda kesinlik; eksik EKLEME notları; kararsız kalan oyuncu için zaman aşımları (s5.b3, s5.b4, s6.b2, s6.b5); süre tablosu; seçimlerin izleri ve yer/olay tabloları.

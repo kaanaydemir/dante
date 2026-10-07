@@ -17,7 +17,8 @@ import { cssColor, lineHeight, textStyle } from '../theme';
 const WIDTH = 400;
 const RIGHT = GAME_WIDTH - 16;
 const LEFT = 20;
-const TOP = 100;
+/** Under the HUD's place name and the Ask Virgil prompt. */
+const TOP = 128;
 const PAD = 28;
 
 export type HintKind = 'hint' | 'gloss' | 'silent';

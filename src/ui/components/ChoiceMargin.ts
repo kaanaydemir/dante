@@ -20,7 +20,8 @@ import { keyLabel } from './VerseBubble';
 const WIDTH = 430;
 const RIGHT = GAME_WIDTH - 14;
 const PAD = 34;
-const TOP_LIMIT = 92;
+// Under the HUD's place name and the Ask Virgil prompt.
+const TOP_LIMIT = 112;
 const BOTTOM_LIMIT = 664;
 
 interface Row {

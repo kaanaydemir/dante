@@ -134,27 +134,48 @@ export class Barks {
 export class TutorialPrompt {
   private root: Phaser.GameObjects.Container | null = null;
   private timer: Phaser.Time.TimerEvent | null = null;
+  /** Top of whatever sits at the bottom of the screen (a balloon, a verse); the prompt stays above it. */
+  private ceiling: () => number = () => GAME_HEIGHT;
 
   constructor(
     private readonly scene: Phaser.Scene,
     private readonly depth: number = DEPTH.prompt,
   ) {}
 
+  avoid(top: () => number): void {
+    this.ceiling = top;
+  }
+
+  private restY(): number {
+    let top = GAME_HEIGHT;
+    try {
+      top = this.ceiling();
+    } catch {
+      top = GAME_HEIGHT;
+    }
+    return Math.min(GAME_HEIGHT - 150, top - 34);
+  }
+
   show(keys: readonly string[], text: string, ms: number = TIMINGS.tutorialMs): void {
     this.clear();
     const row = promptRow(this.scene, keys, text, { align: 'center' });
     const bg = this.scene.add.rectangle(0, 0, row.width + 40, 46, 0x000000, 0.55).setOrigin(0.5, 0.5);
     bg.setStrokeStyle(1, uiContext().theme().colors.gold, 0.5);
-    const root = this.scene.add.container(GAME_WIDTH / 2, GAME_HEIGHT - 150, [bg, row.node]).setDepth(this.depth);
+    const root = this.scene.add.container(GAME_WIDTH / 2, this.restY(), [bg, row.node]).setDepth(this.depth);
     root.setAlpha(0);
     this.root = root;
     this.scene.tweens.add({ targets: root, alpha: 1, duration: 260 });
     this.timer = this.scene.time.delayedCall(ms, () => this.hide());
   }
 
-  /** Move up/down to stay clear of a balloon at the bottom. */
+  /** A balloon or verse came or went at the bottom: move to stay clear of it. */
+  relayout(): void {
+    if (this.root) this.scene.tweens.add({ targets: this.root, y: this.restY(), duration: 160 });
+  }
+
+  /** Move to stay clear of a balloon whose top is at `y`. */
   setBottom(y: number): void {
-    if (this.root) this.scene.tweens.add({ targets: this.root, y: y - 34, duration: 160 });
+    if (this.root) this.scene.tweens.add({ targets: this.root, y: Math.min(GAME_HEIGHT - 150, y - 34), duration: 160 });
   }
 
   hide(): void {

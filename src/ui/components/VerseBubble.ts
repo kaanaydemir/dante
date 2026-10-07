@@ -66,6 +66,7 @@ export class VerseBubble {
   private onRevealed: (() => void) | null = null;
   private prompt: Phaser.GameObjects.Container | null = null;
   private more: Phaser.GameObjects.Text | null = null;
+  private top = BOTTOM;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -74,6 +75,11 @@ export class VerseBubble {
 
   get visible(): boolean {
     return this.root !== null;
+  }
+
+  /** Top edge of the bubble (others stack above it). */
+  get topY(): number {
+    return this.root ? this.top : BOTTOM;
   }
 
   get revealing(): boolean {
@@ -128,6 +134,7 @@ export class VerseBubble {
     const panel = panelTexture(this.scene, 'verse', w, h, theme);
     const bottom = opts.bottom ?? BOTTOM;
     const top = bottom - panel.h;
+    this.top = top;
     const root = this.scene.add.container(opts.centerX ?? GAME_WIDTH / 2, top).setDepth(opts.depth ?? this.depth);
     root.add(this.scene.add.image(0, 0, panel.key).setOrigin(0.5, 0));
     const left = -panel.w / 2 + PAD_X;

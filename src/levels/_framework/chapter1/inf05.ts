@@ -30,6 +30,7 @@
  * Owner: team D (levels framework, Chapter 1 moments).
  */
 
+import type * as Phaser from 'phaser';
 import { DEPTH } from '../../../config';
 import type { BeatHookContext, LevelBuildContext, LevelRuntime, Rect } from '../../../runtime/contracts';
 import type { SpeakerId } from '../../../story/types';
@@ -113,6 +114,9 @@ function mechanic<T>(level: LevelRuntime, id: string): T | null {
 class CircleOf {
   private readonly path: PolyPath;
   private t0 = 0;
+  private readonly glows: Array<Phaser.GameObjects.Image | null> = [];
+  /** Extra brightness of the glows (the lovers' rose light when they pass closest). */
+  glowBoost = 0;
   mode: 'off' | 'circle' | 'hover' = 'off';
 
   constructor(
@@ -123,8 +127,24 @@ class CircleOf {
     ry: number,
     private readonly speed: number,
     private readonly spacing: number,
+    /** A soft light about each of them that shows through the dark (the gold of the named, the lovers' rose). */
+    private readonly glow: { readonly tint: number; readonly size: number; readonly alpha: number } | null = null,
   ) {
     this.path = new PolyPath(ellipseLoop(centre.x, centre.y, rx, ry, 24), true);
+  }
+
+  private glowAt(k: number, x: number, y: number): void {
+    const cfg = this.glow;
+    const scene = this.level.scene;
+    if (!cfg || !scene.textures.exists('fx-glow')) return;
+    let g = this.glows[k] ?? null;
+    if (!g || !g.active) {
+      g = scene.add.image(x, y, 'fx-glow').setDepth(DEPTH.darkness + 1).setTint(cfg.tint).setDisplaySize(cfg.size, cfg.size).setBlendMode('ADD');
+      this.glows[k] = g;
+    }
+    g.setVisible(true)
+      .setPosition(Math.round(x), Math.round(y - 8))
+      .setAlpha(Math.min(1, cfg.alpha + this.glowBoost));
   }
 
   private npcs(): Npc[] {
@@ -174,6 +194,7 @@ class CircleOf {
         const dx = p.x - n.x;
         n.actor.setPosition(p.x, p.y);
         this.orient(n, dx);
+        this.glowAt(k, p.x, p.y);
       };
     });
   }
@@ -198,6 +219,7 @@ class CircleOf {
           const step = Math.min(d, (60 * dt) / 1000);
           n.actor.setPosition(n.x + (dx / d) * step, n.y + (dy / d) * step);
           this.orient(n, dx);
+          this.glowAt(k, n.x, n.y);
           return;
         }
         if (!arrived) {
@@ -206,6 +228,7 @@ class CircleOf {
           this.orient(n, -1);
         }
         n.actor.setPosition(spot.x, spot.y + Math.sin((w.now() - t0) / 420 + k) * 0.6);
+        this.glowAt(k, n.x, n.y);
       };
     });
   }
@@ -217,6 +240,7 @@ class CircleOf {
       npc.behaviour = null;
       npc.setVisible(false);
     }
+    for (const g of this.glows) if (g?.active) g.setVisible(false);
   }
 }
 
@@ -349,8 +373,8 @@ function buildInf05(ctx: LevelBuildContext, layout: GenericLayout): void {
   const leeC = lee ? rectCenter(lee) : { x: ctx.player.x, y: ctx.player.y };
   const edgePlace = place(PLACE.edge);
   const edgeC = edgePlace ? rectCenter(edgePlace) : { x: leeC.x + 300, y: leeC.y - 60 };
-  const line = new CircleOf(ctx, SHADES, { x: leeC.x + 102, y: leeC.y - 2 }, 58, 40, LINE_SPEED, 36);
-  const lovers = new CircleOf(ctx, ['FRANCESCA', 'PAOLO'], { x: edgeC.x + 40, y: edgeC.y + 24 }, 60, 42, LOVERS_SPEED, 14);
+  const line = new CircleOf(ctx, SHADES, { x: leeC.x + 102, y: leeC.y - 2 }, 58, 40, LINE_SPEED, 36, { tint: 0xe8c878, size: 22, alpha: 0.32 });
+  const lovers = new CircleOf(ctx, ['FRANCESCA', 'PAOLO'], { x: edgeC.x + 40, y: edgeC.y + 24 }, 60, 42, LOVERS_SPEED, 14, { tint: 0xe89aa8, size: 30, alpha: 0.3 });
   for (const s of [...SHADES, 'FRANCESCA', 'PAOLO']) showFigure(ctx, s, false);
   for (const s of SHADES) w?.npcOf(s)?.actor.sprite.setTint(0xe8dcb4);
 
@@ -720,6 +744,7 @@ function callThem(ctx: BeatHookContext): void {
       last = t;
       const pos = st.lovers.leader();
       near = st.lovers.mode === 'circle' && dist(pos.x, pos.y, west.x, west.y) < 36;
+      st.lovers.glowBoost = near ? 0.45 : 0;
       // The rose light about them strengthens and the prompt appears while they pass closest.
       it.silent = !near;
       it.x = near ? pos.x : west.x;
@@ -730,6 +755,7 @@ function callThem(ctx: BeatHookContext): void {
     signal,
   ).then(() => {
     w.removeInteractable(CALL_ID);
+    st.lovers.glowBoost = 0;
     if (signal.aborted) return;
     loversCome(level);
     w.emitOnce(EV.calledThem);

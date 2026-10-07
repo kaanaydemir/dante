@@ -688,7 +688,7 @@ class Presenter implements StoryPresenter, InputHandler {
           });
         },
       });
-      ui.overlays.tutorial.setBottom(bubble.topY);
+      ui.overlays.tutorial.relayout();
       const press = (): boolean => {
         if (bubble.typing) bubble.finishTyping();
         else close(false);
@@ -777,6 +777,8 @@ class Presenter implements StoryPresenter, InputHandler {
             }
           },
         });
+        // A tutorial prompt on screen moves above the verse.
+        ui.overlays.tutorial.relayout();
       };
       const next = (): void => {
         if (index + 1 < chunks.length) {

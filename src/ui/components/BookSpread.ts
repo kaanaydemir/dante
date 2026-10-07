@@ -197,7 +197,8 @@ export class BookSpread {
   /** Small running heads at the top of each page (inside the paper, above the text block). */
   folios(left: string, right: string): void {
     const theme = uiContext().theme();
-    const style = textStyle(theme, 'citation', { color: theme.extra.inkFaint, letterSpacing: 3 });
+    // A running head stays small at every text size (it must fit between the paper's edge and the text block).
+    const style = textStyle(theme, 'citation', { px: 20, color: theme.extra.inkFaint, letterSpacing: 3 });
     const place = (side: PageSide, label: string): void => {
       if (!label) return;
       const box = PAGE[side];

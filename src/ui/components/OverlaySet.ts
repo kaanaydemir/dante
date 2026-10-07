@@ -55,6 +55,8 @@ export class OverlaySet {
     this.toasts.avoid(() => (this.strip.visible ? this.strip.bottom : 0));
     this.hint.avoid(() => (this.strip.visible ? this.strip.bottom : 0));
     this.barks.avoid(() => (this.strip.visible ? this.strip.bottom : 0));
+    // Tutorial prompts stay above a balloon or a verse at the bottom of the screen.
+    this.tutorial.avoid(() => Math.min(this.dialog.visible ? this.dialog.topY : 720, this.verse.visible ? this.verse.topY : 720));
     this.strip.onLayout(() => {
       this.toasts.relayout();
       this.barks.relayout();

@@ -260,20 +260,33 @@ function upOrDown(ctx: BeatHookContext): void {
   const wolf = mechanic<PushBack>(level, 'wolf');
   if (!w) return;
   const signal = levelSignal(ctx);
-  const from = { x: level.player.x, y: level.player.y };
   const figure = (): { x: number; y: number } => (w.companion.visible ? { x: w.companion.actor.x, y: w.companion.actor.y } : shadePost(level));
   const shade = level.place(PLACE.shade);
   let decided = false;
+  // Only his own steps decide (§4.9): a knock or a push moves him without him choosing.
+  let ref = { x: level.player.x, y: level.player.y };
+  let toward = 0;
+  let away = 0;
   const reached = (): boolean => dist(level.player.x, level.player.y, figure().x, figure().y) < 42 || (shade !== null && level.isPlayerIn(PLACE.shade));
   void until(
     level,
     () => {
+      const now = { x: level.player.x, y: level.player.y };
+      const input = w.input();
+      if (Math.hypot(input.moveX, input.moveY) > 0.2 || input.dashPressed) {
+        const f = figure();
+        const d0 = dist(ref.x, ref.y, f.x, f.y);
+        const d1 = dist(now.x, now.y, f.x, f.y);
+        if (d1 < d0) toward += d0 - d1;
+        else away += d1 - d0;
+      }
+      ref = now;
       if (!decided) {
-        if (movedToward(from, level.player, figure(), 36)) {
+        if (toward >= 36) {
           decided = true;
           level.emit(EV.turned);
           wolf?.start();
-        } else if (movedToward(from, level.player, figure(), -36)) {
+        } else if (away >= 36) {
           decided = true;
           level.emit(EV.climbed);
           wolf?.start();

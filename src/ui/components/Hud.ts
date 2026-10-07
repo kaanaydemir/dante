@@ -21,7 +21,7 @@ import { uiRouter } from '../router';
 import { promptRow } from './keycap';
 import { keyLabel } from './VerseBubble';
 
-export const BOOK_ICON = { x: GAME_WIDTH - 46, y: GAME_HEIGHT - 44 } as const;
+export const BOOK_ICON = { x: GAME_WIDTH - 46, y: GAME_HEIGHT - 52 } as const;
 
 const SEG_W = 15;
 const SEG_H = 11;
@@ -80,8 +80,7 @@ export class Hud {
   private buildBookKey(): void {
     destroy(this.bookKey);
     const row = promptRow(this.scene, [keyLabel('book')], '', { align: 'center' });
-    row.node.setPosition(BOOK_ICON.x, BOOK_ICON.y + 30);
-    row.node.setScale(0.8);
+    row.node.setPosition(BOOK_ICON.x, BOOK_ICON.y + 34);
     this.root.add(row.node);
     this.bookKey = row.node;
   }
@@ -224,10 +223,12 @@ export class Hud {
     this.ask = null;
     this.askBox = null;
     if (!available) return;
-    const row = promptRow(this.scene, [keyLabel('askVirgil')], 'Ask Virgil', { italic: true, bookFace: true });
-    const x = 22;
-    const y = GAME_HEIGHT - 34;
-    row.node.setPosition(x, y);
+    // Top right, under the place name: Virgil's note opens right there.
+    const row = promptRow(this.scene, [keyLabel('askVirgil')], 'Ask Virgil', { italic: true, bookFace: true, align: 'right' });
+    const right = GAME_WIDTH - 22;
+    const y = this.canto.y + this.canto.height + 20;
+    const x = right - row.width;
+    row.node.setPosition(right, y);
     // Clicking the prompt asks, like Q.
     const zone = this.scene.add.zone(x - 4, y - 20, row.width + 8, 40).setOrigin(0, 0).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', () => {
