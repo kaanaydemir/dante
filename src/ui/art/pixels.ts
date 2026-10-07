@@ -125,12 +125,12 @@ export function engrave(tone: ToneMap, ink: number, paper: number, seed = 1): Im
       const b = (x - y + 1024) % 1024;
       let isInk: boolean;
       if (t > 0.9) isInk = true;
-      else if (t > 0.74) isInk = a % 2 === 0 || b % 3 === 0;
-      else if (t > 0.58) isInk = a % 3 === 0 || b % 4 === 0;
-      else if (t > 0.42) isInk = a % 3 === 0;
-      else if (t > 0.28) isInk = a % 4 === 0 && (x + 3 * y) % 7 !== 0;
-      else if (t > 0.16) isInk = a % 6 === 0 && (x * 3 + y) % 5 !== 0;
-      else isInk = t > 0.08 && r() < 0.02;
+      else if (t > 0.76) isInk = a % 3 !== 2 || b % 3 === 0;
+      else if (t > 0.6) isInk = a % 3 === 0 || b % 3 === 0;
+      else if (t > 0.44) isInk = a % 3 === 0 || b % 6 === 0;
+      else if (t > 0.3) isInk = a % 3 === 0;
+      else if (t > 0.18) isInk = a % 4 === 0 && (x + 3 * y) % 7 !== 0;
+      else isInk = t > 0.08 && a % 6 === 0 && r() < 0.6;
       // Contours: a strong change of tone next to this pixel draws an edge.
       if (!isInk) {
         const right = tone.get(x + 1, y);

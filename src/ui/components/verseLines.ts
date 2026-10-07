@@ -43,6 +43,8 @@ export interface VerseLinesOptions {
   readonly indent?: number;
   readonly lineHeightPx?: number;
   readonly startHidden?: boolean;
+  /** Light paper behind the text: the glowing word is set in rubric (gold would not read). */
+  readonly onPaper?: boolean;
 }
 
 /** Measure the height the lines would take (same wrapping as renderVerseLines). */
@@ -85,7 +87,12 @@ export function renderVerseLines(scene: Phaser.Scene, parent: Phaser.GameObjects
         const wx = sx + measure(before);
         const glow = scene.add.image(wx + measure(word) / 2, y + opts.px * 0.62, glowTexture(scene, theme.extra.glow));
         glow.setDisplaySize(measure(word) + 44, opts.px * 1.9).setAlpha(0.6).setBlendMode('ADD');
-        const t2 = addText(scene, wx, y, word, { ...style, color: `#${theme.extra.glow.toString(16).padStart(6, '0')}`, shadow: { offsetX: 0, offsetY: 0, color: 'rgba(255,200,80,0.9)', blur: 8, fill: true } });
+        const wordColor = opts.onPaper ? theme.colors.rubric : theme.extra.glow;
+        const t2 = addText(scene, wx, y, word, {
+          ...style,
+          color: `#${wordColor.toString(16).padStart(6, '0')}`,
+          shadow: { offsetX: 0, offsetY: 0, color: opts.onPaper ? 'rgba(255,190,60,0.95)' : 'rgba(255,200,80,0.9)', blur: opts.onPaper ? 10 : 8, fill: true },
+        });
         const t3 = addText(scene, wx + measure(word), y, after, style);
         glow.setData('glow', true);
         lineNodes.push(glow, t1, t2, t3);

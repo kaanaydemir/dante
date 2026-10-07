@@ -102,6 +102,10 @@ export interface WorldExtras {
   setCameraAhead(point: { x: number; y: number } | null): void;
   /** Spawn an extra actor (beasts, crowds) that the level owns. */
   spawnActor(opts: { id: string; speaker?: string | null; texture: string; x: number; y: number; facing?: 'left' | 'right' | 'up' | 'down' }): Npc;
+  /** A stone bench (a future checkpoint; Dante can rest on it with E). Returns its position. */
+  placeBench(x: number, y: number): { x: number; y: number };
+  /** Fog density over the level (0 = clear). */
+  setFog(alpha: number): void;
   /** The look-back pose (bible §7.0): Dante faces `dir` while held. */
   setLookBack(on: boolean, dir?: 'left' | 'right' | 'up' | 'down'): void;
   /** Is the look-back key held this frame? */

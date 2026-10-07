@@ -81,7 +81,7 @@ export class TitleScene extends Phaser.Scene implements InputHandler {
     const credit = addText(
       this,
       0,
-      COVER_H / 2 - 112,
+      COVER_H / 2 - 122,
       'In the translation of\nHenry Wadsworth Longfellow, 1867',
       textStyle(theme, 'citation', { italic: true, color: c.paperShade, align: 'center' }),
     ).setOrigin(0.5, 0);

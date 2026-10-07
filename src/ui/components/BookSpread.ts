@@ -10,7 +10,7 @@
 import type * as Phaser from 'phaser';
 import { DEPTH, GAME_HEIGHT, GAME_WIDTH, TIMINGS } from '../../config';
 import type { OpeningPageSpec, QuoteSpec } from '../../runtime/contracts';
-import { illuminatedTexture, panelTexture, vignetteTexture, VIGNETTE_SIZE, motifTexture } from '../art/textures';
+import { illuminatedTexture, panelTexture, vignetteTexture, VIGNETTE_SIZE } from '../art/textures';
 import { sfx, uiContext } from '../context';
 import { addText, destroy, measurer, tweenTo } from '../phaser/helpers';
 import { sliceCitation, wrapText } from '../text';
@@ -24,8 +24,8 @@ export const SPREAD_H = 690;
 
 /** Content boxes of the two pages (screen coordinates). */
 export const PAGE = {
-  left: { x0: 100, x1: 596, y0: 70, y1: 632 },
-  right: { x0: 684, x1: 1180, y0: 70, y1: 632 },
+  left: { x0: 88, x1: 604, y0: 70, y1: 632 },
+  right: { x0: 676, x1: 1192, y0: 70, y1: 632 },
 } as const;
 
 export type PageSide = 'left' | 'right';
@@ -231,8 +231,13 @@ export class BookSpread {
     let epigraph: Phaser.GameObjects.GameObject[][] = [];
     if (spec.epigraph) {
       const q = spec.epigraph;
-      const vpx = theme.size('verse');
-      const style = textStyle(theme, 'verse', { color: c.ink });
+      // As large as fits without turning a line over (never below 20 px).
+      let vpx = Math.round(theme.size('verse') * 1.08);
+      let style = textStyle(theme, 'verse', { px: vpx, color: c.ink });
+      while (vpx > 20 && Math.max(...q.lines.map((l) => measurer(style)(l))) > R.x1 - R.x0) {
+        vpx -= 1;
+        style = textStyle(theme, 'verse', { px: vpx, color: c.ink });
+      }
       const lh = lineHeight(vpx, 'verse');
       const height = q.lines.length * lh + 60;
       const top = Math.round((R.y0 + R.y1) / 2 - height / 2) - 20;
@@ -246,6 +251,7 @@ export class BookSpread {
         px: vpx,
         collectible: q.collectible,
         startHidden: true,
+        onPaper: true,
       });
       epigraph = rendered.nodes;
       words.push(...rendered.words);
@@ -302,21 +308,73 @@ export class BookSpread {
   // Reading flow (page-mode beats)
   // -------------------------------------------------------------------------
 
-  /** Left page illustration for a reading page (a motif by voice, else the canto vignette). */
+  /** Left page illustration for a reading page: a figure of light for Beatrice and Lucia, else the canto's vignette. */
   illustrate(cantoId: string, voice: string | null): void {
     if (this.left.length > 0) return;
     const L = PAGE.left;
     const cx = (L.x0 + L.x1) / 2;
-    const motif = voice === 'BEATRICE' || voice === 'LUCIA' ? 'light' : voice === 'VIRGIL' ? 'poet' : null;
-    const key = motif ? motifTexture(this.scene, motif, ENGRAVING.ink, ENGRAVING.paper) : vignetteTexture(this.scene, `vignette-${cantoId}`, cantoId, ENGRAVING.ink, ENGRAVING.paper);
-    const scale = 4.6;
+    const cy = (L.y0 + L.y1) / 2 - 10;
     const theme = uiContext().theme();
-    const frame = this.scene.add.rectangle(cx, (L.y0 + L.y1) / 2, VIGNETTE_SIZE.w * scale + 14, VIGNETTE_SIZE.h * scale + 14, theme.extra.pageShade, 1);
+    const light = voice === 'BEATRICE' || voice === 'LUCIA';
+    const w = VIGNETTE_SIZE.w * 3;
+    const h = VIGNETTE_SIZE.h * 3;
+    const frame = this.scene.add.rectangle(cx, cy, w + 14, h + 14, theme.extra.pageShade, 1);
     frame.setStrokeStyle(1, theme.extra.inkFaint, 0.9);
-    const img = this.scene.add.image(cx, (L.y0 + L.y1) / 2, key).setScale(scale);
-    this.left.add([frame, img]);
-    img.setAlpha(0);
-    this.scene.tweens.add({ targets: img, alpha: 1, duration: 500 });
+    this.left.add(frame);
+    let art: Phaser.GameObjects.GameObject;
+    if (light) {
+      art = this.glory(cx, cy, w, h, voice === 'LUCIA');
+    } else {
+      const key = vignetteTexture(this.scene, `vignette-${cantoId}`, cantoId, ENGRAVING.ink, ENGRAVING.paper);
+      art = this.scene.add.image(cx, cy, key).setScale(3);
+    }
+    this.left.add(art);
+    (art as unknown as Phaser.GameObjects.Components.Alpha).setAlpha(0);
+    this.scene.tweens.add({ targets: art, alpha: 1, duration: 500 });
+  }
+
+  /**
+   * An engraved glory (Doré's light): horizontal ink lines that thin out
+   * toward a bright centre, rays, and the faint shape of a figure.
+   */
+  private glory(cx: number, cy: number, w: number, h: number, running: boolean): Phaser.GameObjects.Graphics {
+    const g = this.scene.add.graphics();
+    const ink = ENGRAVING.ink;
+    const x0 = cx - w / 2;
+    const y0 = cy - h / 2;
+    g.fillStyle(ENGRAVING.paper, 1);
+    g.fillRect(x0, y0, w, h);
+    // Engraved dark: horizontal lines, heavier far from the light.
+    for (let y = y0 + 2; y < y0 + h; y += 3) {
+      const dy = (y - cy) / (h / 2);
+      for (let x = x0; x < x0 + w; x += 2) {
+        const dx = (x - cx) / (w / 2);
+        const d = Math.sqrt(dx * dx * 0.8 + dy * dy * 1.3);
+        if (d < 0.42) continue;
+        const weight = Math.min(2.2, (d - 0.42) * 2.6);
+        g.fillStyle(ink, Math.min(1, 0.25 + (d - 0.42) * 1.4));
+        g.fillRect(x, y, 2, weight);
+      }
+    }
+    // Rays
+    g.lineStyle(1, ink, 0.35);
+    for (let i = 0; i < 28; i++) {
+      const a = (i / 28) * Math.PI * 2;
+      g.lineBetween(cx + Math.cos(a) * w * 0.2, cy + Math.sin(a) * h * 0.22, cx + Math.cos(a) * w * 0.5, cy + Math.sin(a) * h * 0.5);
+    }
+    // The figure: a pale robe, outlined.
+    g.lineStyle(1.5, ink, 0.55);
+    const lean = running ? 14 : 0;
+    g.beginPath();
+    g.moveTo(cx - 4 + lean, cy - 34);
+    g.lineTo(cx + 18, cy + 40);
+    g.lineTo(cx - 18, cy + 40);
+    g.closePath();
+    g.strokePath();
+    g.strokeCircle(cx + lean, cy - 42, 8);
+    g.lineStyle(2, ink, 0.9);
+    g.strokeRect(x0, y0, w, h);
+    return g;
   }
 
   /** Remaining height on the right page. */
@@ -386,6 +444,7 @@ export class BookSpread {
       collectible: spec.collectible,
       taken,
       startHidden: true,
+      onPaper: true,
     });
     this.flowY += rendered.height + 2;
     const cite = sliceCitation(spec.citation, spec.citationText, spec.lineNumbers, 0, spec.lines.length);

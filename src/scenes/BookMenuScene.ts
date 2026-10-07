@@ -54,7 +54,7 @@ export class BookMenuScene extends Phaser.Scene implements InputHandler {
     const s = services();
     const theme = uiContext().theme();
     // Dim what is behind, then the open book.
-    this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, theme.colors.shadeAlpha + 0.15).setOrigin(0, 0).setDepth(DEPTH.book - 10);
+    this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, Math.min(0.92, theme.colors.shadeAlpha + 0.32)).setOrigin(0, 0).setDepth(DEPTH.book - 10);
     const panel = panelTexture(this, 'spread', 1240, 690, theme);
     this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 6, panel.key).setDepth(DEPTH.book);
     this.content = this.add.container(0, 0).setDepth(DEPTH.book + 10);
