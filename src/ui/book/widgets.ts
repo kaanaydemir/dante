@@ -9,7 +9,7 @@
 import type * as Phaser from 'phaser';
 import { uiContext } from '../context';
 import { addText, destroy, measurer } from '../phaser/helpers';
-import { wrapText } from '../text';
+import { wrapText, wrapVerseLine } from '../text';
 import { cssColor, lineHeight, textStyle, type FontKind, type StyleOptions } from '../theme';
 
 export interface Box {
@@ -33,11 +33,24 @@ export function para(
   const theme = uiContext().theme();
   const style = textStyle(theme, kind, opts);
   const px = opts.px ?? theme.size(kind);
-  const lines = wrapText(text, width, measurer(style));
+  const measure = measurer(style);
+  // Verse keeps its lines: a line too long for the page turns over with a hanging indent.
+  const lines = kind === 'verse' ? verseRows(text, width, measure) : wrapText(text, width, measure);
   const lh = lineHeight(px, kind === 'verse' ? 'verse' : 'prose');
   const obj = addText(scene, x, y, lines.join('\n'), { ...style, lineSpacing: lh - px });
   parent.add(obj);
   return { obj, height: lines.length * lh };
+}
+
+/** Indent of a turned-over verse line (two em spaces, so it survives in a single text object). */
+const VERSE_INDENT = '\u2003\u2003';
+
+/** Verse lines wrapped for a width; continuations start with VERSE_INDENT. */
+export function verseRows(text: string, width: number, measure: (s: string) => number): string[] {
+  const indentPx = measure(VERSE_INDENT);
+  return text
+    .split('\n')
+    .flatMap((line) => wrapVerseLine(line, width, measure, indentPx).map((seg) => (seg.continuation ? VERSE_INDENT + seg.text : seg.text)));
 }
 
 // ---------------------------------------------------------------------------
@@ -50,6 +63,8 @@ export class ScrollPage {
   private readonly bar: Phaser.GameObjects.Graphics;
   private height = 0;
   private offset = 0;
+  /** Called after every scroll with the new offset (lists hide rows the page edge would cut). */
+  onScroll: ((offset: number) => void) | null = null;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -80,6 +95,20 @@ export class ScrollPage {
     this.offset = Math.max(0, Math.min(max, y));
     this.content.y = -this.offset;
     this.drawBar();
+    try {
+      this.onScroll?.(this.offset);
+    } catch {
+      // cosmetic
+    }
+  }
+
+  get scrollOffset(): number {
+    return this.offset;
+  }
+
+  /** Is a content-space range fully inside the visible page? */
+  shows(y0: number, y1: number): boolean {
+    return y0 - this.offset >= this.box.y0 - 1 && y1 - this.offset <= this.box.y1 + 1;
   }
 
   scrollBy(dy: number): void {
@@ -105,7 +134,8 @@ export class ScrollPage {
   private drawBar(): void {
     const g = this.bar;
     g.clear();
-    if (this.height <= this.viewHeight + 1) return;
+    // A few pixels of trailing space are not worth a scroll bar.
+    if (this.height <= this.viewHeight + 4) return;
     const theme = uiContext().theme();
     const x = this.box.x1 + 14;
     const h = this.viewHeight;
@@ -152,6 +182,8 @@ export class ListView {
   private texts: Phaser.GameObjects.Text[] = [];
   private tops: number[] = [];
   private heights: number[] = [];
+  /** Every object of a row (text, aside), hidden together when the page edge would cut the row. */
+  private rowObjects: Phaser.GameObjects.GameObject[][] = [];
   private readonly highlight: Phaser.GameObjects.Rectangle;
   index = -1;
 
@@ -165,32 +197,59 @@ export class ListView {
     this.page = new ScrollPage(scene, box, parent);
     this.highlight = scene.add.rectangle(box.x0 - 8, box.y0, box.x1 - box.x0 + 16, 30, uiContext().theme().extra.rule, 0.18).setOrigin(0, 0);
     this.page.content.add(this.highlight);
+    this.page.onScroll = () => this.clipRows();
+  }
+
+  /** Rows the page edge would cut in half are hidden (a list shows whole rows only). */
+  private clipRows(): void {
+    this.rowObjects.forEach((objs, i) => {
+      const top = this.tops[i] ?? 0;
+      const visible = this.page.shows(top - 2, top + (this.heights[i] ?? 0) - 6);
+      for (const o of objs) (o as unknown as Phaser.GameObjects.Components.Visible).setVisible(visible);
+    });
+    if (this.index >= 0) {
+      const top = this.tops[this.index] ?? 0;
+      this.highlight.setVisible(this.page.shows(top - 2, top + (this.heights[this.index] ?? 0) - 6));
+    }
   }
 
   setRows(rows: ListRow[], select = 0): void {
+    // The highlight survives the clear (clear destroys every child of the page).
+    this.page.content.remove(this.highlight, false);
     this.page.clear();
     this.page.content.add(this.highlight);
     this.rows = rows;
     this.texts = [];
     this.tops = [];
     this.heights = [];
+    this.rowObjects = [];
     const theme = uiContext().theme();
     const c = theme.colors;
     let y = this.box.y0 + 2;
     rows.forEach((row, i) => {
       const kind: FontKind = row.header ? 'citation' : 'body';
+      const px = theme.size(kind);
       const style = textStyle(theme, kind, {
         color: row.header ? c.rubric : row.muted ? c.inkSoft : c.ink,
         italic: row.muted,
         letterSpacing: row.header ? 2 : undefined,
       });
       const x = this.box.x0 + (row.indent ?? 0);
-      const t = addText(this.scene, x, y + (row.header ? 8 : 0), row.header ? row.label.toUpperCase() : row.label, style);
-      this.page.content.add(t);
+      const objs: Phaser.GameObjects.GameObject[] = [];
+      let asideW = 0;
       if (row.aside) {
         const a = addText(this.scene, this.box.x1, y + 3, row.aside, textStyle(theme, 'citation', { italic: true, color: c.inkSoft })).setOrigin(1, 0);
+        asideW = a.width + 12;
         this.page.content.add(a);
+        objs.push(a);
       }
+      // Long labels (a canto's full title at the largest size) turn over instead of running off the page.
+      const label = row.header ? row.label.toUpperCase() : row.label;
+      const lines = wrapText(label, Math.max(60, this.box.x1 - x - asideW), measurer(style));
+      const lh = lineHeight(px, 'ui');
+      const t = addText(this.scene, x, y + (row.header ? 8 : 0), lines.join('\n'), { ...style, lineSpacing: lh - px });
+      this.page.content.add(t);
+      objs.push(t);
       const h = Math.max(t.height + (row.header ? 12 : 6), row.header ? 36 : 34);
       if (!row.header) {
         const zone = this.scene.add.zone(this.box.x0 - 8, y - 2, this.box.x1 - this.box.x0 + 16, h).setOrigin(0, 0).setInteractive({ useHandCursor: true });
@@ -205,6 +264,7 @@ export class ListView {
       this.texts.push(t);
       this.tops.push(y);
       this.heights.push(h);
+      this.rowObjects.push(objs);
       y += h;
     });
     this.page.setHeight(y - this.box.y0 + 10);

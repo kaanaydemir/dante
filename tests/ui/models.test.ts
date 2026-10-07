@@ -3,6 +3,7 @@ import { DEFAULT_SETTINGS, type ColophonSpec, type GameStateData } from '../../s
 import { createInitialState } from '../../src/state/initial';
 import { parseSourceText } from '../../src/story/quotes';
 import { getWord } from '../../src/story/words';
+import type { CantoScript } from '../../src/story/types';
 import { verseContextOf } from '../../src/verse/tercet';
 import {
   BOOK_TABS,
@@ -127,6 +128,18 @@ describe('Book tabs and content', () => {
     expect(list.map((c) => c.id)).toEqual(['inf01', 'inf03']);
     expect(list[0]).toMatchObject({ numeral: 'I', fullText: true });
     expect(list[1]).toMatchObject({ numeral: 'III', fullText: false });
+  });
+
+  it('opens the whole canto as soon as its colophon is on the page', () => {
+    const script = {
+      cantoNumber: 3,
+      front: { title: 'The Gate' },
+      scenes: [{ id: 'inf03.s8', beats: [{ id: 'inf03.s8.b1', mode: 'colophon' }] }],
+    } as unknown as CantoScript;
+    const before = state({ log: [{ kind: 'narration', canto: 'inf03', beat: 'inf03.s1.b1', text: 'x' }] });
+    expect(playedCantos(before, { script: () => script })[0]).toMatchObject({ title: 'The Gate', fullText: false });
+    const during = state({ ...before, seen: ['inf03.s8', 'inf03.s8.b1'] });
+    expect(playedCantos(during, { script: () => script })[0]).toMatchObject({ fullText: true, completed: false });
   });
 
   it('sorts codex entries into their tabs', () => {

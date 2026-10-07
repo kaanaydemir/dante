@@ -42,7 +42,7 @@ export class LookBack extends BaseMechanic {
   private readonly ring: Phaser.GameObjects.Graphics;
 
   constructor(ctx: MechanicContext, cfg: LookBackConfig) {
-    super('look_back', ctx);
+    super('look_back', ctx, cfg);
     this.event = cfg.event ?? null;
     if (this.event) this.emits = [this.event];
     this.holdMs = num(cfg.holdMs, 1200);
@@ -60,7 +60,7 @@ export class LookBack extends BaseMechanic {
     return this.where ? rectContains(this.where, p.x, p.y) : true;
   }
 
-  override update(dt: number): void {
+  protected override step(dt: number): void {
     const w = this.w;
     if (!w) return;
     const here = this.inArea() && w.playable();

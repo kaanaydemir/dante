@@ -52,8 +52,10 @@ import { SceneKeys } from '../scenes/keys';
 import { getWord } from '../story/words';
 import type { BeatMode, OptionLetter, SpeakerId, TutorialName, UnlockFeature, WordName } from '../story/types';
 import { closeBook, forgetBook, isBookOpen, openBook } from './bookControl';
+import { watchCanvasQuality } from './canvasQuality';
 import { renderSummaryPage, summaryHeights } from './components/summary';
-import { PAGE } from './components/BookSpread';
+import { PAGE, type ComingCanto } from './components/BookSpread';
+import { formatCitation, toRoman } from '../story/cite';
 import { revealNodes } from './components/verseLines';
 import { configureUiContext, sfx, uiContext } from './context';
 import type { UiAction } from './inputMap';
@@ -71,6 +73,12 @@ type Stage = 'none' | 'curtain' | 'page' | 'holdover' | 'reading' | 'lingering';
 /** How long the opening vignette / a closed reading spread waits for an unengrave before giving way. */
 const LINGER_MS = 1500;
 
+/** Curtain behind the reading spread of page-mode beats (the world dimmed, not gone). */
+const READING_CURTAIN = 0.86;
+
+/** `busy` stays true this long after a blocking element closes (the closing key belongs to the book). */
+const BUSY_TAIL_MS = 220;
+
 function describe(err: unknown): string {
   return err instanceof Error ? `${err.name}: ${err.message}` : String(err);
 }
@@ -83,6 +91,7 @@ class Presenter implements StoryPresenter, InputHandler {
   private stage: Stage = 'none';
   private stageToken = 0;
   private hintOn = false;
+  private blockingEndedAt = -1e9;
   /** Screen positions of glowing words when they were taken (their cards grow from there). */
   private readonly anchors = new Map<WordName, { x: number; y: number }>();
   private readonly router: InputRouter;
@@ -93,6 +102,7 @@ class Presenter implements StoryPresenter, InputHandler {
     this.router = new InputRouter(deps.game);
     this.router.base(this);
     setUiRouter(this.router);
+    watchCanvasQuality(deps.game);
     deps.bus.on('settings:changed', (p) => {
       try {
         deps.audio.setVolumes({ master: p.settings.masterVolume, music: p.settings.musicVolume, sfx: p.settings.sfxVolume });
@@ -107,7 +117,10 @@ class Presenter implements StoryPresenter, InputHandler {
   // =========================================================================
 
   get busy(): boolean {
-    return (this.current?.blocking ?? false) || isBookOpen();
+    if ((this.current?.blocking ?? false) || isBookOpen()) return true;
+    // The key that closed a page or a balloon must not also reach the world in the same frame
+    // (E would talk to whoever stands nearby again).
+    return now() - this.blockingEndedAt < BUSY_TAIL_MS;
   }
 
   private log(level: 'info' | 'warn' | 'error', message: string, data?: unknown): void {
@@ -120,6 +133,7 @@ class Presenter implements StoryPresenter, InputHandler {
 
   private begin<T>(kind: string, blocking: boolean, fallback: T): Pending<T> {
     const el = new Pending<T>(kind, blocking, fallback, (p) => {
+      if (p.blocking) this.blockingEndedAt = now();
       if (this.current === (p as Pending<unknown>)) this.current = null;
     }, now);
     if (this.current && !this.current.done) {
@@ -209,6 +223,8 @@ class Presenter implements StoryPresenter, InputHandler {
   }
 
   onPointer(meta: PointerMeta): boolean {
+    // The HUD's own controls (the Book icon, Ask Virgil) take their clicks themselves.
+    if (this.stage === 'none' && this.uiNow()?.hud.hitTest(meta.x, meta.y)) return true;
     const cur = this.current;
     if (cur && !cur.done) return cur.onPointer(meta, now());
     return false;
@@ -233,7 +249,9 @@ class Presenter implements StoryPresenter, InputHandler {
 
   /** Q: the gloss of the verse on screen, else Virgil's hint (GDD 2.5, ENGINE §5.10). */
   private askVirgil(): void {
-    if (this.session().status !== 'playing') return;
+    const gloss = this.current && !this.current.done ? this.current.gloss() : null;
+    // A gloss belongs to the verse on screen; Virgil's hint needs a journey under way.
+    if (!gloss && this.session().status !== 'playing') return;
     void (async () => {
       const host = await this.host();
       if (!host) return;
@@ -242,9 +260,8 @@ class Presenter implements StoryPresenter, InputHandler {
         await panel.close();
         return;
       }
-      const gloss = this.current && !this.current.done ? this.current.gloss() : null;
       if (gloss) {
-        void panel.show('gloss', gloss);
+        void panel.show('gloss', gloss, { side: this.noteSide(host) });
         return;
       }
       let spec: HintSpec | null = null;
@@ -255,7 +272,7 @@ class Presenter implements StoryPresenter, InputHandler {
       }
       this.deps.bus.emit('ui:ask-virgil', { answered: spec !== null });
       if (spec) void this.hint(spec);
-      else void panel.show('silent', '');
+      else void panel.show('silent', '', { side: this.noteSide(host) });
     })().catch((err: unknown) => this.log('error', `Ask Virgil failed: ${describe(err)}`));
   }
 
@@ -572,7 +589,8 @@ class Presenter implements StoryPresenter, InputHandler {
     if (this.stage === 'holdover') await bp.dropVignette(200);
     this.stage = 'reading';
     this.stageToken++;
-    await bp.hideCurtain(200);
+    // The book is read on a dark table: the world stays faintly behind it.
+    await bp.dimCurtain(READING_CURTAIN, 200);
     bp.spread.clear();
     await bp.spread.open(true);
   }
@@ -744,6 +762,7 @@ class Presenter implements StoryPresenter, InputHandler {
         bubble.show(spec, range, {
           lineByLine,
           taken,
+          blocking,
           onRevealed: () => {
             revealed = true;
             const shown = spec.collectible.filter((c) => c.lineIndex >= range[0] && c.lineIndex < range[1]).map((c) => c.word);
@@ -928,8 +947,14 @@ class Presenter implements StoryPresenter, InputHandler {
     return (async () => {
       const host = await this.host();
       if (!host) return;
-      await host.overlays.hint.show('hint', spec.text, { speaker: 'VIRGIL' });
+      await host.overlays.hint.show('hint', spec.text, { speaker: 'VIRGIL', side: this.noteSide(host) });
     })().catch((err: unknown) => this.log('warn', `hint failed: ${describe(err)}`));
+  }
+
+  /** The margin note goes left when the right side is taken (an open choice, a card). */
+  private noteSide(host: UiSceneApi | BookPageApi): 'left' | 'right' {
+    const o = host.overlays;
+    return o.margin.visible || o.card.visible ? 'left' : 'right';
   }
 
   // =========================================================================
@@ -938,6 +963,11 @@ class Presenter implements StoryPresenter, InputHandler {
 
   choose(choice: ChoiceSpec, options: readonly ChoiceOptionView[]): Promise<OptionLetter> {
     const first = options[0]?.letter ?? 'a';
+    if (options.length === 0) {
+      // Nothing to choose from (a broken script): never wait on an empty margin.
+      this.log('warn', `Choice ${choice.id} has no visible option.`);
+      return Promise.resolve(first);
+    }
     const el = this.begin<OptionLetter>('choice', true, first);
     const cursor = new ChoiceCursor(options);
     let host: UiSceneApi | BookPageApi | null = null;
@@ -1236,10 +1266,10 @@ class Presenter implements StoryPresenter, InputHandler {
     }
     if (this.stage === 'lingering' || this.stage === 'reading') {
       // The book closes (Canto II: "Kitap kapanır").
-      if (bp.spread.right.length > 0) await bp.spread.turn();
-      await bp.spread.close(true);
       this.stage = 'none';
       this.stageToken++;
+      if (bp.spread.right.length > 0) await bp.spread.turn();
+      await Promise.all([bp.spread.close(true), bp.hideCurtain(400)]);
       return;
     }
     const ui = this.uiNow();
@@ -1283,15 +1313,24 @@ class Presenter implements StoryPresenter, InputHandler {
       const cards = [...spec.reveals];
       let cardIndex = 0;
       let cardEl: Pending<void> | null = null;
-      const nextLabel = spec.next ? `Turn the page ▸ ${spec.next.label}` : 'Close the book ▸';
+      let cardsStarted = false;
+      // The last canto of a chapter: the book stays open for the chapter's own pages.
+      const lastOfChapter = spec.next === null;
+      const nextLabel = spec.next ? `Turn the page ▸ ${spec.next.label}` : 'Turn the page ▸';
+      const shownAt = now();
       let busyTurn = false;
       const finish = async (fast: boolean): Promise<void> => {
         if (busyTurn) return;
         busyTurn = true;
         bp.spread.hideTurnPrompt();
         if (!fast) await bp.spread.turn();
-        await bp.spread.close(!fast);
-        this.stage = 'curtain';
+        if (lastOfChapter) {
+          bp.spread.clear();
+          this.stage = 'page';
+        } else {
+          await bp.spread.close(!fast);
+          this.stage = 'curtain';
+        }
         el.settle();
       };
       const showPrompt = (): void => {
@@ -1299,6 +1338,8 @@ class Presenter implements StoryPresenter, InputHandler {
         bp.spread.showTurnPrompt(more ? '▸' : nextLabel, 300);
       };
       const openCard = (): void => {
+        if (el.done || busyTurn) return;
+        cardsStarted = true;
         const card = cards[cardIndex];
         if (!card) {
           showPrompt();
@@ -1315,6 +1356,13 @@ class Presenter implements StoryPresenter, InputHandler {
       };
       const press = async (): Promise<void> => {
         if (busyTurn) return;
+        // The deferred cards come first: a press before them opens them, never turns past them.
+        if (!cardsStarted) {
+          openCard();
+          return;
+        }
+        if (cardEl || cardIndex < cards.length) return;
+        if (now() - shownAt < 800) return;
         if (page + 1 < pages.length) {
           busyTurn = true;
           bp.spread.hideTurnPrompt();
@@ -1357,8 +1405,29 @@ class Presenter implements StoryPresenter, InputHandler {
         },
       };
       await delay(bp as unknown as Phaser.Scene, 900);
-      if (!el.done) openCard();
+      if (!el.done && !cardsStarted) openCard();
     });
+  }
+
+  /** The canto after the chapter's last one, as the book's next page (its opening lines, if the source has them). */
+  private comingCanto(summary: ChapterSummary): ComingCanto | null {
+    try {
+      const last = summary.chapter.cantos[summary.chapter.cantos.length - 1];
+      const n = Number(/\d+$/.exec(last ?? '')?.[0] ?? NaN);
+      if (!last || !last.startsWith('inf') || !Number.isFinite(n) || n >= 34) return null;
+      const source = this.deps.story.source('Inferno', n + 1);
+      if (!source) return null;
+      const lines = source.lines.slice(0, 3).filter((l) => l.trim().length > 0);
+      return {
+        canticleLabel: 'INFERNO',
+        cantoLabel: `CANTO ${toRoman(n + 1)}`,
+        lines,
+        citation: formatCitation('Inferno', n + 1, 1, lines.length),
+        message: 'This canto is still being written.',
+      };
+    } catch {
+      return null;
+    }
   }
 
   private summaryPages(blocks: readonly SummaryBlock[]): number[][] {
@@ -1383,26 +1452,41 @@ class Presenter implements StoryPresenter, InputHandler {
       else bp.spread.clear();
       if (el.done) return this.bailPage(bp);
       const { summary: left, comedy } = chapterBlocks(summary);
-      const blocks: SummaryBlock[] = [...left, ...comedy];
-      const pages = this.summaryPages(blocks);
-      // Slots: left, right, left, right … with Your Comedy starting on a fresh page when it fits.
+      // The summary and "Your Comedy" each start on a page of their own (left, then right).
+      const pages: SummaryBlock[][] = [
+        ...this.summaryPages(left).map((idx) => this.pick(left, idx)),
+        ...this.summaryPages(comedy).map((idx) => this.pick(comedy, idx)),
+      ];
+      // Bible §7.5: at the very end "Turn the page" works, and the next page is the next canto.
+      const coming = this.comingCanto(summary);
       let slot = 0;
+      let comingShown = false;
+      const lastSpread = (): boolean => slot + 2 >= pages.length;
       const render = (): void => {
         bp.spread.folios(summary.chapter.title.toUpperCase(), summary.chapter.subtitle.toUpperCase());
-        renderSummaryPage(bp, 'left', this.pick(blocks, pages[slot]), {});
-        renderSummaryPage(bp, 'right', this.pick(blocks, pages[slot + 1]), {});
-        bp.spread.showTurnPrompt(slot + 2 < pages.length ? '▸' : 'Close the book ▸', 600);
+        renderSummaryPage(bp, 'left', pages[slot] ?? [], {});
+        renderSummaryPage(bp, 'right', pages[slot + 1] ?? [], {});
+        bp.spread.showTurnPrompt(!lastSpread() ? '▸' : coming ? 'Turn the page ▸' : 'Close the book ▸', 600);
       };
       render();
+      const shownAt = now();
       let turning = false;
       const press = async (): Promise<void> => {
-        if (turning) return;
+        if (turning || now() - shownAt < 800) return;
         turning = true;
         bp.spread.hideTurnPrompt();
         await bp.spread.turn();
-        if (slot + 2 < pages.length) {
+        if (el.done) return;
+        if (!lastSpread()) {
           slot += 2;
           render();
+          turning = false;
+          return;
+        }
+        if (coming && !comingShown) {
+          comingShown = true;
+          bp.spread.layoutComing(coming);
+          bp.spread.showTurnPrompt('Close the book ▸', 900);
           turning = false;
           return;
         }

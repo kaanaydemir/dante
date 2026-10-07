@@ -29,6 +29,8 @@ export interface BookPageApi extends OverlayHost {
   /** Dark backdrop that hides the world while the book is closed between pages. */
   showCurtain(alpha?: number): void;
   hideCurtain(ms: number): Promise<void>;
+  /** Tween the curtain to `alpha` (the book read on a dark table). */
+  dimCurtain(alpha: number, ms: number): Promise<void>;
   readonly curtainUp: boolean;
   /** The opening page's vignette left alone on the dark after the page is turned (bible §1.3.2). */
   holdVignette(image: Phaser.GameObjects.Image | null): void;

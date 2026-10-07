@@ -53,24 +53,28 @@ export class ChoiceMargin {
     this.pick = handlers.onPick;
     this.hover = handlers.onHover;
     this.locked = false;
-    const inner = WIDTH - PAD * 2 - 26;
+    // Larger text gets a wider margin (fewer turned lines).
+    const width = Math.round(WIDTH * Math.min(1.3, theme.fontScale));
+    const inner = width - PAD * 2 - 26;
     const promptStyle = textStyle(theme, 'body', { italic: true, color: c.inkSoft });
     const optStyle = textStyle(theme, 'option', { color: c.ink });
     const pm = measurer(promptStyle);
     const om = measurer(optStyle);
     const plh = lineHeight(theme.size('body'));
     const olh = lineHeight(theme.size('option'));
-    const promptLines = prompt ? wrapText(prompt, WIDTH - PAD * 2, pm) : [];
+    const promptLines = prompt ? wrapText(prompt, width - PAD * 2, pm) : [];
     const optLines = options.map((o) => wrapText(o.text, inner, om));
     const gap = 16;
     let h = PAD + 8;
     if (promptLines.length > 0) h += promptLines.length * plh + 26;
     for (const lines of optLines) h += lines.length * olh + gap + 12;
     h += 44 + PAD;
-    h = Math.min(h, BOTTOM_LIMIT - TOP_LIMIT);
-    const panel = panelTexture(this.scene, 'margin', WIDTH, h, theme);
-    const top = Math.max(TOP_LIMIT, Math.round((TOP_LIMIT + BOTTOM_LIMIT) / 2 - panel.h / 2) - 20);
-    const root = this.scene.add.container(RIGHT - panel.w, top).setDepth(this.depth);
+    const panel = panelTexture(this.scene, 'margin', width, h, theme);
+    // Very long options at the largest text size: the margin shrinks a little rather than run off the screen.
+    const fit = Math.min(1, (BOTTOM_LIMIT - TOP_LIMIT) / panel.h);
+    const top = Math.max(TOP_LIMIT, Math.round((TOP_LIMIT + BOTTOM_LIMIT) / 2 - (panel.h * fit) / 2) - 20);
+    const restX = RIGHT - panel.w * fit;
+    const root = this.scene.add.container(restX, top).setDepth(this.depth).setScale(fit);
     root.add(this.scene.add.image(0, 0, panel.key).setOrigin(0, 0));
     let y = PAD + 6;
     if (promptLines.length > 0) {
@@ -111,7 +115,7 @@ export class ChoiceMargin {
     this.selected = 0;
     this.render();
     root.x = GAME_WIDTH + 10;
-    this.scene.tweens.add({ targets: root, x: RIGHT - panel.w, duration: 320, ease: 'Cubic.easeOut' });
+    this.scene.tweens.add({ targets: root, x: restX, duration: 320, ease: 'Cubic.easeOut' });
   }
 
   select(index: number): void {

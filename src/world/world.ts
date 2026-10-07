@@ -6,6 +6,11 @@
  * what the runner asks through the WorldBridge (beats, DO lines, CAM verbs,
  * control, checkpoints, trust, armed beats).
  *
+ * Robustness rules (docs/ENGINE.md §11): nothing here throws into a Phaser
+ * frame or into the runner; every promise settles (level hooks are capped in
+ * game time and abort with the run); a broken mechanic is switched off and
+ * reported once.
+ *
  * Owner: team D (world).
  */
 
@@ -28,22 +33,21 @@ import type {
   SfxName,
   StoryLibrary,
   StoryPresenter,
-  Trigger,
 } from '../runtime/contracts';
-import type { Beat, CantoId, CantoScript, DoStmt, EventId, PlaceId, SpeakerId, Statement } from '../story/types';
+import type { CantoId, CantoScript, DoStmt, EventId, PlaceId, SpeakerId, Statement, Trigger } from '../story/types';
 import { tryServices } from '../app/services';
 import { ensureCantoTextures, generateTextures } from '../art/textures';
-import { Player } from '../entities/player';
+import { Player, FEET } from '../entities/player';
 import { Companion } from '../entities/virgil';
-import type { Npc } from '../entities/npc';
 import { getLevel } from '../levels/_framework/registry';
 import { createGenericLevel, emptyLevel } from '../levels/_framework/generic';
 import { planGenericLevel, virgilOnStage, type GenericLayout } from '../levels/_framework/layout';
 import { Ambience } from './ambience';
 import { WorldCamera } from './camera';
 import { registerExtras, type Interactable, type InteractableDef, type MechanicHooks, type VerseCast, type WorldExtras } from './extras';
-import { dist, findFreeSpot, rectCenter } from './geometry';
-import { WorldInput } from './input';
+import { leadWaypoints } from './follow';
+import { dist, findFreeSpot, rectCenter, type Vec } from './geometry';
+import { WorldInput, type WorldInputState } from './input';
 import { LevelHost, type LevelHostWorld } from './level';
 import { ArmedMarkers } from './markers';
 import { PlaceTracker, placeSpawn } from './places';
@@ -58,18 +62,41 @@ export interface WorldDeps {
 
 /** Talking reach from Dante's feet to someone's feet (a little more than the interact radius: 32 px figures). */
 const TALK_REACH = PLAYER.interactRadius + 12;
+/** A level hook (one beat phase) never holds the story longer than this, in game time. */
+const HOOK_CAP_MS = 5 * 60_000;
+/** Prompts and glints are lights: they stay visible over the darkness. */
+const PROMPT_DEPTH = DEPTH.darkness + 2;
 
-function anySignal(signals: readonly (AbortSignal | undefined)[]): AbortSignal {
+const IDLE_INPUT: WorldInputState = {
+  moveX: 0,
+  moveY: 0,
+  dashPressed: false,
+  versePressed: false,
+  interactPressed: false,
+  lookBackHeld: false,
+  anyMove: false,
+};
+
+/** One signal that aborts when any of `signals` does; `dispose` detaches the listeners. */
+function linkSignals(signals: readonly (AbortSignal | undefined)[]): { signal: AbortSignal; dispose: () => void } {
   const ctl = new AbortController();
+  const detach: Array<() => void> = [];
   for (const s of signals) {
     if (!s) continue;
     if (s.aborted) {
       ctl.abort();
       break;
     }
-    s.addEventListener('abort', () => ctl.abort(), { once: true });
+    const on = (): void => ctl.abort();
+    s.addEventListener('abort', on, { once: true });
+    detach.push(() => s.removeEventListener('abort', on));
   }
-  return ctl.signal;
+  return {
+    signal: ctl.signal,
+    dispose: () => {
+      for (const d of detach.splice(0)) d();
+    },
+  };
 }
 
 function untilAbort(signal: AbortSignal): Promise<void> {
@@ -79,16 +106,21 @@ function untilAbort(signal: AbortSignal): Promise<void> {
   });
 }
 
-/** Does a beat's script open with the colour seeping back in (CAM unengrave)? */
+/** Does a beat's script contain this CAM verb? */
 function hasCam(lines: readonly Statement[], verb: 'engrave' | 'unengrave'): boolean {
   return lines.some((s) => s.type === 'cam' && s.verb === verb);
 }
 
+/** Does the canto's first playable beat open with the colour seeping back in (CAM unengrave)? */
 function opensEngraved(script: CantoScript | null): boolean {
   if (!script) return false;
   const first = script.scenes.find((s) => s.number > 0);
   const beat = first?.beats[0];
   return beat ? hasCam(beat.lines, 'unengrave') : false;
+}
+
+function describe(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
 }
 
 export class World implements LevelHostWorld {
@@ -97,7 +129,6 @@ export class World implements LevelHostWorld {
   readonly input: WorldInput;
   readonly bus: EventBus;
   readonly store: GameStateStore;
-  private readonly story: StoryLibrary;
   private readonly audio: AudioService;
   private readonly ambience: Ambience;
   private readonly markers: ArmedMarkers;
@@ -112,16 +143,30 @@ export class World implements LevelHostWorld {
   plan: GenericLayout | null = null;
   generic = false;
   palette: CantoPalette = paletteFor(null);
-  private bounds: Rect = { x: 0, y: 0, w: 640, h: 360 };
+  private worldBounds: Rect = { x: 0, y: 0, w: 640, h: 360 };
 
   private runnerControl = false;
   private levelLock = false;
   private readonly locks = new Map<number, string>();
   private lockSeq = 0;
+  private readonly captures = new Map<number, string>();
+  private captureSeq = 0;
   private fainting = false;
+  private rescuing = false;
+  private rescueRule: { at: number; to: number } | null = null;
+  /** 'auto': Virgil comes on stage where the script first brings him; 'manual': the level decides. */
+  private virgilStaging: 'auto' | 'manual' = 'auto';
+  /** Where the next `checkpoint()` puts its bench (a level's own stone), once. */
+  private checkpointNext: Vec | null = null;
+  /** The level's walkable spine (the generic path): Virgil leads along it. */
+  private leadSpine: Vec[] | null = null;
+  /** Virgil leads the way to the place the story waits for (off while a level directs him). */
+  private leadingOn = true;
   private armed: readonly ArmedBeat[] = [];
   private trust: number = TRUST.start;
   private abort = new AbortController();
+  /** Aborts when the current level is torn down (moments that outlive a beat end with it). */
+  private levelAbort = new AbortController();
   private readonly waits = new Set<() => void>();
   private time = 0;
   private interactCooldown = 0;
@@ -133,19 +178,21 @@ export class World implements LevelHostWorld {
   private readonly emitted = new Set<EventId>();
   private frameSlow = 1;
   private stilledUntilMs = 0;
-  private cameraAhead: { x: number; y: number } | null = null;
+  private cameraAhead: Vec | null = null;
   private readonly benches: Array<{ x: number; y: number; sprite: Phaser.GameObjects.Image | null }> = [];
   private pendingSceneSync = false;
   private restoredCheckpoint = false;
   private caughtThisCanto = false;
   private lookBackOn = false;
   private movedFrame = false;
+  private frameInput: WorldInputState = IDLE_INPUT;
   private loadToken = 0;
   private virgilPrompt: Phaser.GameObjects.Image | null = null;
   private virgilGlint: Phaser.GameObjects.Sprite | null = null;
   private interactPrompt: Phaser.GameObjects.Image | null = null;
   private faded = false;
   private destroyed = false;
+  private readonly reported = new Set<string>();
 
   constructor(
     readonly scene: Phaser.Scene,
@@ -153,7 +200,6 @@ export class World implements LevelHostWorld {
   ) {
     this.bus = deps.bus;
     this.store = deps.store;
-    this.story = deps.story;
     this.audio = deps.audio;
     generateTextures(scene);
     this.input = new WorldInput(scene);
@@ -196,6 +242,7 @@ export class World implements LevelHostWorld {
   wait(ms: number, signal?: AbortSignal): Promise<void> {
     return new Promise<void>((resolve) => {
       let done = false;
+      let timer: Phaser.Time.TimerEvent | null = null;
       const finish = (): void => {
         if (done) return;
         done = true;
@@ -210,7 +257,11 @@ export class World implements LevelHostWorld {
       }
       this.waits.add(finish);
       signal?.addEventListener('abort', finish, { once: true });
-      const timer: Phaser.Time.TimerEvent | null = this.scene.time ? this.scene.time.delayedCall(Math.max(0, ms), finish) : null;
+      try {
+        timer = this.scene.time ? this.scene.time.delayedCall(Math.max(0, ms), finish) : null;
+      } catch {
+        timer = null;
+      }
       if (!timer) finish();
     });
   }
@@ -244,7 +295,7 @@ export class World implements LevelHostWorld {
     try {
       this.plan = script ? planGenericLevel(script) : null;
     } catch (err) {
-      this.log('error', `Could not plan a level for ${cantoId}: ${String(err)}`);
+      this.log('error', `Could not plan a level for ${cantoId}: ${describe(err)}`);
       this.plan = null;
     }
     const registered = getLevel(cantoId);
@@ -256,21 +307,33 @@ export class World implements LevelHostWorld {
     let module: LevelModule = registered ?? (script && this.plan ? createGenericLevel(script, this.plan) : emptyLevel(cantoId));
     let ok = await this.build(module, script, cantoId);
     if (token !== this.loadToken) return;
-    if (!ok && registered && script && this.plan) {
-      this.log('error', `Level ${cantoId} failed to build; using the generic level.`);
+    if (!ok) {
+      // A broken level never stops the story: fall back to the generic level, then to an empty one.
+      this.log('error', `Level ${module.id} failed to build; using a fallback level.`);
       this.teardownLevel();
       this.dante = new Player(this.scene, 0, 0);
       this.companion = new Companion(this.scene, 0, 0);
       this.companion.trust = this.trust;
-      module = createGenericLevel(script, this.plan);
+      module = script && this.plan && registered ? createGenericLevel(script, this.plan) : emptyLevel(cantoId);
       ok = await this.build(module, script, cantoId);
       if (token !== this.loadToken) return;
+      if (!ok && !module.id.startsWith('empty:')) {
+        this.teardownLevel();
+        this.dante = new Player(this.scene, 0, 0);
+        this.companion = new Companion(this.scene, 0, 0);
+        this.companion.trust = this.trust;
+        module = emptyLevel(cantoId);
+        await this.build(module, script, cantoId);
+        if (token !== this.loadToken) return;
+      }
     }
-    this.generic = module.id === `generic:${cantoId}` || !registered;
+    this.generic = module !== registered;
     this.finishLoad();
   }
 
   private async build(module: LevelModule, script: CantoScript | null, cantoId: CantoId): Promise<boolean> {
+    this.levelAbort.abort();
+    this.levelAbort = new AbortController();
     const host = new LevelHost(this, cantoId, module.palette ?? this.palette, script);
     this.host = host;
     this.module = module;
@@ -279,7 +342,7 @@ export class World implements LevelHostWorld {
       await module.build(host);
       return true;
     } catch (err) {
-      this.log('error', `Level ${module.id} build failed: ${err instanceof Error ? err.message : String(err)}`);
+      this.log('error', `Level ${module.id} build failed: ${describe(err)}`);
       return false;
     }
   }
@@ -290,7 +353,7 @@ export class World implements LevelHostWorld {
     const companion = this.companion;
     if (!host || !dante || !companion) return;
     const b = host.bounds ?? { w: 640, h: 360 };
-    this.bounds = { x: 0, y: 0, w: b.w, h: b.h };
+    this.worldBounds = { x: 0, y: 0, w: b.w, h: b.h };
     this.camera.configure(host.palette, b.w, b.h);
     this.camera.clearFade();
     this.faded = false;
@@ -298,7 +361,7 @@ export class World implements LevelHostWorld {
 
     const firstSpawn = [...host.spawns.values()][0];
     const firstPlace = this.tracker.places[0];
-    let start = host.start ?? (firstSpawn ? { x: firstSpawn.x, y: firstSpawn.y } : firstPlace ? placeSpawn(firstPlace) : { x: b.w / 2, y: b.h / 2 });
+    let start: Vec = host.start ?? (firstSpawn ? { x: firstSpawn.x, y: firstSpawn.y } : firstPlace ? placeSpawn(firstPlace) : { x: b.w / 2, y: b.h / 2 });
     // Continue: wake at the saved checkpoint of this canto.
     const cp = this.store.state.position.checkpoint;
     this.restoredCheckpoint = false;
@@ -307,10 +370,11 @@ export class World implements LevelHostWorld {
       this.restoredCheckpoint = true;
       this.placeBench(cp.x - 2, cp.y - 10);
     }
-    const free = findFreeSpot(start.x, start.y - 3, 10, 6, this.solids(), this.bounds);
-    dante.teleport(free.x, free.y + 3);
+    const free = this.freeSpot(start.x, start.y);
+    dante.teleport(free.x, free.y);
     companion.placeNear(dante.x, dante.y);
-    companion.setPresent(this.virgilPresentAtStart());
+    // A level that stages Virgil itself has already shown or hidden him in build().
+    if (this.virgilStaging === 'auto') companion.setPresent(this.virgilPresentAtStart());
     this.camera.follow(dante.actor);
     this.camera.cam.centerOn(dante.x, dante.y - 16);
     this.camera.setEngraved(opensEngraved(this.script));
@@ -324,10 +388,10 @@ export class World implements LevelHostWorld {
   }
 
   private virgilPresentAtStart(): boolean {
-    if (!this.plan) return true;
+    if (!this.plan || this.virgilStaging === 'manual') return true;
     if (this.plan.virgilNever) return false;
-    // In the generic level he joins at the first beat that involves him (beginBeat updates it).
-    return this.generic ? this.plan.virgilFrom === null : true;
+    // He joins at the scene in which the script first brings him (beginBeat updates it).
+    return this.plan.virgilFrom === null;
   }
 
   private createPrompts(): void {
@@ -335,9 +399,9 @@ export class World implements LevelHostWorld {
     this.virgilPrompt?.destroy();
     this.virgilGlint?.destroy();
     this.interactPrompt?.destroy();
-    this.virgilPrompt = s.textures.exists('prop-key-e') ? s.add.image(0, 0, 'prop-key-e').setDepth(DEPTH.fx).setVisible(false) : null;
-    this.interactPrompt = s.textures.exists('prop-key-e') ? s.add.image(0, 0, 'prop-key-e').setDepth(DEPTH.fx).setVisible(false) : null;
-    this.virgilGlint = s.textures.exists('fx-glint') ? s.add.sprite(0, 0, 'fx-glint', '2').setDepth(DEPTH.fx).setVisible(false) : null;
+    this.virgilPrompt = s.textures.exists('prop-key-e') ? s.add.image(0, 0, 'prop-key-e').setDepth(PROMPT_DEPTH).setVisible(false) : null;
+    this.interactPrompt = s.textures.exists('prop-key-e') ? s.add.image(0, 0, 'prop-key-e').setDepth(PROMPT_DEPTH).setVisible(false) : null;
+    this.virgilGlint = s.textures.exists('fx-glint') ? s.add.sprite(0, 0, 'fx-glint', '2').setDepth(PROMPT_DEPTH).setVisible(false) : null;
     if (this.virgilGlint && s.anims.exists('fx-glint-twinkle')) this.virgilGlint.play('fx-glint-twinkle');
   }
 
@@ -351,12 +415,17 @@ export class World implements LevelHostWorld {
   }
 
   private teardownLevel(): void {
+    this.levelAbort.abort();
     try {
       this.module?.destroy?.();
-    } catch {
-      // ignore
+    } catch (err) {
+      this.log('warn', `Level destroy failed: ${describe(err)}`);
     }
-    this.host?.destroy();
+    try {
+      this.host?.destroy();
+    } catch {
+      // keep tearing down
+    }
     this.dante?.destroy();
     this.companion?.destroy();
     this.host = null;
@@ -388,7 +457,14 @@ export class World implements LevelHostWorld {
     this.stilledUntilMs = 0;
     this.levelLock = false;
     this.locks.clear();
+    this.captures.clear();
     this.fainting = false;
+    this.rescuing = false;
+    this.rescueRule = null;
+    this.virgilStaging = 'auto';
+    this.leadSpine = null;
+    this.leadingOn = true;
+    this.checkpointNext = null;
     this.lookBackOn = false;
   }
 
@@ -400,11 +476,12 @@ export class World implements LevelHostWorld {
     if (!this.host || !this.dante || info.canto.id !== this.cantoId) return;
     this.levelLock = false;
     this.locks.clear();
+    this.captures.clear();
     this.lookBackOn = false;
     if (this.dante.pose === 'lookBack') this.dante.clearPose();
     const beat = info.beat;
 
-    if (this.generic && this.plan && this.companion) {
+    if (this.virgilStaging === 'auto' && this.plan && this.companion) {
       const on = virgilOnStage(this.plan, beat.id);
       if (on !== this.companion.visible) this.showVirgil(on, info.autoplay);
     }
@@ -437,6 +514,7 @@ export class World implements LevelHostWorld {
     this.camera.restore();
     this.levelLock = false;
     this.locks.clear();
+    this.captures.clear();
   }
 
   async direct(stmt: DoStmt, index: number, info: BeatRunInfo): Promise<void> {
@@ -476,6 +554,30 @@ export class World implements LevelHostWorld {
     for (const a of this.armed) if (a.trigger.kind === 'talk') talk.add(a.trigger.speaker);
     for (const npc of this.host?.npcList ?? []) npc.armed = talk.has(npc.speaker);
     if (talk.has('VIRGIL') && this.companion && !this.companion.visible) this.showVirgil(true, false);
+    this.updateLead();
+  }
+
+  /**
+   * While the story waits for Dante to reach a place (the cursor is `enter:`),
+   * Virgil walks ahead to it and waits there for him ("Vergilius önde yürür").
+   */
+  private updateLead(): void {
+    const c = this.companion;
+    if (!c) return;
+    const cursor = this.armed.find((a) => a.cursor);
+    const t = cursor?.trigger;
+    if (!this.leadingOn || !c.visible || !t || t.kind !== 'enter' || this.armed.some((a) => a.trigger.kind === 'talk' && a.trigger.speaker === 'VIRGIL')) {
+      if (c.leading) c.lead(null);
+      return;
+    }
+    const def = this.tracker.get(t.place);
+    if (!def || this.isPlayerIn(def.id)) {
+      if (c.leading) c.lead(null);
+      return;
+    }
+    const spawn = placeSpawn(def);
+    const dest = this.freeSpot(spawn.x + 14, spawn.y - 6);
+    c.lead(leadWaypoints({ x: c.actor.x, y: c.actor.y }, dest, this.leadSpine));
   }
 
   canSatisfy(t: Trigger): boolean {
@@ -490,7 +592,7 @@ export class World implements LevelHostWorld {
         return (this.host?.npcList ?? []).some((n) => n.speaker === t.speaker && n.talkable);
       case 'event':
         if (this.module?.emits?.includes(t.id)) return true;
-        return (this.host?.mechanicList ?? []).some((m) => (m as MechanicHooks).emits?.includes(t.id) ?? false);
+        return (this.host?.mechanicList ?? []).some((m) => m.enabled && ((m as MechanicHooks).emits?.includes(t.id) ?? false));
     }
     return false;
   }
@@ -510,7 +612,7 @@ export class World implements LevelHostWorld {
         } else {
           const npc = this.host?.npcObject(t.speaker);
           if (npc && this.dante) {
-            const spot = findFreeSpot(npc.x - 18, npc.y, 10, 6, this.solids(), this.bounds);
+            const spot = this.freeSpot(npc.x - 18, npc.y);
             this.dante.teleport(spot.x, spot.y);
             this.companion?.placeNear(this.dante.x, this.dante.y);
             this.updatePlaces();
@@ -531,8 +633,8 @@ export class World implements LevelHostWorld {
     const def = this.tracker.get(place);
     if (!def || !this.dante) return false;
     const p = placeSpawn(def);
-    const spot = findFreeSpot(p.x, p.y - 3, 10, 6, this.solids(), this.bounds);
-    this.dante.teleport(spot.x, spot.y + 3);
+    const spot = this.freeSpot(p.x, p.y);
+    this.dante.teleport(spot.x, spot.y);
     this.companion?.placeNear(this.dante.x, this.dante.y);
     this.camera.follow(this.dante.actor);
     this.camera.cam.centerOn(this.dante.x, this.dante.y - 16);
@@ -553,6 +655,7 @@ export class World implements LevelHostWorld {
     this.camera.cancel();
     this.levelLock = false;
     this.locks.clear();
+    this.captures.clear();
     this.dante?.actor.stopWalk();
     this.companion?.actor.stopWalk();
     for (const n of this.host?.npcList ?? []) n.actor.stopWalk();
@@ -560,18 +663,21 @@ export class World implements LevelHostWorld {
 
   checkpoint(): void {
     if (!this.dante || !this.cantoId) return;
-    const x = Math.round(this.dante.x);
-    const y = Math.round(this.dante.y);
-    const bench = this.benches.find((b) => dist(b.x, b.y, x, y) < 72) ?? this.placeBench(x - 22, y - 8);
+    const where = this.checkpointNext;
+    this.checkpointNext = null;
+    const x = Math.round(where ? where.x : this.dante.x);
+    const y = Math.round(where ? where.y : this.dante.y);
+    const bench = this.benches.find((b) => dist(b.x, b.y, x, y) < (where ? 40 : 72)) ?? this.placeBench(where ? x : x - 22, where ? y : y - 8);
     const cp: CheckpointRef = { canto: this.cantoId, place: this.tracker.current()[0] ?? null, x: bench.x + 4, y: bench.y + 12 };
     this.store.setPosition({ checkpoint: cp });
     this.bus.emit('checkpoint:set', { checkpoint: cp });
-    this.companion?.waitAt(bench.x, bench.y + 2);
+    // A Virgil the level is directing stays where it put him.
+    if (this.companion && this.companion.mode !== 'hold') this.companion.waitAt(bench.x, bench.y + 2);
   }
 
   /** A stone bench: Virgil waits there; E lets Dante rest (Resolve refills). */
   placeBench(x: number, y: number): { x: number; y: number } {
-    const spot = findFreeSpot(x, y - 3, 24, 6, this.solids(), this.bounds);
+    const spot = findFreeSpot(x, y - 3, 24, 6, this.solids(), this.worldBounds);
     const bx = Math.round(spot.x);
     const by = Math.round(spot.y + 3);
     const sprite = this.scene.textures.exists('prop-bench')
@@ -593,15 +699,19 @@ export class World implements LevelHostWorld {
     const dante = this.dante;
     if (!dante || dante.pose === 'sit') return;
     const unlock = this.lock('rest');
-    dante.teleport(bench.x - 4, bench.y + 1);
-    dante.setPose('sit');
-    this.store.refillResolve();
-    await this.wait(1300, this.abort.signal);
-    if (this.dante === dante) {
-      dante.clearPose();
-      dante.teleport(bench.x - 4, bench.y + 10);
+    try {
+      dante.teleport(bench.x - 4, bench.y + 1);
+      dante.setPose('sit');
+      this.store.refillResolve();
+      await this.wait(1300, this.abort.signal);
+    } finally {
+      if (this.dante === dante) {
+        dante.clearPose();
+        const off = this.freeSpot(bench.x - 4, bench.y + 10);
+        dante.teleport(off.x, off.y);
+      }
+      unlock();
     }
-    unlock();
   }
 
   debugInfo(): Record<string, unknown> {
@@ -609,7 +719,7 @@ export class World implements LevelHostWorld {
       canto: this.cantoId,
       level: this.module?.id ?? null,
       generic: this.generic,
-      bounds: this.bounds,
+      bounds: this.worldBounds,
       player: this.dante ? { x: Math.round(this.dante.x), y: Math.round(this.dante.y), pose: this.dante.pose } : null,
       virgil: this.companion
         ? { x: Math.round(this.companion.actor.x), y: Math.round(this.companion.actor.y), mode: this.companion.mode, visible: this.companion.visible }
@@ -617,7 +727,15 @@ export class World implements LevelHostWorld {
       inside: this.tracker.current(),
       places: this.tracker.places.map((p) => p.id),
       npcs: (this.host?.npcList ?? []).map((n) => `${n.speaker}${n.talkable ? '' : '(silent)'}`),
-      control: { runner: this.runnerControl, level: !this.levelLock, locks: [...this.locks.values()], fainting: this.fainting, playable: this.playable() },
+      control: {
+        runner: this.runnerControl,
+        level: !this.levelLock,
+        locks: [...this.locks.values()],
+        captures: [...this.captures.values()],
+        fainting: this.fainting,
+        rescuing: this.rescuing,
+        playable: this.playable(),
+      },
       armed: this.armed.map((a) => `${a.beat}:${a.trigger.kind}`),
       mechanics: (this.host?.mechanicList ?? []).map((m) => {
         try {
@@ -640,6 +758,7 @@ export class World implements LevelHostWorld {
     const dt = Math.min(Math.max(delta, 0), 50);
     this.time += dt;
     const input = this.input.update();
+    this.frameInput = input;
     const dante = this.dante;
     const host = this.host;
     if (!dante || !host || !this.companion) {
@@ -649,6 +768,9 @@ export class World implements LevelHostWorld {
     this.interactCooldown = Math.max(0, this.interactCooldown - dt);
     this.caster.update(dt);
     const playable = this.playable();
+    const busy = this.presenterBusy();
+    // Dante acts on input only while playable, no blocking text is open and no mechanic holds the input.
+    const steer = playable && !busy && this.captures.size === 0;
     this.frameSlow = 1;
 
     // Mechanics first: they push, slow and hurt before Dante moves.
@@ -658,30 +780,31 @@ export class World implements LevelHostWorld {
         m.update(dt, this.time);
       } catch (err) {
         m.enabled = false;
-        this.log('error', `Mechanic ${m.id} failed and was switched off: ${String(err)}`);
+        this.reportError(`Mechanic ${m.id} failed and was switched off: ${describe(err)}`);
       }
     }
     try {
       this.module?.update?.(dt, host);
     } catch (err) {
-      this.log('error', `Level ${this.module?.id ?? '?'} update failed: ${String(err)}`);
+      this.reportError(`Level ${this.module?.id ?? '?'} update failed: ${describe(err)}`);
     }
 
     // Look back (bible §7.0): holding the key turns Dante around while he has control.
-    if (playable && input.lookBackHeld && !input.anyMove && dante.pose === 'none') dante.setPose('lookBack');
-    else if ((!input.lookBackHeld || !playable) && dante.pose === 'lookBack' && !this.lookBackOn) dante.clearPose();
+    if (steer && input.lookBackHeld && !input.anyMove && dante.pose === 'none') dante.setPose('lookBack');
+    else if ((!input.lookBackHeld || !steer) && dante.pose === 'lookBack' && !this.lookBackOn) dante.clearPose();
 
     const resolve = this.store.state.resolve;
     const lowResolve = resolve <= 1.5 ? 0.72 : 1;
     const moved = dante.update(
       dt,
-      playable ? input : null,
-      { control: playable, solids: this.solids(), bounds: this.bounds, speedFactor: Math.min(this.frameSlow, lowResolve) },
+      steer ? input : null,
+      // Without control, wind and crowds no longer move him (only knocks already under way finish).
+      { control: steer, solids: this.solids(), bounds: this.worldBounds, speedFactor: Math.min(this.frameSlow, lowResolve), external: playable },
       () => this.sfx('dash'),
     );
     this.movedFrame = moved > 0.15 || dante.dashing;
 
-    if (playable && !this.presenterBusy()) {
+    if (steer) {
       if (input.versePressed) this.castVerse();
       if (input.interactPressed && this.interactCooldown <= 0) this.interact();
     }
@@ -691,7 +814,12 @@ export class World implements LevelHostWorld {
     for (const npc of host.npcList) {
       const dx = npc.x - dante.x;
       const dy = npc.y - dante.y;
-      npc.update(dt, dx * dx + dy * dy <= reach2 * 1.6);
+      try {
+        npc.update(dt, dx * dx + dy * dy <= reach2 * 1.6);
+      } catch (err) {
+        npc.behaviour = null;
+        this.reportError(`NPC ${npc.speaker} update failed: ${describe(err)}`);
+      }
     }
     this.updatePrompts();
     this.updatePlaces();
@@ -700,12 +828,14 @@ export class World implements LevelHostWorld {
     this.ambience.update(dt, view);
     this.markers.update(dt, view, (id) => this.isPlayerIn(id));
 
-    if (!this.fainting && this.store.state.resolve <= 0.0001 && playable) void this.faint('resolve');
+    const r = this.store.state.resolve;
+    if (this.rescueRule && !this.rescuing && !this.fainting && playable && r <= this.rescueRule.at + 1e-6) void this.rescue();
+    else if (!this.fainting && !this.rescuing && r <= 0.0001 && playable) void this.faint('resolve');
   }
 
-  /** Dante can act on input. */
+  /** Dante can act: the runner gave control, no level lock, no cinematic lock, no faint. */
   playable(): boolean {
-    return this.runnerControl && !this.levelLock && this.locks.size === 0 && !this.fainting && this.dante !== null;
+    return this.runnerControl && !this.levelLock && this.locks.size === 0 && !this.fainting && !this.rescuing && this.dante !== null;
   }
 
   private presenterBusy(): boolean {
@@ -746,7 +876,7 @@ export class World implements LevelHostWorld {
     if (this.interactPrompt) {
       const it = this.nearestInteractable();
       const talkTarget = this.nearestTalkable();
-      this.interactPrompt.setVisible(Boolean(it) && !talkTarget && this.playable());
+      this.interactPrompt.setVisible(Boolean(it) && !it?.silent && !talkTarget && this.playable() && this.captures.size === 0);
       if (it) {
         const key = it.key ?? 'e';
         if (this.interactPrompt.texture.key !== `prop-key-${key}` && this.scene.textures.exists(`prop-key-${key}`)) this.interactPrompt.setTexture(`prop-key-${key}`);
@@ -808,7 +938,7 @@ export class World implements LevelHostWorld {
       try {
         it.onInteract();
       } catch (err) {
-        this.log('error', `Interaction ${it.id} failed: ${String(err)}`);
+        this.reportError(`Interaction ${it.id} failed: ${describe(err)}`);
       }
     }
   }
@@ -845,16 +975,16 @@ export class World implements LevelHostWorld {
       if (m.enabled && typeof h.onVerse === 'function') {
         try {
           h.onVerse(cast);
-        } catch {
-          // ignore
+        } catch (err) {
+          this.reportError(`Mechanic ${m.id} onVerse failed: ${describe(err)}`);
         }
       }
     }
     for (const fn of [...this.verseHandlers]) {
       try {
         fn(cast);
-      } catch {
-        // ignore
+      } catch (err) {
+        this.reportError(`Verse handler failed: ${describe(err)}`);
       }
     }
   }
@@ -867,7 +997,7 @@ export class World implements LevelHostWorld {
       delay: 16,
       loop: true,
       callback: () => {
-        if (this.dante) img.setPosition(this.dante.x, this.dante.y - 14);
+        if (this.dante && img.active) img.setPosition(this.dante.x, this.dante.y - 14);
       },
     });
     this.scene.tweens.add({
@@ -906,6 +1036,40 @@ export class World implements LevelHostWorld {
     if (amount > 0) this.store.adjustResolve(-amount, cause);
   }
 
+  /** Bible §7.3 / §7.5: at the bottom of his strength Dante sinks to his knees and Virgil lifts him. */
+  private async rescue(): Promise<void> {
+    const dante = this.dante;
+    const companion = this.companion;
+    const rule = this.rescueRule;
+    if (!dante || !companion || !rule || this.rescuing) return;
+    this.rescuing = true;
+    try {
+      dante.setPose('sit');
+      this.sfx('hurt');
+      if (companion.visible && companion.mode !== 'hold') {
+        // Virgil comes and lifts him.
+        const spot = this.freeSpot(dante.x + 14, dante.y + 1);
+        await Promise.race([companion.actor.moveTo(spot.x, spot.y, { speed: 120, signal: this.abort.signal }), this.wait(1800, this.abort.signal)]);
+        if (this.dante !== dante) return;
+        companion.actor.stopWalk();
+        companion.actor.faceToward(dante.x, dante.y);
+        companion.gesture(1);
+        await this.wait(600, this.abort.signal);
+      } else {
+        // Alone (Canto I before the shade comes): he gathers himself.
+        await this.wait(1400, this.abort.signal);
+      }
+      const r = this.store.state.resolve;
+      if (r < rule.to) this.store.adjustResolve(rule.to - r, 'virgil');
+    } finally {
+      if (this.dante === dante) {
+        dante.clearPose();
+        dante.grantInvulnerability(1500);
+      }
+      this.rescuing = false;
+    }
+  }
+
   /** Resolve fell to nothing (GDD 2.4): fade, wake at the last bench beside Virgil. */
   private async faint(cause: string): Promise<void> {
     const dante = this.dante;
@@ -921,38 +1085,44 @@ export class World implements LevelHostWorld {
     }
     this.fainting = true;
     const signal = this.abort.signal;
-    dante.setPose('faint');
-    this.sfx('faint');
-    this.bus.emit('player:faint', { cause });
-    this.store.recordFaint();
-    await this.camera.fade('black', TIMINGS.faintFadeMs);
-    if (this.dante !== dante) return;
-    const cp = this.store.state.position.checkpoint;
-    const here = cp && cp.canto === this.cantoId ? { x: cp.x, y: cp.y } : null;
-    const start = here ?? this.host?.start ?? placeSpawn(this.tracker.places[0] ?? { id: 'x', x: 32, y: 160, w: 32, h: 32 });
-    const spot = findFreeSpot(start.x, start.y - 3, 10, 6, this.solids(), this.bounds);
-    dante.teleport(spot.x, spot.y + 3);
-    companion.placeNear(dante.x, dante.y);
-    this.camera.cam.centerOn(dante.x, dante.y - 16);
-    this.store.refillResolve();
-    this.bus.emit('player:respawn', { checkpoint: here ? (cp as CheckpointRef) : null });
-    for (const m of this.host?.mechanicList ?? []) {
-      const h = m as unknown as MechanicHooks;
-      if (typeof h.onRespawn === 'function') {
-        try {
-          h.onRespawn();
-        } catch {
-          // ignore
+    try {
+      dante.setPose('faint');
+      this.sfx('faint');
+      this.bus.emit('player:faint', { cause });
+      this.store.recordFaint();
+      await this.camera.fade('black', TIMINGS.faintFadeMs);
+      if (this.dante !== dante) return;
+      const cp = this.store.state.position.checkpoint;
+      const here = cp && cp.canto === this.cantoId ? { x: cp.x, y: cp.y } : null;
+      const start = here ?? this.host?.start ?? placeSpawn(this.tracker.places[0] ?? { id: 'x', x: 32, y: 160, w: 32, h: 32 });
+      const spot = this.freeSpot(start.x, start.y);
+      dante.teleport(spot.x, spot.y);
+      companion.placeNear(dante.x, dante.y);
+      this.camera.cam.centerOn(dante.x, dante.y - 16);
+      this.store.refillResolve();
+      this.bus.emit('player:respawn', { checkpoint: here ? (cp as CheckpointRef) : null });
+      for (const m of this.host?.mechanicList ?? []) {
+        const h = m as unknown as MechanicHooks;
+        if (typeof h.onRespawn === 'function') {
+          try {
+            h.onRespawn();
+          } catch (err) {
+            this.reportError(`Mechanic ${m.id} onRespawn failed: ${describe(err)}`);
+          }
         }
       }
+      this.updatePlaces();
+      await this.wait(250, signal);
+      await this.camera.fade('clear', TIMINGS.respawnMs);
+    } finally {
+      if (this.dante === dante) {
+        dante.clearPose();
+        dante.grantInvulnerability(1500);
+        if (this.store.state.resolve <= 0.0001) this.store.refillResolve();
+        this.camera.clearFade();
+      }
+      this.fainting = false;
     }
-    this.updatePlaces();
-    await this.wait(250, signal);
-    await this.camera.fade('clear', TIMINGS.respawnMs);
-    if (this.dante !== dante) return;
-    dante.clearPose();
-    dante.grantInvulnerability(1500);
-    this.fainting = false;
   }
 
   /** A scripted faint (the quake, Francesca): Dante falls; the world goes dark behind the presenter's white-out. */
@@ -960,12 +1130,17 @@ export class World implements LevelHostWorld {
     const dante = this.dante;
     if (!dante) return;
     const unlock = this.lock('faint');
-    dante.setPose('faint');
-    this.sfx('faint');
-    this.faded = true;
-    const colour = opts.color === 'red' ? 'red' : opts.color === 'white' ? 'white' : 'black';
-    await Promise.race([this.camera.fade(colour, opts.ms ?? TIMINGS.whiteOutMs), untilAbort(anySignal([opts.signal, this.abort.signal]))]);
-    unlock();
+    const linked = linkSignals([opts.signal, this.abort.signal]);
+    try {
+      dante.setPose('faint');
+      this.sfx('faint');
+      this.faded = true;
+      const colour = opts.color === 'red' ? 'red' : opts.color === 'white' ? 'white' : 'black';
+      await Promise.race([this.camera.fade(colour, opts.ms ?? TIMINGS.whiteOutMs), untilAbort(linked.signal)]);
+    } finally {
+      linked.dispose();
+      unlock();
+    }
   }
 
   lock(reason: string): () => void {
@@ -976,8 +1151,18 @@ export class World implements LevelHostWorld {
     };
   }
 
+  /** A mechanic takes the input (a menu in the world); Dante stands still meanwhile. */
+  captureInput(owner: string): () => void {
+    const id = ++this.captureSeq;
+    this.captures.set(id, owner);
+    this.input.reset();
+    return () => {
+      if (this.captures.delete(id)) this.interactCooldown = Math.max(this.interactCooldown, 250);
+    };
+  }
+
   addInteractable(def: InteractableDef): Interactable {
-    const it: Interactable = { ...def, enabled: true };
+    const it: Interactable = { ...def, enabled: true, silent: def.silent === true };
     this.interactables.set(def.id, it);
     return it;
   }
@@ -986,6 +1171,12 @@ export class World implements LevelHostWorld {
   solids(): Rect[] {
     if (!this.solidsCache) this.solidsCache = [...(this.host?.solidList ?? []), ...this.dynamicSolids.values()];
     return this.solidsCache;
+  }
+
+  /** A free spot for Dante's feet near (x, y) (feet point convention: the actor's point). */
+  freeSpot(x: number, y: number): Vec {
+    const p = findFreeSpot(x, y - FEET.h / 2, FEET.w + 2, FEET.h + 2, this.solids(), this.worldBounds);
+    return { x: p.x, y: p.y + FEET.h / 2 };
   }
 
   private addDynamicSolid(rect: Rect): () => void {
@@ -1008,11 +1199,14 @@ export class World implements LevelHostWorld {
     }
     if (!c.visible) {
       c.placeNear(d.x, d.y, d.heading.x >= 0 ? 1 : -1);
+      const spot = this.freeSpot(c.actor.x, c.actor.y);
+      c.actor.teleport(spot.x, spot.y);
       c.setPresent(true);
       if (!instant) {
         c.actor.sprite.setAlpha(0);
         this.scene.tweens.add({ targets: c.actor.sprite, alpha: 1, duration: 900 });
       }
+      this.updateLead();
     }
   }
 
@@ -1021,30 +1215,33 @@ export class World implements LevelHostWorld {
     const dante = this.dante;
     if (!def || !dante) return;
     const p = placeSpawn(def);
-    const spot = findFreeSpot(p.x, p.y - 3, 10, 6, this.solids(), this.bounds);
-    const tx = spot.x;
-    const ty = spot.y + 3;
-    const d = dist(dante.x, dante.y, tx, ty);
+    const spot = this.freeSpot(p.x, p.y);
+    const d = dist(dante.x, dante.y, spot.x, spot.y);
     if (info.autoplay || d < 4) {
       this.teleport(place);
       return;
     }
-    const signal = anySignal([info.signal, this.abort.signal]);
-    if (d > 220) {
-      await this.camera.fade('black', 180);
-      if (!signal.aborted) this.teleport(place);
-      await this.camera.fade('clear', 220);
-      return;
-    }
-    const unlock = this.lock('walk-to-place');
+    const linked = linkSignals([info.signal, this.abort.signal]);
+    const signal = linked.signal;
     try {
-      await Promise.race([dante.actor.moveTo(tx, ty, { speed: 95, signal }), this.wait(2200, signal)]);
-      dante.actor.stopWalk();
-      if (!this.isPlayerIn(place)) this.teleport(place);
-      this.companion?.trail.reset(dante.x, dante.y);
-      this.updatePlaces();
+      if (d > 220) {
+        await this.camera.fade('black', 180);
+        if (!signal.aborted) this.teleport(place);
+        await this.camera.fade('clear', 220);
+        return;
+      }
+      const unlock = this.lock('walk-to-place');
+      try {
+        await Promise.race([dante.actor.moveTo(spot.x, spot.y, { speed: 95, signal }), this.wait(2200, signal)]);
+        dante.actor.stopWalk();
+        if (!this.isPlayerIn(place)) this.teleport(place);
+        this.companion?.trail.reset(dante.x, dante.y);
+        this.updatePlaces();
+      } finally {
+        unlock();
+      }
     } finally {
-      unlock();
+      linked.dispose();
     }
   }
 
@@ -1053,7 +1250,7 @@ export class World implements LevelHostWorld {
     return first?.id === info.scene.id;
   }
 
-  private aheadPoint(): { x: number; y: number } | null {
+  private aheadPoint(): Vec | null {
     if (this.cameraAhead) return this.cameraAhead;
     const d = this.dante;
     if (!d) return null;
@@ -1069,7 +1266,8 @@ export class World implements LevelHostWorld {
     const hook = this.module?.beatHooks?.[info.beat.id];
     const host = this.host;
     if (!hook || !host) return;
-    const signal = anySignal([info.signal, this.abort.signal]);
+    const linked = linkSignals([info.signal, this.abort.signal]);
+    const signal = linked.signal;
     const ctx: BeatHookContext = {
       phase,
       canto: info.canto,
@@ -1082,18 +1280,30 @@ export class World implements LevelHostWorld {
       autoplay: info.autoplay,
       signal,
     };
+    let capped = false;
     try {
-      await Promise.race([Promise.resolve(hook(ctx)), untilAbort(signal)]);
+      await Promise.race([
+        Promise.resolve(hook(ctx)),
+        untilAbort(signal),
+        this.wait(HOOK_CAP_MS, signal).then(() => {
+          capped = !signal.aborted;
+        }),
+      ]);
+      if (capped) this.log('error', `Beat hook ${info.beat.id} (${phase}) ran past ${HOOK_CAP_MS / 1000} s; the story goes on.`);
     } catch (err) {
-      this.log('error', `Beat hook ${info.beat.id} (${phase}) failed: ${err instanceof Error ? err.message : String(err)}`);
+      this.log('error', `Beat hook ${info.beat.id} (${phase}) failed: ${describe(err)}`);
+    } finally {
+      linked.dispose();
     }
   }
 
   private extrasFor(host: LevelHost): WorldExtras {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const world = this;
+    const levelSignal = this.levelAbort.signal;
     return {
       scene: this.scene,
+      levelSignal,
       get palette() {
         return host.palette;
       },
@@ -1166,9 +1376,32 @@ export class World implements LevelHostWorld {
         if (on) d.setPose('lookBack');
         else if (d.pose === 'lookBack') d.clearPose();
       },
-      lookBackHeld: () => this.input.current.lookBackHeld && this.playable(),
+      lookBackHeld: () => this.frameInput.lookBackHeld && this.playable(),
       movedThisFrame: () => this.movedFrame,
       solids: () => this.solids(),
+      input: () => (this.playable() ? this.frameInput : IDLE_INPUT),
+      captureInput: (owner) => this.captureInput(owner),
+      bounds: () => ({ ...this.worldBounds }),
+      freeSpot: (x, y) => this.freeSpot(x, y),
+      setRescue: (rule) => {
+        this.rescueRule = rule ? { at: Math.max(0, rule.at), to: Math.max(rule.at + 0.5, rule.to) } : null;
+      },
+      presenterBusy: () => this.presenterBusy(),
+      setVirgilStaging: (mode) => {
+        this.virgilStaging = mode;
+      },
+      setLeadPath: (points) => {
+        this.leadSpine = points ? points.map((p) => ({ x: p.x, y: p.y })) : null;
+      },
+      checkpointAt: (x, y) => {
+        this.checkpointNext = { x, y };
+      },
+      setVirgilLeads: (on) => {
+        this.leadingOn = on;
+        if (!on) this.companion?.lead(null);
+        else this.updateLead();
+      },
+      showVirgil: (on, instant) => this.showVirgil(on, instant ?? false),
     };
   }
 
@@ -1192,6 +1425,18 @@ export class World implements LevelHostWorld {
     }
   }
 
+  /** Report an error once (the update loop must never flood the log). */
+  reportError(message: string): void {
+    if (this.reported.has(message) || this.reported.size > 50) return;
+    this.reported.add(message);
+    this.log('error', message);
+  }
+
+  /** True once the World has been destroyed (its scene shut down). */
+  get destroyedFlag(): boolean {
+    return this.destroyed;
+  }
+
   onResume(): void {
     this.input.reset();
   }
@@ -1204,10 +1449,6 @@ export class World implements LevelHostWorld {
     this.input.destroy();
   }
 
-  /** Grace given for listening is the runner's; Resolve max for tests. */
+  /** Resolve max, for tests and tools. */
   static readonly resolveMax = RESOURCES.resolveMax;
 }
-
-/** Unused-type guard so `Beat` stays imported for hook typing in editors. */
-export type _BeatRef = Beat;
-export type _NpcRef = Npc;

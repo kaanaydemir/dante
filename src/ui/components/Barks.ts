@@ -9,30 +9,75 @@
 import type * as Phaser from 'phaser';
 import { DEPTH, GAME_HEIGHT, GAME_WIDTH, TIMINGS } from '../../config';
 import { uiContext } from '../context';
-import { addText, destroy } from '../phaser/helpers';
-import { textStyle } from '../theme';
+import { addText, destroy, measurer } from '../phaser/helpers';
+import { wrapText } from '../text';
+import { lineHeight, textStyle } from '../theme';
 import { promptRow } from './keycap';
 
-const LANE_Y = 214;
+/** Bottom of the bark lane: under the narration strip, above Dante's head (the camera keeps him near the centre). */
+const LANE_Y = 296;
+/** Barks kept in the lane at once (the oldest leaves first). */
+const LANE_MAX = 2;
 
 interface Bark {
   readonly root: Phaser.GameObjects.Container;
   readonly anchored: boolean;
+  gone: boolean;
+  /** Where it rests in the lane (pushes move it up from there, not from a moving position). */
+  restY: number;
+  readonly h: number;
 }
+
+/** Barks wrap at this width (a long line never runs off the screen). */
+const BARK_WRAP = 620;
 
 export class Barks {
   private lane: Bark[] = [];
+  /** Lowest y the lane may reach upward (the narration strip's bottom while one is up). */
+  private floor: () => number = () => 0;
 
   constructor(
     private readonly scene: Phaser.Scene,
     private readonly depth: number = DEPTH.prompt,
   ) {}
 
+  /** Keep the lane clear of something else at the top of the screen (the narration strip). */
+  avoid(bottom: () => number): void {
+    this.floor = bottom;
+  }
+
+  private floorY(): number {
+    try {
+      return this.floor();
+    } catch {
+      return 0;
+    }
+  }
+
+  /** The strip came: lane barks it would cover leave (the book's voice comes first). */
+  relayout(): void {
+    const floor = this.floorY();
+    if (floor <= 0) return;
+    for (const b of [...this.lane]) {
+      if (b.restY + 6 - b.h < floor + 4) this.leave(b, 160);
+    }
+  }
+
+  private leave(b: Bark, ms: number): void {
+    if (b.gone) return;
+    b.gone = true;
+    this.lane = this.lane.filter((o) => o !== b);
+    this.scene.tweens.add({ targets: b.root, alpha: 0, duration: ms, onComplete: () => destroy(b.root) });
+  }
+
   show(name: string, text: string, anchor: { x: number; y: number } | null): void {
     const theme = uiContext().theme();
     const c = theme.colors;
     const root = this.scene.add.container(0, 0).setDepth(this.depth);
-    const body = addText(this.scene, 0, 0, text, textStyle(theme, 'body', { italic: true, color: c.paper, shadow: true }));
+    const bodyStyle = textStyle(theme, 'body', { italic: true, color: c.paper, shadow: true, align: 'center' });
+    const lines = wrapText(text, BARK_WRAP, measurer(bodyStyle));
+    const lh = lineHeight(theme.size('body'));
+    const body = addText(this.scene, 0, 0, lines.join('\n'), { ...bodyStyle, lineSpacing: lh - theme.size('body') });
     body.setOrigin(0.5, 1);
     const label = addText(this.scene, 0, -body.height - 2, name, textStyle(theme, 'citation', { color: c.goldBright, shadow: true, letterSpacing: 1 }));
     label.setOrigin(0.5, 1);
@@ -41,35 +86,46 @@ export class Barks {
     const bg = this.scene.add.rectangle(0, 6, w, h, 0x000000, 0.45).setOrigin(0.5, 1);
     root.add([bg, label, body]);
     let x = GAME_WIDTH / 2;
-    let y = LANE_Y;
+    // Under the narration strip when one is up.
+    const floorNow = this.floorY();
+    let y = Math.max(LANE_Y, floorNow > 0 ? floorNow + 8 + h : 0);
+    const bark: Bark = { root, anchored: anchor !== null, gone: false, restY: y - 6, h };
+    const leave = (b: Bark, ms: number): void => this.leave(b, ms);
     if (anchor) {
       x = Math.max(w / 2 + 10, Math.min(GAME_WIDTH - w / 2 - 10, anchor.x));
       y = Math.max(h + 10, Math.min(GAME_HEIGHT - 200, anchor.y));
     } else {
-      // Stack in the lane: newer ones push older ones up.
-      for (const b of this.lane) this.scene.tweens.add({ targets: b.root, y: b.root.y - h - 6, duration: 160 });
+      // Stack in the lane: newer ones push older ones up; the oldest leaves when the lane is full.
+      while (this.lane.length >= LANE_MAX) {
+        const old = this.lane[0];
+        if (old) leave(old, 200);
+        else break;
+      }
+      const floor = floorNow;
+      for (const b of [...this.lane]) {
+        b.restY -= h + 6;
+        // Pushed up into the strip: it leaves now instead.
+        if (b.restY - b.h + 6 < floor + 4) {
+          leave(b, 160);
+          continue;
+        }
+        this.scene.tweens.add({ targets: b.root, y: b.restY, duration: 160 });
+      }
+      this.lane.push(bark);
     }
-    root.setPosition(x, y);
-    const bark: Bark = { root, anchored: anchor !== null };
-    if (!anchor) this.lane.push(bark);
+    // Lane barks only fade in (their y belongs to the stacking); anchored ones rise a little.
+    root.setPosition(x, anchor ? y : y - 6);
     root.setAlpha(0);
-    this.scene.tweens.add({ targets: root, alpha: 1, y: y - 6, duration: 220 });
+    this.scene.tweens.add(anchor ? { targets: root, alpha: 1, y: y - 6, duration: 220 } : { targets: root, alpha: 1, duration: 220 });
     const life = TIMINGS.barkMs + text.length * 30;
-    this.scene.time.delayedCall(life, () => {
-      this.scene.tweens.add({
-        targets: root,
-        alpha: 0,
-        duration: 380,
-        onComplete: () => {
-          this.lane = this.lane.filter((b) => b !== bark);
-          destroy(root);
-        },
-      });
-    });
+    this.scene.time.delayedCall(life, () => leave(bark, 380));
   }
 
   clear(): void {
-    for (const b of this.lane) destroy(b.root);
+    for (const b of this.lane) {
+      b.gone = true;
+      destroy(b.root);
+    }
     this.lane = [];
   }
 }

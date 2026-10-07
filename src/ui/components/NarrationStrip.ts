@@ -27,6 +27,7 @@ export class NarrationStrip {
   private thread: Phaser.GameObjects.Rectangle | null = null;
   private more: Phaser.GameObjects.Container | null = null;
   private height = 0;
+  private changed: (() => void) | null = null;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -35,6 +36,19 @@ export class NarrationStrip {
 
   get visible(): boolean {
     return this.root !== null;
+  }
+
+  /** Called when a strip appears or leaves (others make room). */
+  onLayout(fn: () => void): void {
+    this.changed = fn;
+  }
+
+  private notify(): void {
+    try {
+      this.changed?.();
+    } catch {
+      // layout of others is cosmetic
+    }
   }
 
   get bottom(): number {
@@ -76,6 +90,7 @@ export class NarrationStrip {
     root.y = STRIP_TOP - 10;
     this.root = root;
     this.scene.tweens.add({ targets: root, alpha: 1, y: STRIP_TOP, duration: 220, ease: 'Quad.easeOut' });
+    this.notify();
   }
 
   /** Non-blocking strips: the thread shrinks over the reading time. */
@@ -91,6 +106,7 @@ export class NarrationStrip {
     this.thread = null;
     this.more = null;
     if (!root) return;
+    this.notify();
     if (fast) {
       destroy(root);
       return;
@@ -104,7 +120,10 @@ export class NarrationStrip {
     this.root = null;
     this.thread = null;
     this.more = null;
-    if (root) destroy(root);
+    if (root) {
+      destroy(root);
+      this.notify();
+    }
   }
 }
 

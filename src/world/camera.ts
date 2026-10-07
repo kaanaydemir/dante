@@ -63,9 +63,18 @@ export class WorldCamera implements WorldCameraApi {
       .setDepth(DEPTH.worldOverlay + 1)
       .setAlpha(0);
     this.paper.setBlendMode(Phaser.BlendModes.MULTIPLY);
-    if (!this.colorMatrix && this.isWebGL()) {
+    this.applyEngrave(this.engraveAmount);
+  }
+
+  /**
+   * The desaturating colour matrix is a full-screen post pass: it is attached
+   * only while the scene is (partly) engraved and removed as soon as the colour
+   * is back, so ordinary play costs nothing.
+   */
+  private setColorMatrix(on: boolean): void {
+    const fx = (this.cam as unknown as { postFX?: Phaser.GameObjects.Components.FX }).postFX;
+    if (on && !this.colorMatrix && this.isWebGL()) {
       try {
-        const fx = (this.cam as unknown as { postFX?: Phaser.GameObjects.Components.FX }).postFX;
         this.colorMatrix = fx?.addColorMatrix() ?? null;
         if (this.colorMatrix) {
           this.colorMatrix.grayscale(1);
@@ -74,8 +83,14 @@ export class WorldCamera implements WorldCameraApi {
       } catch {
         this.colorMatrix = null;
       }
+    } else if (!on && this.colorMatrix) {
+      try {
+        fx?.remove(this.colorMatrix as unknown as Phaser.FX.Controller);
+      } catch {
+        // ignore
+      }
+      this.colorMatrix = null;
     }
-    this.applyEngrave(this.engraveAmount);
   }
 
   private isWebGL(): boolean {
@@ -115,7 +130,7 @@ export class WorldCamera implements WorldCameraApi {
     else this.cam.stopFollow();
   }
 
-  panTo(x: number, y: number, ms = TIMINGS.camPanMs): Promise<void> {
+  panTo(x: number, y: number, ms: number = TIMINGS.camPanMs): Promise<void> {
     this.cam.stopFollow();
     return this.track((done) => {
       this.cam.pan(x, y, Math.max(1, ms), 'Sine.easeInOut', true, (_c: Phaser.Cameras.Scene2D.Camera, p: number) => {
@@ -124,7 +139,7 @@ export class WorldCamera implements WorldCameraApi {
     }, ms + 400);
   }
 
-  zoomTo(zoom: number, ms = TIMINGS.camZoomMs): Promise<void> {
+  zoomTo(zoom: number, ms: number = TIMINGS.camZoomMs): Promise<void> {
     return this.track((done) => {
       this.cam.zoomTo(zoom, Math.max(1, ms), 'Sine.easeInOut', true, (_c: Phaser.Cameras.Scene2D.Camera, p: number) => {
         if (p >= 1) done();
@@ -132,7 +147,7 @@ export class WorldCamera implements WorldCameraApi {
     }, ms + 400);
   }
 
-  shake(ms = TIMINGS.camShakeMs, intensity = 0.006): Promise<void> {
+  shake(ms: number = TIMINGS.camShakeMs, intensity = 0.006): Promise<void> {
     if (!this.targets.screenShake()) return Promise.resolve();
     return this.track((done) => {
       this.cam.shake(ms, intensity, true, (_c: Phaser.Cameras.Scene2D.Camera, p: number) => {
@@ -141,7 +156,7 @@ export class WorldCamera implements WorldCameraApi {
     }, ms + 400);
   }
 
-  fade(to: 'black' | 'white' | 'red' | 'clear', ms = TIMINGS.fadeMs): Promise<void> {
+  fade(to: 'black' | 'white' | 'red' | 'clear', ms: number = TIMINGS.fadeMs): Promise<void> {
     return this.track((done) => {
       if (to === 'clear') {
         this.cam.fadeIn(Math.max(1, ms), 0, 0, 0, (_c: Phaser.Cameras.Scene2D.Camera, p: number) => {
@@ -264,6 +279,7 @@ export class WorldCamera implements WorldCameraApi {
 
   private applyEngrave(v: number): void {
     this.engraveAmount = v;
+    this.setColorMatrix(v > 0.001);
     if (this.colorMatrix) this.colorMatrix.alpha = v;
     this.hatch?.setAlpha(v * 0.32);
     // Without WebGL there is no colour matrix: a paper wash stands in for the desaturation.
@@ -302,14 +318,7 @@ export class WorldCamera implements WorldCameraApi {
     this.paper?.destroy();
     this.hatch = null;
     this.paper = null;
-    if (this.colorMatrix) {
-      try {
-        (this.cam as unknown as { postFX?: Phaser.GameObjects.Components.FX }).postFX?.remove(this.colorMatrix);
-      } catch {
-        // ignore
-      }
-      this.colorMatrix = null;
-    }
+    this.setColorMatrix(false);
   }
 
   get following(): ActorHandle | null {

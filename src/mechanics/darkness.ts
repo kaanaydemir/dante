@@ -8,6 +8,7 @@
  *   alpha?: number          darkness opacity (default 0.9)
  *   color?: number          default: the palette's shadow
  *   areas?: Rect[]          dark only inside these (default: everywhere)
+ *   zones?: {rect, alpha}[] areas with their own depth of darkness (the darkest one containing Dante wins)
  *   lights?: {x,y,r}[]      fixed lights
  *   virgilGlow?: number     radius of Virgil's own light (default 26; 0 = none)
  *
@@ -27,11 +28,19 @@ export interface LightDef {
   readonly r: number;
 }
 
+/** A dark area with its own depth of darkness. */
+export interface DarkZone {
+  readonly rect: Rect;
+  readonly alpha: number;
+}
+
 export interface DarknessConfig {
   readonly radius?: number;
   readonly alpha?: number;
   readonly color?: number;
   readonly areas?: readonly Rect[];
+  /** Areas with their own darkness (the deepest zone containing Dante wins); combine with `areas`. */
+  readonly zones?: readonly DarkZone[];
   readonly lights?: readonly LightDef[];
   readonly virgilGlow?: number;
 }
@@ -43,6 +52,7 @@ export class Darkness extends BaseMechanic {
   private readonly brush: Phaser.GameObjects.Image | null;
   private readonly lights: LightDef[];
   private readonly areas: readonly Rect[] | null;
+  private readonly zones: readonly DarkZone[];
   private readonly color: number;
   private readonly maxAlpha: number;
   private alpha = 0;
@@ -53,12 +63,14 @@ export class Darkness extends BaseMechanic {
   private readonly virgilGlow: number;
 
   constructor(ctx: MechanicContext, cfg: DarknessConfig) {
-    super('darkness', ctx);
+    super('darkness', ctx, cfg);
     const s = this.scene;
     this.radius = this.baseRadius = num(cfg.radius, 72);
     this.maxAlpha = Math.max(0, Math.min(1, num(cfg.alpha, 0.9)));
     this.color = num(cfg.color, ctx.level.palette.shadow);
-    this.areas = cfg.areas && cfg.areas.length > 0 ? cfg.areas : null;
+    this.zones = (cfg.zones ?? []).map((z) => ({ rect: { ...z.rect }, alpha: Math.max(0, Math.min(1, num(z.alpha, this.maxAlpha))) }));
+    const areas = [...(cfg.areas ?? [])];
+    this.areas = areas.length > 0 || this.zones.length > 0 ? areas : null;
     this.lights = [...(cfg.lights ?? [])];
     this.virgilGlow = num(cfg.virgilGlow, 26);
     const cam = s.cameras.main;
@@ -83,7 +95,7 @@ export class Darkness extends BaseMechanic {
     this.lights.length = 0;
   }
 
-  override update(dt: number): void {
+  protected override step(dt: number): void {
     const rt = this.rt;
     const brush = this.brush;
     if (!rt || !brush) return;
@@ -97,7 +109,7 @@ export class Darkness extends BaseMechanic {
       if (k >= 1) this.radiusTween = null;
     }
     const reveal = now < this.revealUntil ? 2.2 : 1;
-    const target = this.areas ? (this.areas.some((a) => rectContains(a, p.x, p.y)) ? this.maxAlpha : 0) : this.maxAlpha;
+    const target = this.targetAlpha(p.x, p.y);
     this.alpha += (target - this.alpha) * Math.min(1, dt / 500);
     const cam = this.scene.cameras.main;
     const v = cam.worldView;
@@ -121,6 +133,14 @@ export class Darkness extends BaseMechanic {
     const v2 = this.level.virgil;
     if (v2 && v2.sprite.visible && this.virgilGlow > 0) draw(v2.x, v2.y - 14, this.virgilGlow * reveal, 0.8);
     for (const l of this.lights) draw(l.x, l.y, l.r, 1);
+  }
+
+  /** How dark it is where (x, y) stands. */
+  targetAlpha(x: number, y: number): number {
+    if (!this.areas) return this.maxAlpha;
+    let a = this.areas.some((r) => rectContains(r, x, y)) ? this.maxAlpha : 0;
+    for (const z of this.zones) if (z.alpha > a && rectContains(z.rect, x, y)) a = z.alpha;
+    return a;
   }
 
   override onVerse(cast: VerseCast): void {

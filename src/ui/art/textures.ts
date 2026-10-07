@@ -26,6 +26,7 @@ import {
   type Ctx,
 } from './paint';
 import { portraitImage, PORTRAIT_SIZE } from './portraits';
+import { touchPanel } from './textureCache';
 import { motifImage, vignetteImage, VIGNETTE_H, VIGNETTE_W } from './vignettes';
 
 /** Create a canvas texture once and paint it. Returns the key. Never throws. */
@@ -102,6 +103,8 @@ export function panelTexture(scene: Phaser.Scene, kind: PanelKind, w: number, h:
         break;
     }
   });
+  // Sizes vary with every balloon and card: old ones are swept once nothing shows them.
+  if (kind !== 'spread' && kind !== 'cover') touchPanel(scene, key);
   return { key, w: W, h: H };
 }
 

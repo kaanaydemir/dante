@@ -17,6 +17,7 @@ import type { EventId, WordCategory, WordName } from '../story/types';
 import type { Companion } from '../entities/virgil';
 import type { Npc } from '../entities/npc';
 import type { Player } from '../entities/player';
+import type { WorldInputState } from './input';
 
 /** One step of a cast verse (a tercet, or the coda's strengthened closing). */
 export interface VerseCast {
@@ -42,11 +43,17 @@ export interface InteractableDef {
   readonly radius?: number;
   /** Key cap shown when Dante is in reach (default 'e'). */
   readonly key?: 'e' | 'r' | 'j' | 'q';
+  /** No key cap is shown (E still works): a moment that answers a press at the wrong time too. */
+  readonly silent?: boolean;
   onInteract(): void;
 }
 
-export interface Interactable extends InteractableDef {
+/** A live interactable: a level may move it (it follows a figure), hush its key cap or switch it off. */
+export interface Interactable extends Omit<InteractableDef, 'x' | 'y' | 'silent'> {
+  x: number;
+  y: number;
   enabled: boolean;
+  silent: boolean;
 }
 
 /** Mechanics may implement these optional hooks (duck-typed). */
@@ -61,6 +68,8 @@ export interface MechanicHooks {
 
 export interface WorldExtras {
   readonly scene: Phaser.Scene;
+  /** Aborts when this level is torn down (a canto change, a jump): moments that outlive their beat end with it. */
+  readonly levelSignal: AbortSignal;
   readonly palette: CantoPalette;
   readonly dante: Player;
   readonly companion: Companion;
@@ -114,6 +123,43 @@ export interface WorldExtras {
   movedThisFrame(): boolean;
   /** Solid rectangles (static and runtime). */
   solids(): readonly Rect[];
+  /** The player's input this frame (all idle while Dante is not playable). */
+  input(): WorldInputState;
+  /**
+   * Take the input for a menu-like moment in the world (choosing a stone in
+   * Minos's court): Dante stands still and E / J no longer reach the world.
+   * Returns the release (captures also clear at every beat start and end).
+   */
+  captureInput(owner: string): () => void;
+  /** The level's bounds (world px). */
+  bounds(): Rect;
+  /** A free spot for Dante's feet near (x, y) (teleports, falls, rescues). */
+  freeSpot(x: number, y: number): { x: number; y: number };
+  /**
+   * Bible §7.3 / §7.5: when Resolve falls to `at` units, Dante sinks to his
+   * knees and Virgil lifts him (`to` units). null switches it off (then a
+   * Resolve of 0 is a faint and a wake at the last bench, GDD 2.4).
+   */
+  setRescue(rule: { readonly at: number; readonly to: number } | null): void;
+  /** A blocking text, page or choice is open (E and J then belong to the book). */
+  presenterBusy(): boolean;
+  /**
+   * 'auto' (default): Virgil comes on stage at the scene in which the script
+   * first brings him and is hidden before it. 'manual': the level shows and
+   * hides him itself (`showVirgil`).
+   */
+  setVirgilStaging(mode: 'auto' | 'manual'): void;
+  /** Bring Virgil on stage beside Dante (fading in unless `instant`), or take him off. */
+  showVirgil(on: boolean, instant?: boolean): void;
+  /** The next `{checkpoint}` puts its bench here (a level's own stone) instead of beside Dante. */
+  checkpointAt(x: number, y: number): void;
+  /** The level's walkable spine; Virgil leads along it (the generic level sets its path). */
+  setLeadPath(points: readonly { readonly x: number; readonly y: number }[] | null): void;
+  /**
+   * Virgil walks ahead to the place the story waits for (default on). A level
+   * that walks him itself (`companion.actor.moveTo`, `companion.mode = 'hold'`) turns it off.
+   */
+  setVirgilLeads(on: boolean): void;
   /** The player's actor handle (same as LevelRuntime.player). */
   readonly player: ActorHandle;
 }

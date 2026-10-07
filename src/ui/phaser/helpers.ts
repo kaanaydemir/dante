@@ -91,10 +91,30 @@ export function stopScene(game: Phaser.Game, key: string): void {
 // Text
 // ---------------------------------------------------------------------------
 
-/** A text object; book-face text gets curly quotes (display typography). */
+/**
+ * A text object; book-face text gets curly quotes (display typography).
+ *
+ * Line spacing: callers lay out multi-line text with `lineSpacing: lh - px`,
+ * meaning "one line every `lh` pixels". Phaser advances a line by the font's
+ * measured ascent + descent (larger than `px` for IM Fell English) plus the
+ * spacing, so the spacing is corrected here to give exactly `lh` per line;
+ * heights computed as `lines × lh` then match what is drawn.
+ */
 export function addText(scene: Phaser.Scene, x: number, y: number, text: string, style: TextStyleSpec): Phaser.GameObjects.Text {
   const shown = style.fontFamily === FONT_FAMILY.book ? typeset(text) : text;
-  return scene.add.text(x, y, shown, style as Phaser.Types.GameObjects.Text.TextStyle);
+  const t = scene.add.text(x, y, shown, style as Phaser.Types.GameObjects.Text.TextStyle);
+  if (style.lineSpacing !== undefined) {
+    try {
+      const px = Number.parseFloat(style.fontSize) || 0;
+      const metrics = (t.style as unknown as { metrics?: { fontSize?: number } }).metrics;
+      const measured = metrics?.fontSize ?? px;
+      const spacing = Math.round(px + style.lineSpacing - measured - (style.strokeThickness ?? 0));
+      if (spacing !== t.lineSpacing) t.setLineSpacing(spacing);
+    } catch {
+      // keep Phaser's spacing
+    }
+  }
+  return t;
 }
 
 let measureCtx: CanvasRenderingContext2D | null = null;

@@ -30,6 +30,8 @@ export interface PlayerStep {
   readonly bounds: Rect | null;
   /** Multiplier on walking speed (low Resolve, the she-wolf's weight …). */
   readonly speedFactor: number;
+  /** Outside forces (wind, crowds) move him this frame (default true). Off while the story holds control. */
+  readonly external?: boolean;
 }
 
 export class Player {
@@ -200,7 +202,7 @@ export class Player {
       vy = this.dashDir.y * this.dashSpeed;
     }
     // Pushes: a dash cuts through most of the wind (GDD 4.3: the dash is the way against it).
-    const forceScale = this.dashMs > 0 ? 0.25 : 1;
+    const forceScale = step.external === false ? 0 : this.dashMs > 0 ? 0.25 : 1;
     vx += this.force.x * forceScale;
     vy += this.force.y * forceScale;
     this.force = { x: 0, y: 0 };

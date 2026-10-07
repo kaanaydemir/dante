@@ -51,6 +51,14 @@ export class OverlaySet {
     this.hint = new HintPanel(scene, DEPTH.margin + 10 + d);
     this.barks = new Barks(scene, DEPTH.prompt + d);
     this.tutorial = new TutorialPrompt(scene, DEPTH.prompt + d);
+    // Notices stack under the narration strip while one is up (they share the top left).
+    this.toasts.avoid(() => (this.strip.visible ? this.strip.bottom : 0));
+    this.hint.avoid(() => (this.strip.visible ? this.strip.bottom : 0));
+    this.barks.avoid(() => (this.strip.visible ? this.strip.bottom : 0));
+    this.strip.onLayout(() => {
+      this.toasts.relayout();
+      this.barks.relayout();
+    });
   }
 
   /** Remove everything at once (cancelAll, scene changes). */

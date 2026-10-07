@@ -69,6 +69,16 @@ export class BookPageScene extends Phaser.Scene implements BookPageApi {
     await tweenTo(this, { targets: this.curtain, alpha: 0, duration: ms });
   }
 
+  async dimCurtain(alpha: number, ms: number): Promise<void> {
+    stopTweens(this, this.curtain);
+    if (Math.abs(this.curtain.alpha - alpha) < 0.01) return;
+    if (ms <= 0) {
+      this.curtain.setAlpha(alpha);
+      return;
+    }
+    await tweenTo(this, { targets: this.curtain, alpha, duration: ms });
+  }
+
   holdVignette(image: Phaser.GameObjects.Image | null): void {
     destroy(this.held);
     this.held = null;

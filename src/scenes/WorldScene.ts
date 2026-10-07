@@ -1,59 +1,91 @@
 /**
- * The playable world (camera zoom 2: a 640x360 pixel-art view).
+ * The playable world (camera zoom 2: a 640x360 pixel-art view). Hosts the
+ * World (src/world/world.ts): the level (a LevelModule or the generic
+ * fallback level), Dante, Virgil, NPCs and mechanics. The WorldBridge
+ * (src/world/bridge.ts) starts this scene when a canto loads and talks to the
+ * World through `worldHost`.
  *
- * PLACEHOLDER created by the architect. Owner: team D (world).
- * Keep the class name and scene key. The real scene hosts the level (a
- * LevelModule or the generic fallback level), player, Virgil and mechanics,
- * and backs the WorldBridge (src/world/bridge.ts).
+ * Owner: team D (world). Class name and scene key are fixed.
  */
 
 import * as Phaser from 'phaser';
-import { PALETTES, PLAYER, WORLD_VIEW_HEIGHT, WORLD_VIEW_WIDTH, WORLD_ZOOM, actorDepth, cssColor } from '../config';
+import { WORLD_ZOOM } from '../config';
+import { tryServices } from '../app/services';
+import { worldHost } from '../world/host';
+import { World, type WorldDeps } from '../world/world';
 import { SceneKeys } from './keys';
 
+/** Optional data passed to `scene.start(SceneKeys.World, data)`. */
+export interface WorldSceneData {
+  readonly deps?: WorldDeps;
+}
+
 export class WorldScene extends Phaser.Scene {
-  private dante: Phaser.GameObjects.Rectangle | null = null;
-  private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
-  private wasd: Record<'W' | 'A' | 'S' | 'D', Phaser.Input.Keyboard.Key> | null = null;
+  private world: World | null = null;
 
   constructor() {
     super({ key: SceneKeys.World });
   }
 
-  create(): void {
-    const pal = PALETTES.inf01;
+  create(data?: WorldSceneData): void {
     const cam = this.cameras.main;
     cam.setZoom(WORLD_ZOOM);
-    cam.setBackgroundColor(cssColor(pal.sky));
-    cam.centerOn(WORLD_VIEW_WIDTH / 2, WORLD_VIEW_HEIGHT / 2);
-
-    const g = this.add.graphics();
-    g.fillStyle(pal.far).fillRect(0, 120, WORLD_VIEW_WIDTH, 80);
-    g.fillStyle(pal.ground).fillRect(0, 200, WORLD_VIEW_WIDTH, WORLD_VIEW_HEIGHT - 200);
-    g.fillStyle(pal.path).fillRect(0, 248, WORLD_VIEW_WIDTH, 24);
-    g.fillStyle(pal.mid);
-    for (let x = 8; x < WORLD_VIEW_WIDTH; x += 37) {
-      g.fillTriangle(x, 210, x + 14, 120 + ((x * 7) % 40), x + 28, 210);
+    cam.setRoundPixels(true);
+    const deps = data?.deps ?? this.depsFromServices();
+    if (!deps) {
+      // No services (should not happen after bootstrap): stay an empty, harmless scene.
+      return;
     }
-    g.fillStyle(pal.light, 0.8).fillCircle(560, 70, 18);
-
-    this.dante = this.add.rectangle(120, 256, 10, 18, 0xa3242a).setDepth(actorDepth(256));
-    this.cursors = this.input.keyboard?.createCursorKeys() ?? null;
-    this.wasd = (this.input.keyboard?.addKeys('W,A,S,D') as WorldScene['wasd']) ?? null;
+    try {
+      this.world = new World(this, deps);
+      worldHost.attach(this.world);
+    } catch (err) {
+      this.world = null;
+      try {
+        deps.bus.emit('debug:log', {
+          level: 'error',
+          message: `[world] WorldScene could not create the world: ${err instanceof Error ? err.message : String(err)}`,
+        });
+      } catch {
+        // nothing else to do
+      }
+    }
+    this.events.on(Phaser.Scenes.Events.RESUME, this.onResume, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.onShutdown, this);
+    this.events.once(Phaser.Scenes.Events.DESTROY, this.onShutdown, this);
   }
 
-  override update(_time: number, delta: number): void {
-    if (!this.dante) return;
-    const left = this.cursors?.left.isDown || this.wasd?.A.isDown;
-    const right = this.cursors?.right.isDown || this.wasd?.D.isDown;
-    const up = this.cursors?.up.isDown || this.wasd?.W.isDown;
-    const down = this.cursors?.down.isDown || this.wasd?.S.isDown;
-    const step = (PLAYER.walkSpeed * delta) / 1000;
-    const dx = (right ? 1 : 0) - (left ? 1 : 0);
-    const dy = (down ? 1 : 0) - (up ? 1 : 0);
-    const len = Math.hypot(dx, dy) || 1;
-    this.dante.x = Phaser.Math.Clamp(this.dante.x + (dx / len) * step, 6, WORLD_VIEW_WIDTH - 6);
-    this.dante.y = Phaser.Math.Clamp(this.dante.y + (dy / len) * step, 206, WORLD_VIEW_HEIGHT - 10);
-    this.dante.setDepth(actorDepth(this.dante.y));
+  private depsFromServices(): WorldDeps | null {
+    const s = tryServices();
+    if (!s) return null;
+    return { bus: s.bus, store: s.store, story: s.story, audio: s.audio };
+  }
+
+  override update(time: number, delta: number): void {
+    const w = this.world;
+    if (!w) return;
+    try {
+      w.update(time, delta);
+    } catch (err) {
+      // Never throw from the update loop (docs/ENGINE.md §11).
+      w.reportError(`World update failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  private onResume(): void {
+    this.world?.onResume();
+  }
+
+  private onShutdown(): void {
+    this.events.off(Phaser.Scenes.Events.RESUME, this.onResume, this);
+    const w = this.world;
+    this.world = null;
+    if (!w) return;
+    worldHost.detach(w);
+    try {
+      w.destroy();
+    } catch {
+      // the scene is going away anyway
+    }
   }
 }

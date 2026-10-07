@@ -23,7 +23,7 @@ import type { EventId, SpeakerId } from '../story/types';
 import type { Npc } from '../entities/npc';
 import { clamp, dist, normalize, rectContains } from '../world/geometry';
 import type { VerseCast } from '../world/extras';
-import { BaseMechanic, num } from './base';
+import { BaseMechanic, num, type Waiter } from './base';
 
 export interface ChaseConfig {
   readonly mode: 'pursue' | 'block' | 'lunge';
@@ -48,6 +48,10 @@ export interface ChaseConfig {
   readonly telegraphMs?: number;
   readonly lungeSpeed?: number;
   readonly lungeMs?: number;
+  /** lunge: charge on its own rhythm (default true); false = only when `lungeOnce()` is called. */
+  readonly auto?: boolean;
+  /** Start hidden and switched off (a level reveals it with `show(true)` and `enabled = true`). */
+  readonly hidden?: boolean;
 }
 
 type LungeState = 'pace' | 'mark' | 'charge' | 'recover';
@@ -71,9 +75,11 @@ export class Chase extends BaseMechanic {
   private paceDir = 1;
   private readonly mark: Phaser.GameObjects.Graphics;
   private touchCooldown = 0;
+  private scripted: Waiter<'done'> | null = null;
+  private lunges = 0;
 
   constructor(ctx: MechanicContext, cfg: ChaseConfig) {
-    super('chase', ctx);
+    super('chase', ctx, cfg);
     this.cfg = cfg;
     this.mode = cfg.mode;
     if (cfg.escapedEvent) this.emits = [cfg.escapedEvent];
@@ -102,21 +108,22 @@ export class Chase extends BaseMechanic {
       );
     }
     this.mark = this.own(this.scene.add.graphics().setDepth(DEPTH.groundDecor + 2));
+    if (cfg.hidden) {
+      this.show(false);
+      this.enabled = false;
+    }
   }
 
-  private get now(): number {
-    return this.w?.now() ?? 0;
-  }
 
   private slowed(): number {
     const stilled = this.w?.stilled() ?? false;
-    return this.now < this.slowUntil || stilled ? 0.35 : 1;
+    return this.now() < this.slowUntil || stilled ? 0.35 : 1;
   }
 
-  override update(dt: number): void {
+  protected override step(dt: number): void {
     if (!this.w) return;
     this.touchCooldown = Math.max(0, this.touchCooldown - dt);
-    if (this.now < this.stunnedUntil) {
+    if (this.now() < this.stunnedUntil) {
       this.beast?.actor.playIdle();
       return;
     }
@@ -149,7 +156,7 @@ export class Chase extends BaseMechanic {
     }
     if (this.shadow) {
       this.shadow.setPosition(x, y - 10);
-      this.shadow.setDisplaySize(90 + Math.sin(this.now / 200) * 8, 60 + Math.cos(this.now / 260) * 6);
+      this.shadow.setDisplaySize(90 + Math.sin(this.now() / 200) * 8, 60 + Math.cos(this.now() / 260) * 6);
     }
   }
 
@@ -228,19 +235,13 @@ export class Chase extends BaseMechanic {
           nx = this.pos.x + this.paceDir * step;
         }
         this.moveBeast(nx, this.pos.y);
-        if (this.stateMs <= 0 && w.playable() && dist(this.pos.x, this.pos.y, p.x, p.y) < 200) {
-          this.state = 'mark';
-          this.stateMs = tele;
-          this.lungeDir = normalize(p.x - this.pos.x, p.y - this.pos.y);
-          this.beast?.actor.face(this.lungeDir.x < 0 ? 'left' : 'right');
-          this.beast?.actor.pose(`${this.lungeDir.x < 0 ? 'left' : 'right'}-lunge`);
-        }
+        if (this.cfg.auto !== false && this.stateMs <= 0 && w.playable() && dist(this.pos.x, this.pos.y, p.x, p.y) < 200) this.beginLunge(tele);
         break;
       }
       case 'mark': {
         // The charge's line shows in the dust a moment before (inf01 s4).
         this.mark.clear();
-        this.mark.lineStyle(2, 0xd8ccb0, 0.25 + 0.35 * Math.abs(Math.sin(this.now / 90)));
+        this.mark.lineStyle(2, 0xd8ccb0, 0.25 + 0.35 * Math.abs(Math.sin(this.now() / 90)));
         this.mark.lineBetween(this.pos.x, this.pos.y - 2, this.pos.x + this.lungeDir.x * lungeSpeed * (lungeMs / 1000), this.pos.y - 2 + this.lungeDir.y * lungeSpeed * (lungeMs / 1000));
         if (this.stateMs <= 0) {
           this.mark.clear();
@@ -267,23 +268,69 @@ export class Chase extends BaseMechanic {
         if (this.stateMs <= 0) {
           this.state = 'pace';
           this.stateMs = every;
+          if (this.scripted) {
+            this.scripted.finish('done');
+            this.scripted = null;
+          }
         }
         break;
       }
     }
   }
 
+  private beginLunge(teleMs: number): void {
+    const p = this.level.player;
+    this.state = 'mark';
+    this.stateMs = teleMs;
+    this.lunges += 1;
+    this.lungeDir = normalize(p.x - this.pos.x, p.y - this.pos.y);
+    this.beast?.actor.face(this.lungeDir.x < 0 ? 'left' : 'right');
+    this.beast?.actor.pose(`${this.lungeDir.x < 0 ? 'left' : 'right'}-lunge`);
+  }
+
+  /** lunge mode: mark the line now and charge once; resolves when the beast has recovered. Always settles. */
+  lungeOnce(): Promise<void> {
+    if (this.mode !== 'lunge') return Promise.resolve();
+    if (this.scripted) return this.scripted.promise.then(() => undefined);
+    const tele = num(this.cfg.telegraphMs, 700);
+    const waiter = this.moment<'done'>(tele + num(this.cfg.lungeMs, 650) + 900 + 4000);
+    this.scripted = waiter;
+    this.enabled = true;
+    this.stunnedUntil = 0;
+    this.beginLunge(tele);
+    return waiter.promise.then(() => {
+      if (this.scripted === waiter) this.scripted = null;
+    });
+  }
+
+  /** Show or hide the beast (or the creeping shadow) without stopping the mechanic. */
+  show(on: boolean): void {
+    this.beast?.setVisible(on);
+    this.shadow?.setVisible(on);
+    if (!on) this.mark.clear();
+  }
+
+  /** Charges so far. */
+  get lungeCount(): number {
+    return this.lunges;
+  }
+
+  /** Move the beast (scripted: a level places it, the mechanic keeps it there). */
+  placeAt(x: number, y: number): void {
+    this.moveBeast(x, y);
+  }
+
   override onVerse(cast: VerseCast): void {
     const near = dist(cast.x, cast.y, this.pos.x, this.pos.y) < 70 * Math.max(1, cast.power);
     if (cast.category === 'Force' && near) {
-      this.stunnedUntil = this.now + 1800 * cast.power;
+      this.stunnedUntil = this.now() + 1800 * cast.power;
       const away = normalize(this.pos.x - cast.x, this.pos.y - cast.y);
       this.moveBeast(this.pos.x + away.x * 26, this.pos.y + away.y * 26);
       this.state = 'recover';
       this.stateMs = 1200;
       this.mark.clear();
     } else if (cast.category === 'Still') {
-      this.slowUntil = this.now + 4000 * cast.power;
+      this.slowUntil = this.now() + 4000 * cast.power;
     }
   }
 
@@ -292,6 +339,10 @@ export class Chase extends BaseMechanic {
     this.enabled = false;
     this.mark.clear();
     this.beast?.actor.playIdle();
+    if (this.scripted) {
+      this.scripted.finish('done');
+      this.scripted = null;
+    }
   }
 
   override onRespawn(): void {

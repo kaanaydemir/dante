@@ -12,11 +12,12 @@ import type * as Phaser from 'phaser';
 import { DEPTH, GAME_HEIGHT, GAME_WIDTH, RESOURCES, TIMINGS } from '../../config';
 import type { BeatMode, WordName } from '../../story/types';
 import type { GameStateView } from '../../runtime/contracts';
-import { iconTexture } from '../art/textures';
+import { fadeBarTexture, iconTexture } from '../art/textures';
 import { uiContext } from '../context';
 import { scalePose, segments } from '../models/hud';
 import { addText, destroy } from '../phaser/helpers';
 import { textStyle } from '../theme';
+import { uiRouter } from '../router';
 import { promptRow } from './keycap';
 import { keyLabel } from './VerseBubble';
 
@@ -47,14 +48,14 @@ export class Hud {
   private justice = 0;
   private mode: BeatMode | null = null;
   private hintOn = false;
+  private askBox: { x0: number; y0: number; x1: number; y1: number } | null = null;
 
   constructor(private readonly scene: Phaser.Scene) {
     const theme = uiContext().theme();
     const c = theme.colors;
     this.root = scene.add.container(0, 0).setDepth(DEPTH.hud);
-    // A soft shade behind the top corners keeps the HUD legible over bright scenes.
-    const shadeL = scene.add.rectangle(0, 0, 420, 96, 0x000000, 0.28).setOrigin(0, 0);
-    const shadeR = scene.add.rectangle(GAME_WIDTH, 0, 420, 86, 0x000000, 0.28).setOrigin(1, 0);
+    // A soft shade along the top keeps the HUD legible over bright scenes (no hard edges).
+    const shade = scene.add.image(0, 0, fadeBarTexture(scene, 0x000000, 128)).setOrigin(0, 0).setDisplaySize(GAME_WIDTH, 120).setAlpha(0.5);
     this.flame = scene.add.image(34, 32, iconTexture(scene, 'flame', c.resolve, c.ink, 36));
     this.drop = scene.add.image(34, 68, iconTexture(scene, 'drop', c.grace, c.ink, 30));
     this.bars = scene.add.graphics();
@@ -66,7 +67,12 @@ export class Hud {
     this.book = scene.add.image(BOOK_ICON.x, BOOK_ICON.y, iconTexture(scene, 'book', c.rubric, c.ink, 44));
     this.verse = addText(scene, BOOK_ICON.x - 70, BOOK_ICON.y, '', textStyle(theme, 'citation', { italic: true, color: c.goldBright, shadow: true }));
     this.verse.setOrigin(1, 0.5);
-    this.root.add([shadeL, shadeR, this.flame, this.drop, this.bars, this.scaleG, this.place, this.canto, this.book, this.verse]);
+    this.root.add([shade, this.flame, this.drop, this.bars, this.scaleG, this.place, this.canto, this.book, this.verse]);
+    // The Book icon opens the Book with a click, like Tab.
+    this.book.setInteractive({ useHandCursor: true });
+    this.book.on('pointerdown', () => {
+      if (this.shown) uiRouter()?.inject('book');
+    });
     this.buildBookKey();
     this.scene.tweens.add({ targets: this.flame, scaleY: 1.06, scaleX: 0.96, yoyo: true, repeat: -1, duration: 520, ease: 'Sine.easeInOut' });
   }
@@ -83,6 +89,8 @@ export class Hud {
   setCanto(location: string, label: string): void {
     this.place.setText(location);
     this.canto.setText(label);
+    // The numeral sits under the place name at every text size.
+    this.canto.setY(this.place.y + Math.max(34, this.place.height - 4));
   }
 
   update(state: GameStateView): void {
@@ -214,24 +222,52 @@ export class Hud {
     this.hintOn = available;
     destroy(this.ask);
     this.ask = null;
+    this.askBox = null;
     if (!available) return;
     const row = promptRow(this.scene, [keyLabel('askVirgil')], 'Ask Virgil', { italic: true, bookFace: true });
-    row.node.setPosition(22, GAME_HEIGHT - 34);
-    this.root.add(row.node);
-    this.ask = row.node;
-    row.node.setAlpha(0);
-    this.scene.tweens.add({ targets: row.node, alpha: 0.9, duration: 400 });
+    const x = 22;
+    const y = GAME_HEIGHT - 34;
+    row.node.setPosition(x, y);
+    // Clicking the prompt asks, like Q.
+    const zone = this.scene.add.zone(x - 4, y - 20, row.width + 8, 40).setOrigin(0, 0).setInteractive({ useHandCursor: true });
+    zone.on('pointerdown', () => {
+      if (this.shown) uiRouter()?.inject('askVirgil');
+    });
+    const holder = this.scene.add.container(0, 0, [row.node, zone]);
+    this.root.add(holder);
+    this.ask = holder;
+    this.askBox = { x0: x - 4, y0: y - 20, x1: x + row.width + 4, y1: y + 20 };
+    holder.setAlpha(0);
+    this.scene.tweens.add({ targets: holder, alpha: 0.9, duration: 400 });
   }
 
-  /** Cinematic and page modes quiet the HUD. */
+  /** The HUD is on screen (not stepped away for the book's pages). */
+  private get shown(): boolean {
+    return this.root.visible && this.root.alpha > 0.2;
+  }
+
+  /** A click here belongs to a HUD control (the Book icon, Ask Virgil), not to the text on screen. */
+  hitTest(x: number, y: number): boolean {
+    if (!this.shown) return false;
+    if (Math.hypot(x - BOOK_ICON.x, y - BOOK_ICON.y) < 30) return true;
+    const a = this.askBox;
+    return this.ask !== null && a !== null && x >= a.x0 && x <= a.x1 && y >= a.y0 && y <= a.y1;
+  }
+
+  /** Cinematic mode quiets the HUD; on the book's pages (page, colophon) it steps away. */
   setMode(mode: BeatMode): void {
     this.mode = mode;
-    const alpha = mode === 'play' ? 1 : mode === 'dialogue' ? 0.75 : 0.35;
+    const alpha = mode === 'play' ? 1 : mode === 'dialogue' ? 0.75 : mode === 'cinematic' ? 0.35 : 0;
+    this.scene.tweens.killTweensOf(this.root);
     this.scene.tweens.add({ targets: this.root, alpha, duration: 300 });
   }
 
   get currentMode(): BeatMode | null {
     return this.mode;
+  }
+
+  get hintShown(): boolean {
+    return this.hintOn;
   }
 
   setVisible(v: boolean): void {

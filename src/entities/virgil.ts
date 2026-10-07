@@ -11,7 +11,8 @@
 import type * as Phaser from 'phaser';
 import { TRUST, VIRGIL } from '../config';
 import { dist } from '../world/geometry';
-import { followStep, Trail } from '../world/follow';
+import { followStep, leadStep, Trail } from '../world/follow';
+import type { Vec } from '../world/geometry';
 import { Actor } from './actor';
 
 export type CompanionMode = 'follow' | 'hold' | 'wait';
@@ -25,6 +26,9 @@ export class Companion {
   private bench: { x: number; y: number } | null = null;
   private gestureMs = 0;
   private present = true;
+  /** Waypoints while he leads the way (empty: he follows). */
+  private leadPath: Vec[] = [];
+  private leadWaiting = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.actor = new Actor(scene, {
@@ -64,6 +68,16 @@ export class Companion {
   clearBench(): void {
     this.bench = null;
     if (this.mode === 'wait') this.mode = 'follow';
+  }
+
+  /** Lead the way along `waypoints` (the last is where the story waits); null: follow again. */
+  lead(waypoints: readonly Vec[] | null): void {
+    this.leadPath = waypoints ? waypoints.map((p) => ({ x: p.x, y: p.y })) : [];
+    this.leadWaiting = false;
+  }
+
+  get leading(): boolean {
+    return this.leadPath.length > 0;
   }
 
   /** Trust shown by posture: a nod when it grows, a turn away when it falls. */
@@ -126,6 +140,20 @@ export class Companion {
         a.poseLocked = false;
         a.playIdle();
       }
+    }
+
+    if (this.leadPath.length > 0) {
+      const lead = leadStep({ companion: { x: a.x, y: a.y }, player: { x: player.x, y: player.y }, waypoints: this.leadPath, waiting: this.leadWaiting });
+      if (lead.reached > 0) this.leadPath.splice(0, lead.reached);
+      this.leadWaiting = lead.waiting;
+      if (lead.target) this.stepToward(lead.target.x, lead.target.y, dt, lead.speedFactor);
+      else if (this.gestureMs <= 0) {
+        a.poseLocked = false;
+        a.faceToward(player.x, player.y);
+        a.playIdle();
+      }
+      a.sync();
+      return;
     }
 
     const step = followStep({

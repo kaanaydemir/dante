@@ -55,31 +55,26 @@ export class RevealCardView {
     const theme = uiContext().theme();
     const c = theme.colors;
     const x = theme.extra;
-    const verseStyle = textStyle(theme, 'verse', { color: c.verseText });
-    const noteStyle = textStyle(theme, 'body', { color: x.cardText });
-    const kickerStyle = textStyle(theme, 'citation', { color: x.verseSoft, letterSpacing: 2 });
     const as = card.heading === 'As Dante did';
-    const headStyle = textStyle(theme, 'heading', { color: as ? c.goldBright : 0xd9826e });
-    const chosenStyle = textStyle(theme, 'citation', { italic: true, color: x.dim });
-    const citeStyle = textStyle(theme, 'citation', { italic: true, color: x.verseSoft });
-    const vpx = theme.size('verse');
-    // Width from the longest verse line.
-    const allLines = card.quotes.flatMap((q) => [...q.lines]);
-    const vm = measureVerseLines(allLines, { maxWidth: MAX_W - PAD * 2, style: verseStyle, px: vpx });
-    const w = Math.max(MIN_W, Math.min(MAX_W, Math.ceil(vm.width) + PAD * 2 + 10));
-    const inner = w - PAD * 2;
-    const noteLines = wrapText(card.note, inner, measurer(noteStyle));
-    const chosen = `You: ${unquote(card.chosenText)}`;
-    const chosenLines = wrapText(chosen, inner, measurer(chosenStyle));
-    const nlh = lineHeight(theme.size('body'));
-    const clh = lineHeight(theme.size('citation'));
-    let h = PAD + clh + theme.size('heading') + 14 + chosenLines.length * clh + 18;
-    for (const q of card.quotes) {
-      h += measureVerseLines(q.lines, { maxWidth: inner, style: verseStyle, px: vpx }).height + clh + 10;
+    // At large text sizes a six-line card can outgrow the screen: its type steps down
+    // (never below 20 px) until it fits.
+    let k = 1;
+    let L = this.layout(card, k);
+    while (L.h > GAME_HEIGHT - 40 && L.px.verse > 20 && L.px.body > 20 && k > 0.6) {
+      k -= 0.05;
+      L = this.layout(card, k);
     }
-    h += 22 + noteLines.length * nlh + 50 + PAD;
-    const panel = panelTexture(this.scene, 'card', w, h, theme);
-    const top = Math.max(70, Math.round(GAME_HEIGHT / 2 - panel.h / 2));
+    const { px, w, inner, noteLines, chosenLines, nlh, clh } = L;
+    const verseStyle = textStyle(theme, 'verse', { px: px.verse, color: c.verseText });
+    const noteStyle = textStyle(theme, 'body', { px: px.body, color: x.cardText });
+    const kickerStyle = textStyle(theme, 'citation', { px: px.cite, color: x.verseSoft, letterSpacing: 2 });
+    const headStyle = textStyle(theme, 'heading', { px: px.heading, color: as ? c.goldBright : 0xd9826e });
+    const chosenStyle = textStyle(theme, 'citation', { px: px.cite, italic: true, color: x.dim });
+    const citeStyle = textStyle(theme, 'citation', { px: px.cite, italic: true, color: x.verseSoft });
+    const panel = panelTexture(this.scene, 'card', w, L.h, theme);
+    // Centred, clear of the HUD when there is room for it.
+    const centred = Math.round(GAME_HEIGHT / 2 - panel.h / 2);
+    const top = panel.h <= GAME_HEIGHT - 90 ? Math.max(70, centred) : Math.max(20, centred);
     const cx = opts.centerX ?? RIGHT - panel.w / 2;
     const root = this.scene.add.container(cx, top).setDepth(this.depth);
     root.add(this.scene.add.image(0, 0, panel.key).setOrigin(0.5, 0));
@@ -90,8 +85,8 @@ export class RevealCardView {
     y += clh + 2;
     const head = addText(this.scene, left, y, card.heading, headStyle);
     root.add(head);
-    y += theme.size('heading') + 10;
-    const ch = addText(this.scene, left, y, chosenLines.join('\n'), { ...chosenStyle, lineSpacing: clh - theme.size('citation') });
+    y += px.heading + 10;
+    const ch = addText(this.scene, left, y, chosenLines.join('\n'), { ...chosenStyle, lineSpacing: clh - px.cite });
     root.add(ch);
     y += chosenLines.length * clh + 14;
     this.words = [];
@@ -101,7 +96,7 @@ export class RevealCardView {
         y,
         maxWidth: inner,
         style: verseStyle,
-        px: vpx,
+        px: px.verse,
         collectible: q.collectible,
         ...(opts.taken ? { taken: opts.taken } : {}),
       });
@@ -116,7 +111,7 @@ export class RevealCardView {
     rule.lineBetween(left, y + 4, panel.w / 2 - PAD, y + 4);
     root.add(rule);
     y += 18;
-    const note = addText(this.scene, left, y, noteLines.join('\n'), { ...noteStyle, lineSpacing: nlh - theme.size('body') });
+    const note = addText(this.scene, left, y, noteLines.join('\n'), { ...noteStyle, lineSpacing: nlh - px.body });
     root.add(note);
     const footY = panel.h - PAD + 2;
     if (this.words.length > 0) {
@@ -134,6 +129,40 @@ export class RevealCardView {
     root.setAlpha(0);
     root.x = cx + 60;
     this.scene.tweens.add({ targets: root, alpha: 1, x: cx, duration: 360, ease: 'Cubic.easeOut' });
+  }
+
+  /** Sizes and wrapped text of a card at type factor `k` (1 = the reader's size). */
+  private layout(card: RevealCard, k: number): {
+    px: { verse: number; body: number; cite: number; heading: number };
+    w: number;
+    h: number;
+    inner: number;
+    noteLines: string[];
+    chosenLines: string[];
+    nlh: number;
+    clh: number;
+  } {
+    const theme = uiContext().theme();
+    const at = (kind: 'verse' | 'body' | 'citation' | 'heading'): number => Math.max(20, Math.round(theme.size(kind) * k));
+    const px = { verse: at('verse'), body: at('body'), cite: at('citation'), heading: at('heading') };
+    const verseStyle = textStyle(theme, 'verse', { px: px.verse });
+    const noteStyle = textStyle(theme, 'body', { px: px.body });
+    const chosenStyle = textStyle(theme, 'citation', { px: px.cite, italic: true });
+    // Width from the longest verse line.
+    const allLines = card.quotes.flatMap((q) => [...q.lines]);
+    const vm = measureVerseLines(allLines, { maxWidth: MAX_W - PAD * 2, style: verseStyle, px: px.verse });
+    const w = Math.max(MIN_W, Math.min(MAX_W, Math.ceil(vm.width) + PAD * 2 + 10));
+    const inner = w - PAD * 2;
+    const noteLines = wrapText(card.note, inner, measurer(noteStyle));
+    const chosenLines = wrapText(`You: ${unquote(card.chosenText)}`, inner, measurer(chosenStyle));
+    const nlh = lineHeight(px.body);
+    const clh = lineHeight(px.cite);
+    let h = PAD + clh + px.heading + 14 + chosenLines.length * clh + 18;
+    for (const q of card.quotes) {
+      h += measureVerseLines(q.lines, { maxWidth: inner, style: verseStyle, px: px.verse }).height + clh + 10;
+    }
+    h += 22 + noteLines.length * nlh + 50 + PAD;
+    return { px, w, h, inner, noteLines, chosenLines, nlh, clh };
   }
 
   /** The word leaves the card (its flight starts from wordAnchor). */

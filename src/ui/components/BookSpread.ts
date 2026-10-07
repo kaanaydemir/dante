@@ -28,7 +28,22 @@ export const PAGE = {
   right: { x0: 676, x1: 1192, y0: 70, y1: 632 },
 } as const;
 
+/** Where the paper of the open spread begins and ends (the painted texture's page block). */
+export const PAPER_TOP = (GAME_HEIGHT - SPREAD_H) / 2 + 26;
+export const PAPER_BOTTOM = (GAME_HEIGHT + SPREAD_H) / 2 - 26;
+
 export type PageSide = 'left' | 'right';
+
+/** The canto that follows a chapter: its page is turned, and it is still being written. */
+export interface ComingCanto {
+  readonly canticleLabel: string;
+  /** `CANTO VI` */
+  readonly cantoLabel: string;
+  /** Its first lines (the waking of VI 1–3 after Chapter 1). */
+  readonly lines: readonly string[];
+  readonly citation: string;
+  readonly message: string;
+}
 
 /** Engraving ink and paper (config palette ink / paper). */
 export const ENGRAVING = { ink: 0x15130f, paper: 0xe6dcc3 } as const;
@@ -179,13 +194,20 @@ export class BookSpread {
     this.turnPrompt = null;
   }
 
-  /** Small running heads at the top of each page. */
+  /** Small running heads at the top of each page (inside the paper, above the text block). */
   folios(left: string, right: string): void {
     const theme = uiContext().theme();
     const style = textStyle(theme, 'citation', { color: theme.extra.inkFaint, letterSpacing: 3 });
-    const l = addText(this.scene, (PAGE.left.x0 + PAGE.left.x1) / 2, PAGE.left.y0 - 34, left, style).setOrigin(0.5, 0);
-    const r = addText(this.scene, (PAGE.right.x0 + PAGE.right.x1) / 2, PAGE.right.y0 - 34, right, style).setOrigin(0.5, 0);
-    this.chrome.add([l, r]);
+    const place = (side: PageSide, label: string): void => {
+      if (!label) return;
+      const box = PAGE[side];
+      const t = addText(this.scene, (box.x0 + box.x1) / 2, 0, label, style).setOrigin(0.5, 0);
+      // The paper starts at y ≈ 41; the running head sits between it and the text block.
+      t.setY(Math.max(PAPER_TOP + 4, box.y0 - t.height - 2));
+      this.chrome.add(t);
+    };
+    place('left', left);
+    place('right', right);
   }
 
   // -------------------------------------------------------------------------
@@ -200,21 +222,7 @@ export class BookSpread {
     const L = PAGE.left;
     const cx = (L.x0 + L.x1) / 2;
     this.text('left', cx, L.y0 + 20, spec.canticleLabel.split('').join(' '), textStyle(theme, 'citation', { color: c.inkSoft, letterSpacing: 4 })).setOrigin(0.5, 0);
-    // Illuminated numeral: a drop-cap box with the C, then "ANTO III".
-    const capPx = Math.round(theme.size('title') * 1.05);
-    const box = Math.round(capPx * 1.25);
-    const label = spec.cantoLabel;
-    const restStyle = textStyle(theme, 'title', { px: Math.round(capPx * 0.8), color: c.rubric });
-    const rest = label.slice(1);
-    const restW = measurer(restStyle)(rest);
-    const total = box + 10 + restW;
-    const startX = cx - total / 2;
-    const y = L.y0 + 74;
-    const illum = this.scene.add.image(startX + box / 2, y + box / 2, illuminatedTexture(this.scene, box, 0x23406e, c.gold, 0xf4ecd8));
-    this.left.add(illum);
-    this.text('left', startX + box / 2, y + box / 2 + 2, label[0] ?? 'C', textStyle(theme, 'title', { px: capPx, color: c.goldBright, shadow: true })).setOrigin(0.5, 0.5);
-    this.text('left', startX + box + 10, y + box / 2 + 4, rest, restStyle).setOrigin(0, 0.5);
-    const titleY = y + box + 22;
+    const titleY = this.illuminatedLabel(cx, L.y0 + 74, spec.cantoLabel) + 22;
     this.text('left', cx, titleY, spec.canto.title, textStyle(theme, 'heading', { italic: true, color: c.ink })).setOrigin(0.5, 0);
     // Vignette 96×64 ×3
     const vy = titleY + theme.size('heading') + 30;
@@ -255,10 +263,81 @@ export class BookSpread {
       });
       epigraph = rendered.nodes;
       words.push(...rendered.words);
-      this.text('right', Math.min(R.x1, lx + Math.max(widest, 200)), top + rendered.height + 14, q.citationText, textStyle(theme, 'citation', { italic: true, color: c.inkSoft })).setOrigin(1, 0);
+      const cite = this.text('right', Math.min(R.x1, lx + Math.max(widest, 200)), top + rendered.height + 14, q.citationText, textStyle(theme, 'citation', { italic: true, color: c.inkSoft })).setOrigin(1, 0);
+      // The citation arrives with the last line (it is never hidden once the verse is there).
+      const last = epigraph[epigraph.length - 1];
+      if (last) {
+        cite.setAlpha(0);
+        last.push(cite);
+      }
     }
     this.flowWords = words;
     return { vignette, epigraph, words };
+  }
+
+  /**
+   * "CANTO III" with an illuminated drop cap (a gilt C on a blue field), centred
+   * at `cx` on the left page, top at `y`. Returns the bottom y.
+   */
+  private illuminatedLabel(cx: number, y: number, label: string): number {
+    const theme = uiContext().theme();
+    const c = theme.colors;
+    const capPx = Math.round(theme.size('title') * 1.05);
+    const box = Math.round(capPx * 1.25);
+    const restStyle = textStyle(theme, 'title', { px: Math.round(capPx * 0.8), color: c.rubric });
+    const rest = label.slice(1);
+    const restW = measurer(restStyle)(rest);
+    const total = box + 10 + restW;
+    const startX = cx - total / 2;
+    const illum = this.scene.add.image(startX + box / 2, y + box / 2, illuminatedTexture(this.scene, box, 0x23406e, c.gold, 0xf4ecd8));
+    this.left.add(illum);
+    this.text('left', startX + box / 2, y + box / 2 + 2, label[0] ?? 'C', textStyle(theme, 'title', { px: capPx, color: c.goldBright, shadow: true })).setOrigin(0.5, 0.5);
+    this.text('left', startX + box + 10, y + box / 2 + 4, rest, restStyle).setOrigin(0, 0.5);
+    return y + box;
+  }
+
+  // -------------------------------------------------------------------------
+  // The next canto, after a chapter's last page (bible §7.5)
+  // -------------------------------------------------------------------------
+
+  /** Left: INFERNO, the illuminated numeral, "still being written". Right: the canto's first lines. */
+  layoutComing(spec: ComingCanto): void {
+    const theme = uiContext().theme();
+    const c = theme.colors;
+    const L = PAGE.left;
+    const R = PAGE.right;
+    const cx = (L.x0 + L.x1) / 2;
+    this.text('left', cx, L.y0 + 20, spec.canticleLabel.split('').join(' '), textStyle(theme, 'citation', { color: c.inkSoft, letterSpacing: 4 })).setOrigin(0.5, 0);
+    const bottom = this.illuminatedLabel(cx, L.y0 + 74, spec.cantoLabel);
+    this.ornament('left', bottom + 40);
+    this.text('left', cx, bottom + 70, spec.message, textStyle(theme, 'pageText', { italic: true, color: c.inkSoft, align: 'center', wrap: L.x1 - L.x0 - 40 })).setOrigin(0.5, 0);
+    // A few empty ruled lines: the page waiting for its words.
+    const g = this.scene.add.graphics();
+    g.lineStyle(1, theme.extra.inkFaint, 0.35);
+    for (let i = 0; i < 5; i++) {
+      const y = bottom + 190 + i * 34;
+      if (y > L.y1 - 10) break;
+      g.lineBetween(L.x0 + 40, y, L.x1 - 40, y);
+    }
+    this.left.add(g);
+    if (spec.lines.length === 0) return;
+    // The first lines of the next canto, as large as fits (never below 20 px).
+    let vpx = Math.round(theme.size('verse') * 1.08);
+    let style = textStyle(theme, 'verse', { px: vpx, color: c.ink });
+    const widest = (): number => Math.max(...spec.lines.map((l) => measurer(style)(l)));
+    while (vpx > 20 && widest() > R.x1 - R.x0) {
+      vpx -= 1;
+      style = textStyle(theme, 'verse', { px: vpx, color: c.ink });
+    }
+    const lh = lineHeight(vpx, 'verse');
+    const top = Math.round((R.y0 + R.y1) / 2 - (spec.lines.length * lh + 50) / 2) - 20;
+    const w = widest();
+    const lx = Math.max(R.x0, Math.round((R.x0 + R.x1) / 2 - w / 2));
+    const rendered = renderVerseLines(this.scene, this.right, spec.lines, { x: lx, y: top, maxWidth: R.x1 - lx, style, px: vpx, startHidden: true });
+    this.text('right', Math.min(R.x1, lx + Math.max(w, 200)), top + rendered.height + 14, spec.citation, textStyle(theme, 'citation', { italic: true, color: c.inkSoft })).setOrigin(1, 0);
+    rendered.nodes.forEach((nodes, k) => {
+      for (const n of nodes) this.scene.tweens.add({ targets: n, alpha: 1, duration: 600, delay: 300 + k * TIMINGS.verseLineIntervalMs });
+    });
   }
 
   // -------------------------------------------------------------------------
@@ -447,8 +526,14 @@ export class BookSpread {
       onPaper: true,
     });
     this.flowY += rendered.height + 2;
-    const cite = sliceCitation(spec.citation, spec.citationText, spec.lineNumbers, 0, spec.lines.length);
-    this.text('right', PAGE.right.x1, this.flowY, cite, textStyle(theme, 'citation', { italic: true, color: c.inkSoft })).setOrigin(1, 0);
+    const citeText = sliceCitation(spec.citation, spec.citationText, spec.lineNumbers, 0, spec.lines.length);
+    const cite = this.text('right', PAGE.right.x1, this.flowY, citeText, textStyle(theme, 'citation', { italic: true, color: c.inkSoft })).setOrigin(1, 0);
+    // The citation comes with the last line.
+    const last = rendered.nodes[rendered.nodes.length - 1];
+    if (last) {
+      cite.setAlpha(0);
+      last.push(cite);
+    }
     this.flowY += theme.size('citation') + 22;
     this.flowWords.push(...rendered.words);
     return { lines: rendered.nodes, words: rendered.words };

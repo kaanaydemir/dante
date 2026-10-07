@@ -118,3 +118,73 @@ export function followStep(input: FollowInput): FollowStep {
   const d = dist(companion.x, companion.y, behind.x, behind.y);
   return { target: d > 3 ? behind : null, speedFactor: hurry, teleport: false };
 }
+
+// ---------------------------------------------------------------------------
+// Leading the way (Virgil walks ahead to where the story waits)
+// ---------------------------------------------------------------------------
+
+/** Virgil stops to wait when Dante is farther behind than this (px)… */
+export const LEAD_WAIT = 96;
+/** …and walks on once Dante has come this close again. */
+export const LEAD_RESUME = 60;
+/** A waypoint counts as reached within this distance (px). */
+export const LEAD_REACHED = 6;
+
+export interface LeadInput {
+  readonly companion: Vec;
+  readonly player: Vec;
+  /** Remaining waypoints; the last one is the destination. */
+  readonly waypoints: readonly Vec[];
+  /** Was he waiting for Dante in the last step (hysteresis)? */
+  readonly waiting: boolean;
+}
+
+export interface LeadStep {
+  /** Where to walk now, or null to stand (arrived, or waiting for Dante). */
+  readonly target: Vec | null;
+  readonly speedFactor: number;
+  /** How many leading waypoints are behind him now (drop them). */
+  readonly reached: number;
+  readonly waiting: boolean;
+  readonly arrived: boolean;
+}
+
+/**
+ * One step of leading: walk the waypoints toward the destination, a little
+ * ahead of Dante; stop and wait when he falls behind; hurry when he is ahead.
+ */
+export function leadStep(input: LeadInput): LeadStep {
+  const { companion, player } = input;
+  let reached = 0;
+  while (reached < input.waypoints.length - 1) {
+    const w = input.waypoints[reached] as Vec;
+    if (dist(companion.x, companion.y, w.x, w.y) > LEAD_REACHED) break;
+    reached += 1;
+  }
+  const rest = input.waypoints.slice(reached);
+  const dest = rest[rest.length - 1];
+  const next = rest[0];
+  if (!dest || !next) return { target: null, speedFactor: 1, reached, waiting: false, arrived: true };
+  if (rest.length === 1 && dist(companion.x, companion.y, dest.x, dest.y) <= LEAD_REACHED) {
+    return { target: null, speedFactor: 1, reached, waiting: false, arrived: true };
+  }
+  const gap = dist(companion.x, companion.y, player.x, player.y);
+  const playerAhead = dist(player.x, player.y, dest.x, dest.y) + 24 < dist(companion.x, companion.y, dest.x, dest.y);
+  if (playerAhead) return { target: next, speedFactor: gap > VIRGIL.leash ? 1.9 : 1.4, reached, waiting: false, arrived: false };
+  const waiting = input.waiting ? gap > LEAD_RESUME : gap > LEAD_WAIT;
+  if (waiting) return { target: null, speedFactor: 1, reached, waiting: true, arrived: false };
+  return { target: next, speedFactor: 1, reached, waiting: false, arrived: false };
+}
+
+/**
+ * Waypoints from `from` to `to` along a level's spine (`path`): the spine's
+ * vertices that lie between them (in the direction of travel), then `to`.
+ * Without a spine, a straight line.
+ */
+export function leadWaypoints(from: Vec, to: Vec, path: readonly Vec[] | null): Vec[] {
+  if (!path || path.length < 2) return [to];
+  const forward = to.x >= from.x;
+  const between = path.filter((p) => (forward ? p.x > from.x + LEAD_REACHED && p.x < to.x : p.x < from.x - LEAD_REACHED && p.x > to.x));
+  between.sort((a, b) => (forward ? a.x - b.x : b.x - a.x));
+  return [...between, to];
+}

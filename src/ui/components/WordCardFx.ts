@@ -54,16 +54,19 @@ export class WordCardFx {
     const sealed = change.change === 'sealed';
     const shed = change.change === 'shed';
     const nameColor = burden ? x.burden : sealed ? x.dim : x.glow;
-    const kicker = CHANGE_COPY[change.change];
-    const family = def ? (def.role === 'closer' ? 'closes a verse' : def.role === 'burden' ? 'burden' : `rhymes in ${def.family ?? '—'}`) : '';
-    const category = def ? `${def.category} · ${CATEGORY_COPY[def.category]}` : '';
+    const kicker = burden && change.change === 'gained' ? 'A burden' : CHANGE_COPY[change.change];
+    // A burden has no rhyme and no use: one quiet line says what it does.
+    const family = def && !burden ? (def.role === 'closer' ? 'closes a verse' : `rhymes in ${def.family ?? '—'}`) : '';
+    const category = def ? (burden ? CATEGORY_COPY.Burden : `${def.category} · ${CATEGORY_COPY[def.category]}`) : '';
     const originStyle = textStyle(theme, 'citation', { italic: true, color: c.verseText });
     const inner = CARD_W - PAD * 2;
     const originLines = def ? wrapText(def.origin.text, inner, measurer(originStyle)) : [];
     const descStyle = textStyle(theme, 'citation', { color: x.cardText });
     const descLines = def ? wrapText(def.description, inner, measurer(descStyle)) : [];
     const clh = lineHeight(theme.size('citation'));
-    const h = PAD + clh + theme.size('title') * 0.8 + 16 + clh * 2 + 12 + originLines.length * clh + clh + 10 + descLines.length * clh + PAD;
+    const labelRows = (family ? 1 : 0) + (category ? 1 : 0);
+    const originH = originLines.length > 0 ? originLines.length * clh + clh + 10 : 0;
+    const h = PAD + clh + theme.size('title') * 0.8 + 16 + clh * labelRows + 12 + originH + descLines.length * clh + PAD;
     const panel = panelTexture(this.scene, 'card', CARD_W, h, theme);
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2 - 30;
@@ -78,10 +81,15 @@ export class WordCardFx {
     nameText.setOrigin(0.5, 0);
     root.add(nameText);
     y += theme.size('title') * 0.8 + 16;
-    if (family) root.add(addText(this.scene, 0, y, family, textStyle(theme, 'citation', { italic: true, color: x.verseSoft })).setOrigin(0.5, 0));
-    y += clh;
-    if (category) root.add(addText(this.scene, 0, y, category, textStyle(theme, 'citation', { color: c.goldBright })).setOrigin(0.5, 0));
-    y += clh + 12;
+    if (family) {
+      root.add(addText(this.scene, 0, y, family, textStyle(theme, 'citation', { italic: true, color: x.verseSoft })).setOrigin(0.5, 0));
+      y += clh;
+    }
+    if (category) {
+      root.add(addText(this.scene, 0, y, category, textStyle(theme, 'citation', { color: burden ? x.verseSoft : c.goldBright, italic: burden })).setOrigin(0.5, 0));
+      y += clh;
+    }
+    y += 12;
     if (originLines.length > 0) {
       root.add(addText(this.scene, left, y, originLines.join('\n'), { ...originStyle, lineSpacing: clh - theme.size('citation') }));
       y += originLines.length * clh;

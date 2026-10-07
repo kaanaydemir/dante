@@ -76,10 +76,12 @@ export class UIScene extends Phaser.Scene implements UiSceneApi {
 
   private rebuildHud(): void {
     const mode = this.hud.currentMode;
+    const hint = this.hud.hintShown;
     this.hud.destroy();
     this.hud = new Hud(this);
     this.hud.setCanto(this.cantoLabel.location, this.cantoLabel.label);
     if (mode) this.hud.setMode(mode);
+    this.hud.setHint(hint);
     this.dirty = true;
   }
 

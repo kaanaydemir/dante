@@ -13,11 +13,14 @@ import { CODEX_TABS } from '../../story/types';
 import { formatCitation } from '../../story/cite';
 import { uiContext } from '../context';
 import type { UiAction } from '../inputMap';
-import { CODEX_TAB_LABELS, codexByTab, mapCircles, memoriesOf, REMEMBERED_BY_WORLD, REMEMBRANCE_EPIGRAPH } from '../models/book';
+import { CIRCLES, CODEX_TAB_LABELS, codexByTab, mapCircles, memoriesOf, REMEMBERED_BY_WORLD, REMEMBRANCE_EPIGRAPH } from '../models/book';
+import { GAME_WIDTH } from '../../config';
 import { addText } from '../phaser/helpers';
 import { lineHeight, mixColor, textStyle } from '../theme';
 import type { BookCtx, BookTabView } from './types';
 import { ListView, para, ScrollPage, type ListRow } from './widgets';
+
+const CIRCLES_ROWS = CIRCLES.length;
 
 function quoteLines(q: QuoteStmt | null): string[] {
   return q ? q.lines.map((l) => (l.kind === 'verse' ? l.text : '…')) : [];
@@ -105,28 +108,32 @@ export class CodexTab implements BookTabView {
 
 export class RemembranceTab implements BookTabView {
   readonly capturesHorizontal = false;
+  private readonly leftPage: ScrollPage;
   private readonly page: ScrollPage;
 
   constructor(private readonly ctx: BookCtx) {
     const { scene, root, left, right } = ctx;
     const theme = uiContext().theme();
     const c = theme.colors;
-    // Left: remembered by the world (IV 76–78).
+    // Left: remembered by the world (IV 76–78). Both pages scroll at larger text sizes.
+    this.leftPage = new ScrollPage(scene, left, root);
+    const lp = this.leftPage.content;
     let y = left.y0;
-    y += para(scene, root, left.x0, y, left.x1 - left.x0, 'Remembered by the world', 'heading', { px: Math.round(theme.size('heading') * 0.85), color: c.rubric }).height + 12;
+    y += para(scene, lp, left.x0, y, left.x1 - left.x0, 'Remembered by the world', 'heading', { px: Math.round(theme.size('heading') * 0.85), color: c.rubric }).height + 12;
     const src = ctx.story.source(REMEMBRANCE_EPIGRAPH.canticle, REMEMBRANCE_EPIGRAPH.canto);
     if (src) {
-      for (let n = REMEMBRANCE_EPIGRAPH.first; n <= REMEMBRANCE_EPIGRAPH.last; n++) {
-        y += para(scene, root, left.x0 + 10, y, left.x1 - left.x0 - 10, src.lines[n - 1] ?? '', 'verse', { px: Math.max(20, theme.size('verse') - 2), color: c.ink }).height;
-      }
-      root.add(addText(scene, left.x1, y + 2, formatCitation(REMEMBRANCE_EPIGRAPH.canticle, REMEMBRANCE_EPIGRAPH.canto, REMEMBRANCE_EPIGRAPH.first, REMEMBRANCE_EPIGRAPH.last), textStyle(theme, 'citation', { italic: true, color: c.inkSoft })).setOrigin(1, 0));
+      const lines: string[] = [];
+      for (let n = REMEMBRANCE_EPIGRAPH.first; n <= REMEMBRANCE_EPIGRAPH.last; n++) lines.push(src.lines[n - 1] ?? '');
+      y += para(scene, lp, left.x0 + 10, y, left.x1 - left.x0 - 10, lines.join('\n'), 'verse', { px: Math.max(20, theme.size('verse') - 2), color: c.ink }).height;
+      lp.add(addText(scene, left.x1, y + 2, formatCitation(REMEMBRANCE_EPIGRAPH.canticle, REMEMBRANCE_EPIGRAPH.canto, REMEMBRANCE_EPIGRAPH.first, REMEMBRANCE_EPIGRAPH.last), textStyle(theme, 'citation', { italic: true, color: c.inkSoft })).setOrigin(1, 0));
       y += theme.size('citation') + 22;
     }
     for (const p of REMEMBERED_BY_WORLD) {
-      root.add(addText(scene, left.x0, y, p.name, textStyle(theme, 'body', { color: c.ink })));
+      lp.add(addText(scene, left.x0, y, p.name, textStyle(theme, 'body', { color: c.ink })));
       y += lineHeight(theme.size('body'));
-      y += para(scene, root, left.x0 + 16, y, left.x1 - left.x0 - 16, p.note, 'citation', { italic: true, color: c.inkSoft }).height + 8;
+      y += para(scene, lp, left.x0 + 16, y, left.x1 - left.x0 - 16, p.note, 'citation', { italic: true, color: c.inkSoft }).height + 6;
     }
+    this.leftPage.setHeight(y - left.y0);
     // Right: remembered by you.
     this.page = new ScrollPage(scene, right, root);
     const parent = this.page.content;
@@ -143,20 +150,29 @@ export class RemembranceTab implements BookTabView {
       ry += para(scene, parent, right.x0, ry, right.x1 - right.x0, m.note, 'body', { color: c.ink }).height + 20;
     }
     this.page.setHeight(ry - right.y0 + 10);
-    ctx.footer('PgUp PgDn read', 'Esc close');
+    ctx.footer('▴ ▾ PgUp PgDn read', 'Esc close');
+  }
+
+  private scrollBoth(dy: number): void {
+    this.page.scrollBy(dy);
+    this.leftPage.scrollBy(dy);
   }
 
   onAction(action: UiAction): boolean {
-    if (action === 'pageDown' || action === 'down') return this.page.scrollBy(action === 'down' ? 60 : 400), true;
-    if (action === 'pageUp' || action === 'up') return this.page.scrollBy(action === 'up' ? -60 : -400), true;
+    if (action === 'pageDown' || action === 'down') return this.scrollBoth(action === 'down' ? 60 : 400), true;
+    if (action === 'pageUp' || action === 'up') return this.scrollBoth(action === 'up' ? -60 : -400), true;
     return false;
   }
 
   onWheel(dy: number): void {
-    this.page.scrollBy(dy);
+    // The page under the pointer scrolls.
+    const x = this.ctx.scene.input.activePointer?.x ?? GAME_WIDTH;
+    if (x < GAME_WIDTH / 2) this.leftPage.scrollBy(dy);
+    else this.page.scrollBy(dy);
   }
 
   destroy(): void {
+    this.leftPage.destroy();
     this.page.destroy();
   }
 }
@@ -213,10 +229,12 @@ export class MapTab implements BookTabView {
     // Right page: the legend
     let y = right.y0;
     y += para(scene, root, right.x0, y, right.x1 - right.x0, 'The way down', 'heading', { px: Math.round(theme.size('heading') * 0.85), color: c.rubric }).height + 10;
-    const lh = lineHeight(theme.size('body'));
+    // The legend's eleven rows fit the page at every text size.
+    const legendPx = Math.max(20, Math.min(theme.size('body'), Math.floor((right.y1 - y - 80) / CIRCLES_ROWS / 1.36)));
+    const lh = lineHeight(legendPx);
     for (const circle of circles) {
       const name = circle.named ? `${circle.numeral ? `${circle.numeral} · ` : ''}${circle.name}` : '· · ·';
-      const t = addText(scene, right.x0 + 22, y, name, textStyle(theme, 'body', { color: circle.current ? c.rubric : circle.reached ? c.ink : c.inkSoft, italic: !circle.reached }));
+      const t = addText(scene, right.x0 + 22, y, name, textStyle(theme, 'body', { px: legendPx, color: circle.current ? c.rubric : circle.reached ? c.ink : c.inkSoft, italic: !circle.reached }));
       root.add(t);
       if (circle.reached) {
         const dot = scene.add.graphics();

@@ -17,7 +17,7 @@
 
 import type * as Phaser from 'phaser';
 import { DEPTH, RESOURCES, TIMINGS } from '../config';
-import type { GameStateStore, StoryPresenter } from '../runtime/contracts';
+import type { GameStateStore, StoryPresenter, Tercet } from '../runtime/contracts';
 import { castPlan, evaluateVerse, verseContextOf, type VerseCastStep } from '../verse/tercet';
 import type { Player } from '../entities/player';
 import { facingVector } from '../entities/actor';
@@ -66,7 +66,10 @@ export class VerseCaster {
       this.hint('Compose a verse in the Book (Tab), then cast it with J.');
       return 'none';
     }
-    const evaluation = evaluateVerse(verse, verseContextOf(state));
+    const evaluation = evaluateVerse(
+      { tercets: verse.tercets.map((t) => [t[0] ?? '', t[1] ?? '', t[2] ?? ''] as Tercet), coda: verse.coda },
+      verseContextOf(state),
+    );
     if (!evaluation.valid) {
       this.hint('That verse no longer holds. Compose it again in the Book.');
       return 'invalid';

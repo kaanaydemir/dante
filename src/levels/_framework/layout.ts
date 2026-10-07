@@ -7,10 +7,10 @@
  *   (`inf03_shore` -> shore, `inf01_slope_lower` -> slope).
  * - NPCs: a talkable NPC for every `talk:` speaker in its beat's place (or the
  *   place the player stands in by then, else the next one); silent set
- *   dressing for the front matter's characters in the first scene that
- *   mentions them (crowds for SOUL / NEUTRAL / SHADE).
- * - Virgil: on stage from the first beat that involves him (Canto I keeps
- *   Dante alone until the shade appears).
+ *   dressing for the front matter's characters where the text first shows
+ *   them (crowds for SOUL / NEUTRAL / SHADE).
+ * - Virgil: on stage from the scene in which he first appears (Canto I keeps
+ *   Dante alone until the shade comes).
  * - Scene homes: where to put the player when play starts mid-canto.
  * - Decoration: seeded, themed props that never block the path or a place.
  *
@@ -24,6 +24,7 @@ import {
   SPEAKERS,
   type Beat,
   type BeatId,
+  type CantoId,
   type CantoScript,
   type PlaceId,
   type SceneId,
@@ -61,16 +62,18 @@ export const PLACE_THEMES = [
   'rest',
   'court',
   'brink',
+  'ford',
 ] as const;
 export type PlaceTheme = (typeof PLACE_THEMES)[number];
 
 /** Keyword -> theme, tried in order on the words of a place id (`inf01_slope_lower` -> `slope`). */
 const THEME_KEYWORDS: ReadonlyArray<readonly [RegExp, PlaceTheme]> = [
-  [/^(edge|treeline|outskirts)$/, 'forest_edge'],
+  [/^(treeline|outskirts)$/, 'forest_edge'],
   [/^(wood|woods|forest|grove|thicket|trees|ghosts)$/, 'forest'],
   [/^(glade|clearing)$/, 'clearing'],
   [/^(gate|door|portal|threshold|arch|inscription)$/, 'gate'],
-  [/^(shore|bank|acheron|river|stream|ford|water|beach|strand|landing)$/, 'shore'],
+  [/^(rivulet|brook|rill|ford|moat|streamlet)$/, 'ford'],
+  [/^(shore|bank|acheron|river|stream|water|beach|strand|landing)$/, 'shore'],
   [/^(island|isle)$/, 'island'],
   [/^(castle|wall|walls|keep|tower|towers|fortress|citadel)$/, 'castle'],
   [/^(meadow|green|lawn|field|fields)$/, 'meadow'],
@@ -94,15 +97,23 @@ const CANTO_DEFAULT_THEME: Readonly<Record<string, PlaceTheme>> = {
   inf99: 'forest',
 };
 
-/** The theme of a place id; words are read from the end (the most specific word is usually last). */
+/**
+ * The theme of a place id; words are read from the end (the most specific word
+ * is usually last). `edge` alone says nothing (`inf03_plain_edge` is plain,
+ * `inf05_lee_edge` storm); next to a wood it is the wood's edge.
+ */
 export function themeForPlace(id: PlaceId, cantoId: string): PlaceTheme {
   const words = id
     .toLowerCase()
     .split('_')
     .slice(1)
     .filter((w) => w.length > 0);
+  const edge = words.includes('edge');
   for (const word of [...words].reverse()) {
-    for (const [re, theme] of THEME_KEYWORDS) if (re.test(word)) return theme;
+    if (word === 'edge') continue;
+    for (const [re, theme] of THEME_KEYWORDS) {
+      if (re.test(word)) return edge && theme === 'forest' ? 'forest_edge' : theme;
+    }
   }
   return CANTO_DEFAULT_THEME[cantoId] ?? 'plain';
 }
@@ -142,8 +153,20 @@ const NOT_ON_STAGE: ReadonlySet<SpeakerId> = new Set([
   'RACHEL',
 ]);
 
+/** Characters a canto only shows as visions (engravings in the sky, pages), never as bodies on the ground. */
+const VISIONS: Readonly<Record<CantoId, readonly SpeakerId[]>> = {
+  inf02: ['AENEAS'],
+};
+
 /** Speakers drawn as a small crowd of shades rather than one figure. */
 export const CROWD_SPEAKERS: ReadonlySet<SpeakerId> = new Set(['SOUL', 'NEUTRAL', 'SHADE']);
+
+/** Where a crowd prefers to stand, when its scene offers such a place. */
+const CROWD_THEMES: Readonly<Record<SpeakerId, readonly PlaceTheme[]>> = {
+  SOUL: ['shore', 'court'],
+  NEUTRAL: ['plain'],
+  SHADE: [],
+};
 
 export const CROWD_SIZE = 5;
 
@@ -231,6 +254,8 @@ export interface GenericLayout {
   readonly beatPlace: Readonly<Record<BeatId, PlaceId | null>>;
   /** Every beat id in file order. */
   readonly beatOrder: readonly BeatId[];
+  /** The canto's front-matter mechanics (the generic level dresses itself with the ambient ones). */
+  readonly mechanics: readonly string[];
 }
 
 /** Virgil shows up this late only when the script keeps him away for a while (Canto I). */
@@ -246,15 +271,18 @@ export function planGenericLevel(script: CantoScript): GenericLayout {
   const beatPlace: Record<BeatId, PlaceId | null> = {};
   const sceneFirst: Record<SceneId, PlaceId | null> = {};
   const sceneEntry: Record<SceneId, PlaceId | null> = {};
+  const scenePlaces: Record<SceneId, PlaceId[]> = {};
   let current: PlaceId | null = null;
   for (const scene of scenes) {
     sceneEntry[scene.id] = current;
     sceneFirst[scene.id] = null;
+    scenePlaces[scene.id] = [];
     for (const beat of scene.beats) {
       beatOrder.push(beat.id);
       for (const p of placesOfBeat(beat)) {
         if (!order.includes(p)) order.push(p);
         if (sceneFirst[scene.id] === null) sceneFirst[scene.id] = p;
+        if (!(scenePlaces[scene.id] as PlaceId[]).includes(p)) (scenePlaces[scene.id] as PlaceId[]).push(p);
         current = p;
       }
       beatPlace[beat.id] = current;
@@ -339,26 +367,45 @@ export function planGenericLevel(script: CantoScript): GenericLayout {
     }
   }
 
-  // 3b. Silent set dressing for the characters on stage.
-  const cast = script.front.characters.filter((c) => !NOT_ON_STAGE.has(c) && !placed.has(c));
+  // 3b. Silent set dressing for the characters on stage, where the text first shows them.
+  const visions = new Set(VISIONS[cantoId] ?? []);
+  const cast = script.front.characters.filter((c) => !NOT_ON_STAGE.has(c) && !placed.has(c) && !visions.has(c));
   for (const speaker of cast) {
     if (speaker === 'PAOLO' && cast.includes('FRANCESCA')) continue; // placed beside Francesca below
     const name = mentionName(speaker);
     let home: PlaceId | null = null;
-    let found = false;
+    let homeScene: SceneId | null = null;
+    // Prefer the first beat that has them speak; else the first that names them; else a scene titled for them.
+    let involvedAt: Beat | null = null;
+    let mentionedAt: Beat | null = null;
+    let titledScene: SceneId | null = null;
     for (const scene of scenes) {
       if (scene.number === 0) continue;
-      const titleHit = scene.title.toLowerCase().includes(name);
+      if (titledScene === null && scene.title.toLowerCase().includes(name)) titledScene = scene.id;
       for (const beat of scene.beats) {
-        if (titleHit || beatInvolves(beat, speaker) || beatText(beat).toLowerCase().includes(name)) {
-          home = sceneHome[scene.id] ?? beatPlace[beat.id] ?? null;
-          found = true;
-          break;
-        }
+        if (!involvedAt && beatInvolves(beat, speaker)) involvedAt = beat;
+        if (!mentionedAt && beatText(beat).toLowerCase().includes(name)) mentionedAt = beat;
       }
-      if (found) break;
     }
-    if (!found) continue;
+    const crowd = CROWD_SPEAKERS.has(speaker);
+    const firstBeat = crowd ? (involvedAt ?? mentionedAt) : (mentionedAt ?? involvedAt);
+    if (firstBeat) {
+      home = beatPlace[firstBeat.id] ?? sceneHome[firstBeat.sceneId] ?? null;
+      homeScene = firstBeat.sceneId;
+    } else if (titledScene) {
+      home = sceneHome[titledScene] ?? null;
+      homeScene = titledScene;
+    } else {
+      continue;
+    }
+    // A crowd stands where its kind belongs when the scene (or the next one) has such a place.
+    const prefer = CROWD_THEMES[speaker] ?? [];
+    if (crowd && prefer.length > 0 && homeScene) {
+      const si = scenes.findIndex((s) => s.id === homeScene);
+      const candidates = [...(scenePlaces[homeScene] ?? []), ...(scenePlaces[scenes[si + 1]?.id ?? ''] ?? [])];
+      const better = candidates.find((p) => prefer.includes(themes[p] ?? 'plain'));
+      if (better) home = better;
+    }
     addNpc(speaker, home, false);
   }
   const francesca = npcs.find((m) => m.speaker === 'FRANCESCA' && !m.crowd);
@@ -367,14 +414,13 @@ export function planGenericLevel(script: CantoScript): GenericLayout {
     placed.add('PAOLO');
   }
 
-  // 4. Virgil.
+  // 4. Virgil: from the first beat of the scene in which he first appears.
   let virgilFrom: BeatId | null = null;
   let virgilScene = -1;
   for (const scene of scenes) {
     if (scene.number === 0) continue;
-    const beat = scene.beats.find((b) => beatInvolves(b, 'VIRGIL'));
-    if (beat) {
-      virgilFrom = beat.id;
+    if (scene.beats.some((b) => beatInvolves(b, 'VIRGIL'))) {
+      virgilFrom = scene.beats[0]?.id ?? null;
       virgilScene = scene.number;
       break;
     }
@@ -396,6 +442,7 @@ export function planGenericLevel(script: CantoScript): GenericLayout {
     sceneHome,
     beatPlace,
     beatOrder,
+    mechanics: [...script.front.mechanics],
   };
 }
 
@@ -429,7 +476,8 @@ export type DecorKind =
   | 'bench'
   | 'boat'
   | 'banner'
-  | 'ghost_tree';
+  | 'ghost_tree'
+  | 'stone';
 
 export interface DecorItem {
   readonly kind: DecorKind;
@@ -450,6 +498,8 @@ export interface WaterArea {
 export interface DecorPlan {
   readonly items: readonly DecorItem[];
   readonly water: readonly WaterArea[];
+  /** Shallow water that holds whoever walks on it (Limbo's rivulet, IV 109): drawn as water, never solid. */
+  readonly fords: readonly WaterArea[];
   /** Impassable border strips (cliff edges, walls) in addition to item footprints. */
   readonly walls: readonly Rect[];
 }
@@ -472,6 +522,8 @@ export function decorFootprint(kind: DecorKind, x: number, y: number): Rect | nu
       return { x: x - 6, y: y - 6, w: 12, h: 6 };
     case 'castle':
       return { x: x - 32, y: y - 14, w: 64, h: 14 };
+    case 'stone':
+      return { x: x - 8, y: y - 8, w: 16, h: 8 };
     case 'boat':
     case 'bench':
     case 'gate':
@@ -503,6 +555,7 @@ const THEME_DECOR: Readonly<Record<PlaceTheme, ReadonlyArray<readonly [DecorKind
   rest: [['grass', 3], ['rock', 2], ['bush', 1]],
   court: [['pillar', 3], ['rock', 2]],
   brink: [['rock', 4], ['rock_big', 2]],
+  ford: [['reed', 3], ['grass', 3], ['flower', 1]],
 };
 
 function pickWeighted(rnd: () => number, table: ReadonlyArray<readonly [DecorKind, number]>): DecorKind {
@@ -528,15 +581,18 @@ export function themeAtX(layout: GenericLayout, x: number): PlaceTheme {
 
 /**
  * Seeded decoration for a generic level: themed props in the bands above and
- * below the path, landmark props per place (gate, bench, castle, boat), water
- * strips for shores. Nothing solid ever touches the path corridor or a place.
+ * below the path, landmark props per place (gate, bench, castle, stone), water
+ * strips for shores, a shallow ford across the map for streams. Nothing solid
+ * ever touches the path corridor or a place.
  */
 export function planDecor(layout: GenericLayout, seed = hashString(layout.cantoId)): DecorPlan {
   const rnd = seededRandom(seed);
   const items: DecorItem[] = [];
   const water: WaterArea[] = [];
+  const fords: WaterArea[] = [];
   const walls: Rect[] = [];
   const keepClear = layout.places.map((p) => inflate(p, 6));
+  const inscribed = layout.mechanics.includes('inscription');
 
   const blocked = (r: Rect | null, x: number, y: number): boolean => {
     if (distToPolyline(x, y, layout.path) < GENERIC.corridor + 10) return true;
@@ -544,6 +600,7 @@ export function planDecor(layout: GenericLayout, seed = hashString(layout.cantoI
       if (distToPolyline(r.x + r.w / 2, r.y + r.h / 2, layout.path) < GENERIC.corridor + r.w / 2) return true;
       for (const k of keepClear) if (rectsOverlap(k, r)) return true;
       for (const w of water) if (rectsOverlap(w.rect, r)) return true;
+      for (const f of fords) if (rectsOverlap(f.rect, r)) return true;
     } else {
       for (const k of keepClear) if (k.x <= x && x < k.x + k.w && k.y <= y && y < k.y + k.h) return true;
     }
@@ -557,8 +614,14 @@ export function planDecor(layout: GenericLayout, seed = hashString(layout.cantoI
     const c = rectCenter(place);
     switch (theme) {
       case 'gate':
-        // The gate faces the reader from the back of the place (its arch is a backdrop; the path runs before it).
-        items.push({ kind: 'gate', x: c.x + 8, y: place.y + 18, solid: null, flip: false });
+        if (inscribed) {
+          // The gate faces the reader from the back of the place (its arch is a backdrop; the path runs before it).
+          items.push({ kind: 'gate', x: c.x + 8, y: place.y + 18, solid: null, flip: false });
+        } else {
+          // Elsewhere a gate is a pair of pillars either side of the way.
+          items.push({ kind: 'pillar', x: c.x - 34, y: place.y + 26, solid: decorFootprint('pillar', c.x - 34, place.y + 26), flip: false });
+          items.push({ kind: 'pillar', x: c.x + 34, y: place.y + 26, solid: decorFootprint('pillar', c.x + 34, place.y + 26), flip: true });
+        }
         break;
       case 'rest':
         items.push({ kind: 'bench', x: c.x - 24, y: place.y + 22, solid: null, flip: false });
@@ -571,17 +634,31 @@ export function planDecor(layout: GenericLayout, seed = hashString(layout.cantoI
         const top = place.y + place.h + 4;
         const rect: Rect = { x: place.x - 24, y: top, w: place.w + 48, h: layout.height - top };
         water.push({ rect, place: place.id });
+        // Charon's boat waits on the water below the shore (III 82).
+        if (theme === 'shore' && layout.npcs.some((n) => n.speaker === 'CHARON' && n.place === place.id)) {
+          items.push({ kind: 'boat', x: c.x + 36, y: Math.min(layout.height - 8, top + 30), solid: null, flip: false });
+        }
         if (theme === 'island') {
           const above: Rect = { x: place.x - 24, y: 0, w: place.w + 48, h: Math.max(0, place.y - 4) };
           water.push({ rect: above, place: place.id });
         }
         break;
       }
+      case 'ford':
+        // A band of shallow water across the whole map; the way crosses it.
+        fords.push({ rect: { x: Math.round(c.x - 20), y: 0, w: 40, h: layout.height }, place: place.id });
+        break;
       case 'plain':
         if (layout.cantoId === 'inf03') items.push({ kind: 'banner', x: c.x + 40, y: place.y + 18, solid: null, flip: false });
         break;
       default:
         break;
+    }
+    // A stone that blocks nothing but stands for the one in the script (II s6: the fallen stone).
+    if (/(^|_)stone($|_)/.test(place.id.slice(place.id.indexOf('_') + 1))) {
+      const sx = c.x + 30;
+      const sy = place.y + 30;
+      items.push({ kind: 'stone', x: sx, y: sy, solid: decorFootprint('stone', sx, sy), flip: false });
     }
   }
 
@@ -601,7 +678,7 @@ export function planDecor(layout: GenericLayout, seed = hashString(layout.cantoI
   for (let x = 8; x < layout.width; x += 14 + Math.floor(rnd() * 10)) {
     const theme = themeAtX(layout, x);
     const wooded = theme === 'forest' || theme === 'forest_edge' || theme === 'clearing' || theme === 'road';
-    const kindTop: DecorKind = wooded ? 'tree' : theme === 'storm' ? 'storm_rock' : theme === 'meadow' ? 'ghost_tree' : 'rock_big';
+    const kindTop: DecorKind = wooded ? 'tree' : theme === 'storm' ? 'storm_rock' : theme === 'meadow' || theme === 'ford' ? 'ghost_tree' : 'rock_big';
     for (const y of [22 + Math.floor(rnd() * 8), layout.height - 2 - Math.floor(rnd() * 6)]) {
       const solid = decorFootprint(kindTop, x, y);
       if (blocked(solid, x, y)) continue;
@@ -610,10 +687,10 @@ export function planDecor(layout: GenericLayout, seed = hashString(layout.cantoI
   }
 
   items.sort((a, b) => a.y - b.y);
-  return { items, water, walls };
+  return { items, water, fords, walls };
 }
 
-/** Every impassable rectangle of a decor plan. */
+/** Every impassable rectangle of a decor plan (fords are never solid). */
 export function decorSolids(plan: DecorPlan): Rect[] {
   const out: Rect[] = [];
   for (const it of plan.items) if (it.solid) out.push(it.solid);

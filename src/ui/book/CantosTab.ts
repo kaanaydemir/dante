@@ -120,7 +120,8 @@ export class CantosTab implements BookTabView {
         break;
       case 'quote': {
         const vpx = theme.size('citation') + 2;
-        for (const line of e.lines) y += para(scene, parent, box.x0 + 10, y, width - 10, line, 'verse', { px: vpx, color: c.ink }).height;
+        // One text object per quote (a long canto's log has hundreds of lines).
+        y += para(scene, parent, box.x0 + 10, y, width - 10, e.lines.join('\n'), 'verse', { px: vpx, color: c.ink }).height;
         parent.add(addText(scene, box.x1, y, e.citation, textStyle(theme, 'citation', { italic: true, color: c.inkSoft })).setOrigin(1, 0));
         y += theme.size('citation') + 4;
         break;
@@ -249,9 +250,8 @@ export class VersesTab implements BookTabView {
     const parent = this.page.content;
     let y = box.y0;
     for (const run of group.runs) {
-      for (const line of run.lines) {
-        y += para(scene, parent, box.x0, y, width, line.text, 'verse', { px: Math.max(20, theme.size('citation') + 2), color: c.ink }).height;
-      }
+      const text = run.lines.map((line) => line.text).join('\n');
+      y += para(scene, parent, box.x0, y, width, text, 'verse', { px: Math.max(20, theme.size('citation') + 2), color: c.ink }).height;
       parent.add(addText(scene, box.x1, y, run.citation, textStyle(theme, 'citation', { italic: true, color: c.inkSoft })).setOrigin(1, 0));
       y += theme.size('citation') + 22;
     }

@@ -43,6 +43,8 @@ export class TitleScene extends Phaser.Scene implements InputHandler {
   private pointer: Phaser.GameObjects.Text | null = null;
   private menu: Phaser.GameObjects.Container | null = null;
   private popRouter: (() => void) | null = null;
+  /** Screen y where the menu starts (under the cover's lettering). */
+  private menuTop = GAME_HEIGHT / 2 + 56;
 
   constructor() {
     super({ key: SceneKeys.Title });
@@ -64,39 +66,72 @@ export class TitleScene extends Phaser.Scene implements InputHandler {
     const cover = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2);
     cover.add(this.add.image(0, 0, panel.key));
     const gold = c.goldBright;
-    const t1 = addText(this, 0, -250, 'THE DIVINE', textStyle(theme, 'title', { px: 54, color: gold, letterSpacing: 6, shadow: true }));
-    const t2 = addText(this, 0, -186, 'COMEDY', textStyle(theme, 'title', { px: 64, color: gold, letterSpacing: 10, shadow: true }));
+    // The cover is laid out from the top down, so larger text sizes keep their spacing.
+    let y = -COVER_H / 2 + 90;
+    const t1 = addText(this, 0, y, 'THE DIVINE', textStyle(theme, 'title', { px: 54, color: gold, letterSpacing: 6, shadow: true }));
     t1.setOrigin(0.5, 0);
+    y += 64;
+    const t2 = addText(this, 0, y, 'COMEDY', textStyle(theme, 'title', { px: 64, color: gold, letterSpacing: 10, shadow: true }));
     t2.setOrigin(0.5, 0);
+    y += 88;
     const rule = this.add.graphics();
     rule.lineStyle(1, c.gold, 0.9);
-    rule.lineBetween(-150, -98, -14, -98);
-    rule.lineBetween(14, -98, 150, -98);
+    rule.lineBetween(-150, y, -14, y);
+    rule.lineBetween(14, y, 150, y);
     rule.fillStyle(c.gold, 1);
-    rule.fillTriangle(-7, -98, 0, -105, 7, -98);
-    rule.fillTriangle(-7, -98, 0, -91, 7, -98);
-    const author = addText(this, 0, -78, 'Dante Alighieri', textStyle(theme, 'heading', { italic: true, color: c.paper, shadow: true })).setOrigin(0.5, 0);
-    const sub = addText(this, 0, -28, 'A  PLAYABLE  BOOK', textStyle(theme, 'citation', { color: c.gold, letterSpacing: 3 })).setOrigin(0.5, 0);
-    const part = addText(this, 0, 4, 'Inferno · Chapter One · Cantos I–V', textStyle(theme, 'citation', { italic: true, color: c.paperShade })).setOrigin(0.5, 0);
+    rule.fillTriangle(-7, y, 0, y - 7, 7, y);
+    rule.fillTriangle(-7, y, 0, y + 7, 7, y);
+    y += 18;
+    const author = addText(this, 0, y, 'Dante Alighieri', textStyle(theme, 'heading', { italic: true, color: c.paper, shadow: true })).setOrigin(0.5, 0);
+    y += author.height + 4;
+    const sub = addText(this, 0, y, 'A  PLAYABLE  BOOK', textStyle(theme, 'citation', { color: c.gold, letterSpacing: 3 })).setOrigin(0.5, 0);
+    y += sub.height + 4;
+    const part = addText(this, 0, y, 'Inferno · Chapter One · Cantos I–V', textStyle(theme, 'citation', { italic: true, color: c.paperShade })).setOrigin(0.5, 0);
+    y += part.height;
+    this.menuTop = GAME_HEIGHT / 2 + y + 26;
     const credit = addText(
       this,
       0,
-      COVER_H / 2 - 122,
+      0,
       'In the translation of\nHenry Wadsworth Longfellow, 1867',
       textStyle(theme, 'citation', { italic: true, color: c.paperShade, align: 'center' }),
-    ).setOrigin(0.5, 0);
+    ).setOrigin(0.5, 1);
+    credit.setY(COVER_H / 2 - 68);
     cover.add([t1, t2, rule, author, sub, part, credit]);
     this.cover = cover;
     cover.setAlpha(0);
     this.tweens.add({ targets: cover, alpha: 1, duration: 900, ease: 'Sine.easeOut' });
     this.buildMenu();
     this.popRouter = uiRouter()?.push(this) ?? null;
+    // Text size or contrast changed in the Settings opened from here: redraw the cover when the Book closes.
+    const themeKey = this.themeKey();
+    let offBook: (() => void) | null = null;
+    try {
+      offBook = services().bus.on('ui:book', (p) => {
+        if (!p.open && !this.started && this.themeKey() !== themeKey) {
+          try {
+            this.scene.restart();
+          } catch {
+            // keep the old cover
+          }
+        }
+      });
+    } catch {
+      offBook = null;
+    }
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      offBook?.();
+      offBook = null;
       this.popRouter?.();
       this.popRouter = null;
       this.uiReady = false;
     });
     this.uiReady = true;
+  }
+
+  private themeKey(): string {
+    const t = uiContext().theme();
+    return `${t.fontScale}|${t.highContrast}`;
   }
 
   private canContinue(): boolean {
@@ -121,17 +156,19 @@ export class TitleScene extends Phaser.Scene implements InputHandler {
           { id: 'continue', label: 'Continue', enabled: this.canContinue(), text: null, zone: null },
           { id: 'settings', label: 'Settings', enabled: true, text: null, zone: null },
         ];
-    const menu = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 56);
+    const menu = this.add.container(GAME_WIDTH / 2, this.menuTop);
+    let top = 0;
     if (this.confirming) {
-      menu.add(
-        addText(this, 0, -34, 'The journey so far will be lost.', textStyle(theme, 'citation', { italic: true, color: c.paperShade })).setOrigin(0.5, 0),
-      );
+      const warn = addText(this, 0, 0, 'The journey so far will be lost.', textStyle(theme, 'citation', { italic: true, color: c.paperShade })).setOrigin(0.5, 0);
+      menu.add(warn);
+      top = warn.height + 10;
     }
     const style = textStyle(theme, 'option', { color: c.paper, shadow: true });
+    const step = Math.max(46, Math.round(theme.size('option') * 1.6));
     items.forEach((it, i) => {
-      const y = i * 46 + (this.confirming ? 4 : 0);
+      const y = top + i * step;
       const t = addText(this, 0, y, it.label, { ...style, color: cssColor(it.enabled ? c.paper : 0x6f6655) }).setOrigin(0.5, 0);
-      const zone = this.add.zone(0, y + t.height / 2, 300, 42).setInteractive({ useHandCursor: it.enabled });
+      const zone = this.add.zone(0, y + t.height / 2, 320, step - 4).setInteractive({ useHandCursor: it.enabled });
       zone.on('pointerover', () => {
         if (it.enabled) this.select(i);
       });
@@ -149,7 +186,8 @@ export class TitleScene extends Phaser.Scene implements InputHandler {
     pointer.setOrigin(1, 0);
     menu.add(pointer);
     const hint = promptRow(this, ['▴', '▾', 'Enter'], 'choose and open', { align: 'right' });
-    hint.node.setPosition(GAME_WIDTH / 2 - 24, GAME_HEIGHT / 2 - 32 - 56);
+    // Bottom right of the screen (the menu container's origin is at menuTop).
+    hint.node.setPosition(GAME_WIDTH / 2 - 24, GAME_HEIGHT - 32 - this.menuTop);
     hint.node.setAlpha(0.55);
     menu.add(hint.node);
     this.pointer = pointer;

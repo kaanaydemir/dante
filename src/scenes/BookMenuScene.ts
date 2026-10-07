@@ -153,6 +153,8 @@ export class BookMenuScene extends Phaser.Scene implements InputHandler {
     this.view?.destroy();
     this.view = null;
     this.content.removeAll(true);
+    // Each tab writes its own footer; a tab that fails must not inherit the last one's.
+    this.footer('', '');
     this.tab = id;
     if (!this.fromTitle) lastTab = id;
     const ctx = this.ctx();

@@ -106,6 +106,15 @@ export class InputRouter {
     return false;
   }
 
+  /**
+   * A UI action from a clickable control (the HUD's Book icon, "Ask Virgil"),
+   * delivered exactly like a key press to the top handler.
+   */
+  inject(action: UiAction): boolean {
+    this.gesture();
+    return this.dispatch([action], { device: uiContext().device(), code: 'Pointer', repeat: false, time: now(), shift: false });
+  }
+
   /** The first user gesture unlocks WebAudio (browsers require one). */
   private gesture(): void {
     try {

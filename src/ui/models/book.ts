@@ -86,12 +86,16 @@ export function playedCantos(state: GameStateView, story: Pick<StoryLibrary, 'sc
     .map((id) => {
       const script = story.script(id);
       const n = script?.cantoNumber ?? cantoNumber(id);
+      const completed = state.completedCantos.includes(id);
+      // The colophon opens the whole canto (bible §1.3.8), even while its page is still up.
+      const colophonReached =
+        script?.scenes.some((s) => s.beats.some((b) => b.mode === 'colophon' && state.seen.includes(b.id))) ?? false;
       return {
         id,
         numeral: toRoman(n) || id,
         title: script?.front.title ?? id,
-        completed: state.completedCantos.includes(id),
-        fullText: state.completedCantos.includes(id),
+        completed,
+        fullText: completed || colophonReached,
       };
     });
 }

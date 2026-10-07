@@ -19,15 +19,16 @@ import { sfx, uiContext } from '../context';
 import type { UiAction } from '../inputMap';
 import { ComposerModel, composerWords, headlineIssue, sameSlot, type ComposerWord, type SlotRef } from '../models/composer';
 import { CATEGORY_COPY } from '../models/copy';
-import { addText } from '../phaser/helpers';
+import { addText, measurer } from '../phaser/helpers';
 import type { ActionMeta } from '../router';
-import { textStyle } from '../theme';
+import { lineHeight, textStyle } from '../theme';
 import type { BookCtx, BookTabView } from './types';
 import { para } from './widgets';
 
-const CHIP_W = 236;
-const CHIP_H = 44;
-const CHIP_GAP = 12;
+const COLS = 3;
+const CHIP_H = 40;
+const CHIP_GAP = 10;
+const CHIP_ROW_GAP = 8;
 const SLOT_W = 140;
 const SLOT_H = 50;
 
@@ -62,22 +63,33 @@ export class WordsTab implements BookTabView {
     root.add(addText(scene, left.x0, left.y0, 'Words', textStyle(theme, 'heading', { color: c.rubric })));
     const words = composerWords(state.words.owned, state.words.sealed);
     for (const shed of state.words.shed) if (!words.some((w) => w.name === shed)) words.push({ name: shed, use: 'burden' });
-    // Grid
+    // Grid: three chips a row, sized for the reader's text size.
     const gridTop = left.y0 + theme.size('heading') + 20;
+    const chipW = Math.floor((left.x1 - left.x0 - CHIP_GAP * (COLS - 1)) / COLS);
+    const chipH = Math.max(CHIP_H, lineHeight(theme.size('body'), 'ui') + 12);
+    const nameStyle = textStyle(theme, 'body', {});
+    const famStyle = textStyle(theme, 'citation', { italic: true, color: c.inkSoft });
+    const nameW = measurer(nameStyle);
+    const famW = measurer(famStyle);
     words.forEach((w, i) => {
-      const col = i % 2;
-      const row = Math.floor(i / 2);
-      const x = left.x0 + col * (CHIP_W + CHIP_GAP);
-      const y = gridTop + row * (CHIP_H + 8);
+      const col = i % COLS;
+      const row = Math.floor(i / COLS);
+      const x = left.x0 + col * (chipW + CHIP_GAP);
+      const y = gridTop + row * (chipH + CHIP_ROW_GAP);
       const isShed = state.words.shed.includes(w.name);
-      const bg = scene.add.rectangle(x, y, CHIP_W, CHIP_H, theme.extra.pageShade, 0.9).setOrigin(0, 0);
+      const bg = scene.add.rectangle(x, y, chipW, chipH, theme.extra.pageShade, 0.9).setOrigin(0, 0);
       bg.setStrokeStyle(1, theme.extra.inkFaint, 0.8);
       const color = isShed ? c.inkSoft : w.use === 'burden' ? theme.extra.burden : w.use === 'sealed' ? theme.extra.dim : c.ink;
-      const t = addText(scene, x + 14, y + CHIP_H / 2, w.name, textStyle(theme, 'body', { color, italic: isShed })).setOrigin(0, 0.5);
+      const t = addText(scene, x + 12, y + chipH / 2, w.name, textStyle(theme, 'body', { color, italic: isShed })).setOrigin(0, 0.5);
+      root.add([bg, t]);
       const def = getWord(w.name);
-      const fam = addText(scene, x + CHIP_W - 10, y + CHIP_H / 2, isShed ? 'set down' : def?.family ?? (def?.role === 'closer' ? 'closer' : 'burden'), textStyle(theme, 'citation', { italic: true, color: c.inkSoft })).setOrigin(1, 0.5);
-      root.add([bg, t, fam]);
-      if (w.use === 'sealed') root.add(scene.add.image(x + CHIP_W - 70, y + CHIP_H / 2, iconTexture(scene, 'seal', theme.extra.seal, c.ink, 26)));
+      // The rhyme family on the chip when it fits; the detail below always has it.
+      const fam = isShed ? 'set down' : def?.family ?? (def?.role === 'closer' ? 'closer' : 'burden');
+      const sealRoom = w.use === 'sealed' ? 30 : 0;
+      if (nameW(w.name) + famW(fam) + 34 + sealRoom <= chipW) {
+        root.add(addText(scene, x + chipW - 10, y + chipH / 2, fam, famStyle).setOrigin(1, 0.5));
+      }
+      if (w.use === 'sealed') root.add(scene.add.image(x + 24 + nameW(w.name) + 10, y + chipH / 2, iconTexture(scene, 'seal', theme.extra.seal, c.ink, 26)));
       bg.setInteractive({ useHandCursor: true });
       bg.on('pointerdown', () => {
         this.focus = 'grid';
@@ -86,8 +98,8 @@ export class WordsTab implements BookTabView {
       });
       this.chips.push({ word: w, bg, text: t });
     });
-    const rows = Math.ceil(words.length / 2);
-    const detailTop = gridTop + rows * (CHIP_H + 8) + 14;
+    const rows = Math.ceil(words.length / COLS);
+    const detailTop = gridTop + rows * (chipH + CHIP_ROW_GAP) + 10;
     this.detail = scene.add.container(0, detailTop);
     root.add(this.detail);
     if (words.length === 0) para(scene, root, left.x0, gridTop, left.x1 - left.x0, 'No word has been gathered yet. Words glow in their lines; take them with E.', 'body', { italic: true, color: c.inkSoft });
@@ -178,13 +190,17 @@ export class WordsTab implements BookTabView {
     if (!def) return;
     const w = left.x1 - left.x0;
     let y = 0;
-    const cat = def.category === 'Burden' ? 'A burden' : `${def.category}: ${CATEGORY_COPY[def.category]}`;
+    const fam = def.role === 'closer' ? 'closes a verse' : def.family ? `rhymes in ${def.family}` : '';
+    const cat = def.category === 'Burden' ? 'A burden' : `${def.category}: ${CATEGORY_COPY[def.category]}${fam ? ` · ${fam}` : ''}`;
     y += para(scene, this.detail, left.x0, y, w, cat, 'citation', { color: c.rubric }).height + 4;
     y += para(scene, this.detail, left.x0, y, w, def.origin.text, 'citation', { italic: true, color: c.ink }).height;
     this.detail.add(addText(scene, left.x1, y, def.origin.citation, textStyle(theme, 'citation', { italic: true, color: c.inkSoft })).setOrigin(1, 0));
     y += theme.size('citation') + 8;
     const note = chip.word.use === 'sealed' ? `${def.description} Sealed: it cannot be placed.` : def.description;
-    para(scene, this.detail, left.x0, y, w, note, 'citation', { color: c.inkSoft });
+    // The note only when the page has room for it (large text, many words).
+    if (this.detail.y + y + lineHeight(theme.size('citation')) <= left.y1) {
+      para(scene, this.detail, left.x0, y, w, note, 'citation', { color: c.inkSoft });
+    }
   }
 
   private evaluation(): VerseEvaluation | null {
@@ -221,8 +237,13 @@ export class WordsTab implements BookTabView {
       const coda = ev.coda ? `, closing in ${ev.coda.category}` : '';
       y += para(scene, this.verdict, right.x0, y, w, `A verse of ${t}${coda}.`, 'body', { color: c.rubric }).height + 2;
       y += para(scene, this.verdict, right.x0, y, w, `It costs ${ev.graceCost === 1 ? 'one drop' : `${ev.graceCost} drops`} of Grace.`, 'citation', { italic: true, color: c.inkSoft }).height + 10;
-      for (const line of ev.cento) {
-        y += para(scene, this.verdict, right.x0 + 8, y, w - 8, line.text, 'citation', { italic: true, color: c.ink }).height;
+      // The verse read as Longfellow's lines, when the page has room for it (always in Cantos · Your verses).
+      const lh = lineHeight(theme.size('citation'));
+      const room = right.y1 - (this.verdict.y + y) - 110;
+      if (ev.cento.length * lh * 1.2 <= room) {
+        for (const line of ev.cento) {
+          y += para(scene, this.verdict, right.x0 + 8, y, w - 8, line.text, 'citation', { italic: true, color: c.ink }).height;
+        }
       }
       y += 12;
     } else {
@@ -311,11 +332,16 @@ export class WordsTab implements BookTabView {
     }
     if (this.focus === 'grid') {
       const n = this.chips.length;
-      if (action === 'up') this.select(this.index - 2);
-      else if (action === 'down') this.select(Math.min(n - 1, this.index + 2));
-      else if (action === 'left') this.select(this.index - (this.index % 2 === 1 ? 1 : 0));
-      else if (action === 'right') {
-        if (this.index % 2 === 0 && this.index + 1 < n) this.select(this.index + 1);
+      const col = this.index % COLS;
+      if (action === 'up') {
+        if (this.index - COLS >= 0) this.select(this.index - COLS);
+      } else if (action === 'down') {
+        if (this.index + COLS < n) this.select(this.index + COLS);
+        else if (Math.floor(this.index / COLS) < Math.floor((n - 1) / COLS)) this.select(n - 1);
+      } else if (action === 'left') {
+        if (col > 0) this.select(this.index - 1);
+      } else if (action === 'right') {
+        if (col < COLS - 1 && this.index + 1 < n) this.select(this.index + 1);
         else if (this.composer) {
           this.focus = 'slots';
           this.render();

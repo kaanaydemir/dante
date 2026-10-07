@@ -47,6 +47,8 @@ export interface VerseShowOptions {
   readonly taken?: ReadonlySet<string>;
   /** Text of the "[E] …" take prompt; null hides it. */
   readonly takeLabel?: string | null;
+  /** The reader must press to go on: a small ▸ appears once the lines are in. */
+  readonly blocking?: boolean;
 }
 
 interface WordNode {
@@ -63,6 +65,7 @@ export class VerseBubble {
   private revealedCount = 0;
   private onRevealed: (() => void) | null = null;
   private prompt: Phaser.GameObjects.Container | null = null;
+  private more: Phaser.GameObjects.Text | null = null;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -119,7 +122,8 @@ export class VerseBubble {
     const lh = lineHeight(theme.size('verse'), 'verse');
     const citeH = theme.size('citation') + 12;
     const hasTake = spec.collectible.some((cw) => !cw.auto && cw.lineIndex >= start && cw.lineIndex < end && !(opts.taken?.has(cw.word) ?? false));
-    const footer = spec.gloss || hasTake ? 34 : 8;
+    const showMore = (opts.blocking ?? false) && !hasTake;
+    const footer = spec.gloss || hasTake || showMore ? 34 : 8;
     const h = PAD_TOP + layout.length * lh + citeH + footer + PAD_BOTTOM;
     const panel = panelTexture(this.scene, 'verse', w, h, theme);
     const bottom = opts.bottom ?? BOTTOM;
@@ -167,9 +171,16 @@ export class VerseBubble {
     root.add(cite);
     // Footer prompts
     const footY = citeY + citeH + 8;
+    const rightX = panel.w / 2 - PAD_X + 6;
+    if (showMore) {
+      const more = addText(this.scene, rightX, footY, '▸', textStyle(theme, 'body', { color: c.goldBright })).setOrigin(1, 0.5);
+      more.setAlpha(0);
+      root.add(more);
+      this.more = more;
+    }
     if (spec.gloss) {
       const q = promptRow(this.scene, [keyLabel('askVirgil')], 'gloss', { align: 'right', color: x.verseSoft, bookFace: true, italic: true });
-      q.node.setPosition(panel.w / 2 - PAD_X + 6, footY);
+      q.node.setPosition(rightX - (showMore ? 34 : 0), footY);
       root.add(q.node);
     }
     if (hasTake && opts.takeLabel !== null) {
@@ -229,6 +240,12 @@ export class VerseBubble {
       this.revealTimer = null;
     }
     if (this.prompt) this.scene.tweens.add({ targets: this.prompt, alpha: 1, duration: 300 });
+    const more = this.more;
+    if (more && more.getData('shown') !== true) {
+      more.setData('shown', true);
+      this.scene.tweens.add({ targets: more, alpha: 1, duration: 300, delay: 150 });
+      this.scene.tweens.add({ targets: more, x: more.x + 4, yoyo: true, repeat: -1, duration: 600, delay: 450, ease: 'Sine.easeInOut' });
+    }
     const cb = this.onRevealed;
     this.onRevealed = null;
     cb?.();
@@ -273,6 +290,7 @@ export class VerseBubble {
     this.lineNodes = [];
     this.words = [];
     this.prompt = null;
+    this.more = null;
     this.onRevealed = null;
     this.revealedCount = 0;
   }
