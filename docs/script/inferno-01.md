@@ -51,7 +51,7 @@ Kanto I oyunun ilk on dakikası ve kitabın ilk sayfasıdır. Üç işi var. Bir
 | s7 | 1–1,5 | Kehaneti dinler, iki yol arasında yürür, yolculuk teklifini dinler | `inf01.greyhound` |
 | s8 | 1–1,5 | Yolculuğun nedenini seçer, Vergilius'un ardından yürür | `inf01.c4` |
 | s9 | 0,3–0,5 | Kolofonu okur | `unlock:book` |
-| **Toplam** | **9–12,5** | Her dizeyi okuyan ve geriye bakan bir ilk oynayış üst sınırdadır; ön bilgideki 8–12 hedefi korunur. Okumanın yaklaşık yarısı çapa dizeleridir; kısaltma gerekirse aşağıdaki M0 listesinden başlanır. | |
+| **Toplam** | **9–12,5** | Ön bilgideki 8–12 hedefiyle uyumludur; yalnızca her dizeyi yavaşça okuyup geriye da bakan bir ilk oynayış üst sınırı biraz aşabilir. Kısaltma gerekirse aşağıdaki M0 listesinden başlanır. | |
 
 **Seçimler ve izleri**
 
@@ -328,7 +328,7 @@ SFX: Davul susar. Bütün yamaç boyunca kuşlar.
 
 ## [inf01.s4] The Lion
 
-Umut uzun sürmez. Şiirde I 44, I 43'teki umudu "but" ile keser; oyunda da aslan, Hope kartı daha kitaba yeni konmuşken gelir. Aslan bir kükreme ve hamle desenidir. Kükreme bir korku dalgasıdır: kaçan oyuncu korkuyu yanında taşır, duran oyuncunun etrafından yarılarak geçer. Hamleler atılmayla savuşturulur. Aslanın Dante'yi korkuttuğunu söyleyen dizeler (I 44–45) sahnede gösterilmez, kartta saklanır.
+Umut uzun sürmez. Şiirde I 44, I 43'teki umudu "but" ile keser; oyunda da aslan, Hope kartı kitaba konduktan yalnızca kısa bir tırmanış sonra, oyuncu yamacın üst yarısına adım atınca gelir. Aslan bir kükreme ve hamle desenidir. Kükreme bir korku dalgasıdır: kaçan oyuncu korkuyu yanında taşır, duran oyuncunun etrafından yarılarak geçer. Hamleler atılmayla savuşturulur. Aslanın Dante'yi korkuttuğunu söyleyen dizeler (I 44–45) sahnede gösterilmez, kartta saklanır.
 
 ### [inf01.s4.b1] Head Uplifted
 
@@ -406,7 +406,7 @@ DO: Aşağıda, vadinin gölgeye döndüğü yerde, kıpırdamayan bir insan bi�
 
 ```script
 @mode: play
-DO: Oyuncu serbesttir. Yukarıda kurt bekler, aşağıda biçim bekler. Hiçbir istem, ok ya da ses yön göstermez. Oyuncu hiçbir yöne gitmezse (öneri: 45 saniye) kurt yeniden iner ve onu adım adım biçimin önüne kadar iter; turned_to_guide ve climbed_again yayılmaz, b4 atlanır.
+DO: Oyuncu serbesttir. Yukarıda kurt bekler, aşağıda biçim bekler. Hiçbir istem, ok ya da ses yön göstermez. Oyuncu hiçbir yöne gitmezse (öneri: 45 saniye) kurt yeniden iner ve onu adım adım biçimin önüne kadar iter; Dante oraya varınca reached_shadow yayılır. Bu yolda turned_to_guide ve climbed_again yayılmaz, b4 atlanır.
 DO: Oyuncu yeniden tırmanmak yerine aşağıdaki biçime doğru yürürse {event:inf01.turned_to_guide} yayılır. Kurt onun ardından iner ve onu adım adım biçimin önüne kadar iter. Dante biçimin önüne varınca {event:inf01.reached_shadow} yayılır; b4 atlanır.
 DO: Oyuncu yeniden yukarı tırmanırsa {event:inf01.climbed_again} yayılır ve b4 oynar.
 ```
