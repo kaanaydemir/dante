@@ -77,6 +77,43 @@ export class PolyPath {
   }
 }
 
+/**
+ * Arc lengths of the corners of a closed path that turn by more than `minDeg`
+ * degrees: where a line following the path bends (III s3, the banner's turns).
+ */
+export function sharpBends(path: PolyPath, minDeg = 50): number[] {
+  const pts = path.points;
+  const n = pts.length;
+  if (!path.closed || n < 3) return [];
+  const out: number[] = [];
+  let s = 0;
+  for (let i = 0; i < n; i++) {
+    const prev = pts[(i - 1 + n) % n] as Vec;
+    const cur = pts[i] as Vec;
+    const next = pts[(i + 1) % n] as Vec;
+    const ax = cur.x - prev.x;
+    const ay = cur.y - prev.y;
+    const bx = next.x - cur.x;
+    const by = next.y - cur.y;
+    const la = Math.hypot(ax, ay);
+    const lb = Math.hypot(bx, by);
+    if (la > 0 && lb > 0) {
+      const cos = Math.max(-1, Math.min(1, (ax * bx + ay * by) / (la * lb)));
+      if ((Math.acos(cos) * 180) / Math.PI > minDeg) out.push(s);
+    }
+    s += lb;
+  }
+  return out;
+}
+
+/** Signed shortest distance from arc length `a` to `b` along a closed path of length `length`. */
+export function arcDelta(a: number, b: number, length: number): number {
+  if (length <= 0) return b - a;
+  let d = (((b - a) % length) + length) % length;
+  if (d > length / 2) d -= length;
+  return d;
+}
+
 /** A closed loop approximating an ellipse (crowd loops, circling shades). */
 export function ellipseLoop(cx: number, cy: number, rx: number, ry: number, steps = 16, startAngle = 0): Vec[] {
   const out: Vec[] = [];

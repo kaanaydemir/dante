@@ -1009,6 +1009,7 @@ class Presenter implements StoryPresenter, InputHandler {
           if (cursor.set(i)) margin.select(i);
         },
       });
+      const shownAt = now();
       el.handlers.onAction = (a, m) => {
         if (picked) return true;
         if (a === 'up' || a === 'down') {
@@ -1025,6 +1026,8 @@ class Presenter implements StoryPresenter, InputHandler {
           return true;
         }
         if ((a === 'advance' || a === 'interact') && !m.repeat) {
+          // The key that closed the line before (E pressed through a speech) does not choose: the options are seen first.
+          if (now() - shownAt < 450) return true;
           pick(cursor.index, true);
           return true;
         }

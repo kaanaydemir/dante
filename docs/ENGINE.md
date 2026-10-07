@@ -1,6 +1,6 @@
 # Engine Architecture — The Divine Comedy, a Playable Book
 
-This is the technical companion to the story bible (`docs/script/README.md`, Turkish; "the bible") and the game design document (`docs/GDD.md`). The bible is the spec for the script format and every story system. This document says how the engine is cut into modules, who owns which file, and the exact runtime semantics every module codes against.
+This is the technical companion to the story bible (`docs/script/README.md`, Turkish; "the bible") and the game design document (`docs/GDD.md`). The bible is the spec for the script format and every story system. This document says how the engine is cut into modules, where each part lives, and the exact runtime semantics every module codes against.
 
 The product is a book first. The story, the characters and the conversations come first; play serves the reading. When a technical choice trades text quality against anything else, text wins.
 
@@ -17,11 +17,15 @@ npm run typecheck    # tsc --noEmit
 npm run lint:story   # vitest run tests/story-lint  (lints every docs/script/inferno-*.md)
 npm run smoke        # Playwright: boots the game in headless Chromium, fails on any console error
 npm run smoke -- --dist                 # same against the production build (run `npm run build` first)
-npm run smoke -- --autoplay             # autoplay Chapter 1 through window.__dante
+npm run smoke -- --url <url>            # same against a server that is already running
+npm run smoke -- --autoplay             # autoplay Chapter 1 through window.__dante (must reach chapter_complete)
 npm run smoke -- --autoplay --fixture   # autoplay the engine fixture chapter (canto inf99)
+npm run smoke -- --autoplay --timeout 600   # autoplay time limit in seconds (default 420)
 ```
 
-Open `http://localhost:5173/?debug=1` to get `window.__dante` in any build. Chromium for Playwright is preinstalled (`PLAYWRIGHT_BROWSERS_PATH`); never run `playwright install`.
+Open `http://localhost:5173/?debug=1` to get `window.__dante` in any build (`vite dev` has it without the parameter; `?debug=0` turns it off). In the project's dev container Chromium for Playwright is preinstalled (`PLAYWRIGHT_BROWSERS_PATH`): never run `playwright install` there. On another machine, install it once with `npx playwright install chromium`.
+
+Deployment: `.github/workflows/deploy.yml` runs `npm ci` and `npm run build` on Node 22 and publishes `dist/` to GitHub Pages on every push to `main` (and on manual dispatch). `vite.config.ts` sets `base: './'`, so `dist/index.html` loads `./assets/…` and the game works under `https://<owner>.github.io/<repo>/`. The game makes no network requests at runtime.
 
 ---
 
@@ -59,54 +63,55 @@ Open `http://localhost:5173/?debug=1` to get `window.__dante` in any build. Chro
 
 ---
 
-## 3. File ownership (next phase)
+## 3. Module map
 
-Four implementers work in parallel. Each owns a disjoint set of files. **Do not edit files you do not own**; if a contract must change, ask the architect / integrator.
+The engine was built by four parallel teams plus an architect / integrator. File headers still name the owner (`Owner: team D (world)`); the table maps those names to directories. Keep a module's public surface stable when you change it, and change a contract (`src/runtime/contracts.ts`, `src/story/types.ts`) together with every implementation and test that uses it.
 
-| Team | Owns | Delivers |
+| Team (file headers) | Directories | What lives there |
 |---|---|---|
-| **A story-core** | `src/story/**` except `types.ts` (`parser.ts`, `conditions.ts`, `effects.ts`, `lint.ts`, `quotes.ts`, `words.ts`, `cite.ts`, `load.ts`, any new helpers), `tests/story*/**` | Parser, condition grammar, effect tokens, quote verification, lint L01–L22, word table, library |
-| **B runtime** | `src/state/**`, `src/runtime/**` except `contracts.ts` (`bus.ts`, `runner.ts`, `session.ts`, headless presenter/world, autoplay), `src/verse/**`, `tests/runtime/**`, `tests/verse/**`, `tests/state/**` | Store, runner, session, autoplay, tercet / chain / coda logic |
-| **C presentation** | `src/ui/**`, `src/scenes/TitleScene.ts`, `src/scenes/BookPageScene.ts`, `src/scenes/UIScene.ts`, `src/scenes/BookMenuScene.ts`, `src/audio/**` | The book: pages, strips, bubbles, margin, cards, colophon, Book menu + settings, HUD, input for text, audio |
-| **D world** | `src/world/**`, `src/entities/**`, `src/mechanics/**`, `src/art/**`, `src/scenes/BootScene.ts`, `src/scenes/WorldScene.ts`, `src/levels/_framework/**` | World scene, player, Virgil, generic fallback level, LevelModule framework, mechanics library, procedural art |
-| **Architect / integrator** | `src/story/types.ts`, `src/runtime/contracts.ts`, `src/config.ts`, `src/main.ts`, `src/app/**`, `src/scenes/keys.ts`, `src/scenes/registry.ts`, `src/debug/**`, `scripts/**`, `tests/fixtures/**`, `index.html`, `vite.config.ts`, `vitest.config.ts`, `tsconfig.json`, `package.json`, `docs/ENGINE.md` | Contracts, composition root, debug API, smoke tests |
+| **A story-core** | `src/story/**` (`parser.ts`, `conditions.ts`, `effects.ts`, `quotes.ts`, `lint.ts`, `words.ts`, `cite.ts`, `load.ts`, `ast.ts`, `bible.ts`, `registry.ts`), `tests/story*/**` | Parser, condition grammar, effect tokens, quote verification against Longfellow, lint L01–L22, the word table, the story library, the bible's Chapter 1 registers (`registry.ts`, a snapshot checked against the live bible by `tests/story/bible.test.ts`) |
+| **B runtime** | `src/runtime/**` (`bus.ts`, `runner.ts`, `session.ts`, `chapters.ts`, `autoplay.ts`, `specs.ts`, `headless.ts`, `clock.ts`), `src/state/**`, `src/verse/**`, `tests/runtime/**`, `tests/state/**`, `tests/verse/**` | Event bus, story runner, game session, autoplay, headless ports; state store, effects, persistence, selectors; tercets, chains, codas, cento |
+| **C presentation** | `src/ui/**`, `src/audio/**`, `src/scenes/{Title,BookPage,UI,BookMenu}Scene.ts`, `tests/ui/**`, `tests/audio/**` | The book: presenter, pages, strips, bubbles, margin, cards, colophon, the Book menu and its tabs, HUD, text input, the WebAudio synth |
+| **D world** | `src/world/**`, `src/entities/**`, `src/mechanics/**`, `src/art/**`, `src/levels/**`, `src/scenes/{Boot,World}Scene.ts`, `tests/world/**` | World scene and bridge, Dante, Virgil and NPCs, the mechanics library, procedural art, the level framework and the Chapter 1 levels |
+| **Architect / integrator** | `src/story/types.ts`, `src/runtime/contracts.ts`, `src/config.ts`, `src/main.ts`, `src/app/**`, `src/scenes/keys.ts`, `src/scenes/registry.ts`, `src/debug/**`, `scripts/**`, `tests/fixtures/**`, `index.html`, `vite.config.ts`, `vitest.config.ts`, `tsconfig.json`, `package.json`, `.github/workflows/**`, `docs/ENGINE.md` | Contracts, constants, composition root, debug API, smoke test, build and deploy |
 
-Later phase: per-canto levels in `src/levels/<cantoId>/` (one owner per canto).
+Levels: the Chapter 1 levels live in `src/levels/_framework/chapter1/` (`inf01.ts` … `inf05.ts` on the shared `common.ts`). A canto may instead get a folder of its own, `src/levels/<cantoId>/index.ts`, which the registry prefers (§8.2).
 
-### 3.1 Entry points (signatures frozen)
+### 3.1 Entry points
 
-Every entry point already exists as a compiling stub or starter implementation, so all four teams compile from day one. Replace the bodies; **keep the file path, export name and type**. Types live in `src/runtime/contracts.ts` and `src/story/types.ts`.
+Each module is reached through one factory or function; the types live in `src/runtime/contracts.ts` and `src/story/types.ts`. Keep the file path, export name and type when you change an implementation.
 
-| File | Export | Type | State today |
-|---|---|---|---|
-| `src/story/parser.ts` | `parseCanto(text, file)` | `(string, string) => ParseResult` | stub |
-| `src/story/conditions.ts` | `parseCondition(text, pos?)`, `evaluateCondition(cond, ctx)` | `ConditionParse`, `boolean` | parse stub, evaluate done |
-| `src/story/effects.ts` | `parseEffects(text, pos?)`, `formatEffect(effect)` | `EffectsParse`, `string` | parse stub, format done |
-| `src/story/quotes.ts` | `parseSourceText(text, file)`, `verifyQuote(quote, source)`, `sourceKey()` | `SourceCanto \| null`, `QuoteCheck` | source done, verify stub |
-| `src/story/lint.ts` | `lintCanto(script, ctx)` | `(CantoScript, LintContext) => Diagnostic[]` | stub |
-| `src/story/words.ts` | `WORDS`, `getWord`, `isRhyme`, `findWordInLine` | §3.4.6 table | done (verified against sources) |
-| `src/story/cite.ts` | `parseCitation`, `formatCitation`, `toRoman`, `fromRoman`, `cantoLabel` | | done |
-| `src/story/load.ts` | `loadStoryLibrary(opts?)`, `buildStoryLibrary(scripts, sources)`, `RAW_SCRIPTS`, `RAW_SOURCES`, `RAW_FIXTURES`, `cantoIdFromPath` | `LoadStoryLibrary` | starter (uses the stub parser) |
-| `src/runtime/bus.ts` | `createEventBus()` | `CreateEventBus` | done |
-| `src/state/initial.ts` | `createInitialState(profile?)` | | done |
-| `src/state/store.ts` | `createGameStateStore({ bus, storage })` | `CreateGameStateStore` | stub |
-| `src/runtime/runner.ts` | `createStoryRunner(deps)` | `CreateStoryRunner` | stub |
-| `src/runtime/session.ts` | `createGameSession(deps)` | `CreateGameSession` | stub |
-| `src/verse/tercet.ts` | `evaluateVerse(verse, ctx)` | `EvaluateVerse` | stub |
-| `src/ui/presenter.ts` | `createPresenter(deps)` | `CreatePresenter` | stub |
-| `src/audio/audio.ts` | `createAudio(deps)` | `CreateAudio` | stub |
-| `src/world/bridge.ts` | `createWorldBridge(deps)` | `CreateWorldBridge` | stub |
-| `src/art/textures.ts` | `generateTextures(scene)` | `(Phaser.Scene) => void` | stub |
-| `src/levels/_framework/registry.ts` | `getLevel`, `listLevels`, `registerLevel` | | done (auto-discovers `src/levels/<id>/index.ts`) |
-| scenes | `BootScene`, `TitleScene`, `WorldScene`, `UIScene`, `BookPageScene`, `BookMenuScene` | Phaser scenes, keys in `src/scenes/keys.ts` | placeholders |
+| File | Export | Type |
+|---|---|---|
+| `src/story/parser.ts` | `parseCanto(text, file)` | `(string, string) => ParseResult` |
+| `src/story/conditions.ts` | `parseCondition(text, pos?)`, `evaluateCondition(cond, ctx)` | `ConditionParse`, `boolean` |
+| `src/story/effects.ts` | `parseEffects(text, pos?)`, `formatEffect(effect)` | `EffectsParse`, `string` |
+| `src/story/quotes.ts` | `parseSourceText(text, file)`, `verifyQuote(quote, source)`, `sourceKey()` | `SourceCanto \| null`, `QuoteCheck` |
+| `src/story/lint.ts` | `lintCanto(script, ctx)` | `(CantoScript, LintContext) => Diagnostic[]` |
+| `src/story/words.ts` | `WORDS`, `getWord`, `isRhyme`, `findWordInLine` | bible §3.4.6 table |
+| `src/story/cite.ts` | `parseCitation`, `formatCitation`, `toRoman`, `fromRoman`, `cantoLabel` | |
+| `src/story/load.ts` | `loadStoryLibrary(opts?)`, `buildStoryLibrary(scripts, sources)`, `RAW_SCRIPTS`, `RAW_SOURCES`, `RAW_FIXTURES`, `cantoIdFromPath` | `LoadStoryLibrary` |
+| `src/runtime/bus.ts` | `createEventBus()` | `CreateEventBus` |
+| `src/state/initial.ts` | `createInitialState(profile?)` | |
+| `src/state/store.ts` | `createGameStateStore({ bus, storage })` | `CreateGameStateStore` |
+| `src/runtime/runner.ts` | `createStoryRunner(deps)` | `CreateStoryRunner` |
+| `src/runtime/session.ts` | `createGameSession(deps)` | `CreateGameSession` |
+| `src/verse/tercet.ts` | `evaluateVerse(verse, ctx)` | `EvaluateVerse` |
+| `src/ui/presenter.ts` | `createPresenter(deps)` | `CreatePresenter` |
+| `src/audio/audio.ts` | `createAudio(deps)` | `CreateAudio` |
+| `src/world/bridge.ts` | `createWorldBridge(deps)` | `CreateWorldBridge` |
+| `src/art/textures.ts` | `generateTextures(scene)` | `(Phaser.Scene) => void` |
+| `src/levels/_framework/registry.ts` | `getLevel`, `listLevels`, `registerLevel` | |
+| `src/mechanics/index.ts` | `createLibraryMechanic(name, ctx, config)`, `libraryMechanicNames()` | |
+| scenes | `BootScene`, `TitleScene`, `WorldScene`, `UIScene`, `BookPageScene`, `BookMenuScene` | Phaser scenes, keys in `src/scenes/keys.ts`, render order in `src/scenes/registry.ts` |
 
-Stubs use `stubObject()` (`src/app/stub.ts`): listed members return values, every other member is an async no-op. Delete the stub call when you implement the module.
+`src/app/stub.ts` (`stubObject()`) is what the modules started from; nothing uses it any more.
 
-### 3.2 Cross-team dependencies
+### 3.2 Dependencies between modules
 
-- B imports from A: `evaluateCondition`, `getWord`, `findWordInLine`, `formatCitation`, `cantoLabel`, `toRoman`. These already work.
-- C imports from A (`WORDS`, `getWord`, `SPEAKERS` from types) and from B (`evaluateVerse` for the compose screen).
-- D imports from B (`evaluateVerse` for casting) and the level registry.
+- Runtime imports from story-core: `evaluateCondition`, `getWord`, `findWordInLine`, `formatCitation`, `cantoLabel`, `toRoman`.
+- Presentation imports from story-core (`WORDS`, `getWord`, `SPEAKERS` from types) and from runtime / verse (`evaluateVerse` for the compose screen).
+- World imports from verse (`evaluateVerse` for casting) and the level registry.
 - Nobody imports a scene class except `src/scenes/registry.ts`. Presenter and world reach scenes through `game.scene.getScene(SceneKeys.X)`.
 
 ---
@@ -148,7 +153,7 @@ The fixture `tests/fixtures/test-canto.md` uses the reserved canto id `inf99` an
 
 ---
 
-## 5. Runner semantics (team B implements; everyone relies on them)
+## 5. Runner semantics (runtime; everyone relies on them)
 
 ### 5.1 Session and chapter
 
@@ -275,7 +280,9 @@ Both sides receive every `CAM` and resolve at once for verbs they do not handle:
 - choices are answered with `presenter.answer(letter)`: `canon` = first canonical visible letter (`all` -> first visible), `first`, `last`, or a per-choice map;
 - waiting on triggers: after `triggerDelayMs` the runner calls `world.satisfy(cursorTrigger)` (teleport / talk / emit);
 - `DO … {event:x}` tags: when `events` is `all` or lists x, the runner emits x after `world.direct` resolves, so systemic options that measure good play resolve to their first option;
-- `stopAt` pauses autoplay on reaching a beat or canto.
+- `stopAt` pauses autoplay (autoplay becomes `null`, the game keeps running) when that beat starts or that canto starts; turning autoplay on again also picks up the presenter call that is waiting.
+- Defaults (`DEFAULT_AUTOPLAY`): `choices: 'canon'`, `textDelayMs` 40, `triggers: true`, `triggerDelayMs` 80, `events: 'all'`, `stopAt: null`. A per-choice map falls back to the canonical letter for choices it does not list.
+- `presenter.skip()` finishes what is on screen at once (takes pending words, completes transitions); after a skipped transition the screen ends where the transition was going (for example, a skipped `unengrave` from the dark curtain leaves the world visible).
 
 ### 5.13 Cancellation
 
@@ -283,7 +290,7 @@ Both sides receive every `CAM` and resolve at once for verbs they do not handle:
 
 ---
 
-## 6. State (team B)
+## 6. State (runtime)
 
 `GameStateData` (contracts §2) is the public shape and the save file (version 1). Arrays, not Sets, so it serialises as is.
 
@@ -295,7 +302,7 @@ Both sides receive every `CAM` and resolve at once for verbs they do not handle:
 
 ---
 
-## 7. Presentation (team C)
+## 7. Presentation
 
 ### 7.1 Screens (bible §1.3–§1.5)
 
@@ -311,27 +318,29 @@ Both sides receive every `CAM` and resolve at once for verbs they do not handle:
 | Chapter end | BookPageScene | Summary and a preview of "Your Comedy" (the player's tercets as Longfellow lines). |
 | Missing canto | BookPageScene | "CANTO II — This canto is still being written." Turn the page to go on. |
 | The Book | BookMenuScene | Tabs below; opening it pauses the World and UI scenes, closing resumes them. |
-| HUD | UIScene | Top left: Resolve (flame) and Grace (light drop), and from `unlock:heart` (Canto III) a small scale beside them: pans for pity and justice, the beam for the balance, no numbers. Top right: place name and canto numeral. Suggested: a small strip with the equipped tercet's three words. Trust is never shown. |
+| HUD | UIScene | Top left: Resolve (flame) and Grace (light drop), and from `unlock:heart` (Canto III) a small scale beside them: pans for pity and justice, the beam for the balance, no numbers. Top right: place name and canto numeral, and the [Q] Ask Virgil mark while a hint is available. Bottom right: the Book icon, where gained words fly. The equipped verse's words show in a small strip. Trust is never shown. |
 
 ### 7.2 Book tabs and gating
 
+Tabs in their order on the page (`BOOK_TABS` in `src/ui/models/book.ts`):
+
 | Tab | Content | Visible when |
 |---|---|---|
-| Settings | §1.6 settings (below) | always |
-| Words | word cards (name, family, category, origin line); compose screen (A · B · A slots, chains, coda) using `evaluateVerse` | `unlock:words`; composing needs `compose`, chains `chain` |
 | Cantos | per played canto: title + epigraph; "As you lived it" (log, with choice margin notes); "Your verses"; "The whole canto" (Longfellow, seen lines in gold, numbered) after its colophon | `unlock:book` |
 | Verses | every Longfellow quote seen, in canto and line order | `unlock:book` |
+| Words | word cards (name, family, category, origin line); compose screen (A · B · A slots, chains, coda) using `evaluateVerse` | `unlock:words`; composing needs `compose`, chains `chain` |
 | Souls · Places · Lore | codex entries by tab | `unlock:codex` |
 | Remembrance | "Remembered by the world" (Homer, Horace, Ovid, Lucan, Virgil) and "Remembered by you" (memories) | `unlock:remembrance` |
 | Map | Botticelli-style section; first page from `codex:inf05.order_of_hell` | `unlock:codex` |
+| Settings | §1.6 settings (below) | always |
 
 ### 7.3 Settings and accessibility (bible §1.6, GDD 9)
 
-`Settings` in contracts: text speed (slow / normal / fast / instant), verse display (line by line / all at once), font scale (1, 1.15, 1.3), high contrast (`UI_COLORS_HIGH_CONTRAST`), "What Dante did" timing (after each choice / end of canto / only in the Book), volumes, screen shake, flashes, easy mode. Pity and justice differ by shape as well as colour (a tear and a scale pan). Citations can never be hidden. Body text is never below 20 px (`FONT_SIZE` × `fontScale`).
+`Settings` in contracts: text speed (slow / normal / fast / instant), verse display (line by line / all at once), font scale (1, 1.15, 1.3), high contrast (`UI_COLORS_HIGH_CONTRAST`), "What Dante did" timing (after each choice / end of canto / only in the Book), volumes (all, music and air, sounds), screen shake, flashes, easy mode (shown as "Gentle mode": Resolve does not fall). Settings are also reachable from the title page. Pity and justice differ by shape as well as colour (a tear and a scale pan). Citations can never be hidden. Body text is never below 20 px (`FONT_SIZE` × `fontScale`).
 
 ### 7.4 Input arbitration
 
-- UI (C) owns: text advance (E, Enter, Space while control is locked, click, pad A / Y), choices (arrows / W S, E / Enter, 1–3, click, pad), Q (ask Virgil / gloss), Tab / Esc (the Book), taking a glowing word (E while a quote with collectibles is on screen).
+- UI (C) owns: text advance (E, Enter, Space while control is locked, click, pad A / Y), choices (arrows / W S, E / Enter, 1–3, click, pad), Q (ask Virgil / gloss), Tab / Esc (the Book), taking a glowing word (E while a quote with collectibles is on screen). Every element ignores advance input for `INPUT_GRACE_MS` (140 ms) after it appears, and a choice ignores E / Enter / Space for 450 ms, so the press that closed the line before it cannot pick an option; arrows and 1–3 work at once.
 - World (D) owns: movement, dash (Shift / Space), interact (E), verse (J / left click), look back (hold R / pad RB), only while player control is on and no blocking UI element is open (`presenter.busy === false`).
 - In play mode, non-blocking strips do not consume E; Enter or a click dismisses them.
 - Key map and pad map: `config.ts` `KEYS`, `PAD_BUTTONS`.
@@ -342,7 +351,7 @@ Both sides receive every `CAM` and resolve at once for verbs they do not handle:
 
 ---
 
-## 8. World (team D)
+## 8. World
 
 ### 8.1 WorldScene
 
@@ -351,14 +360,18 @@ Both sides receive every `CAM` and resolve at once for verbs they do not handle:
 - Virgil (grey-white robe, beard): follows at `virgilFollowDistance(trust)`, never attacked, waits at checkpoints, can be directed by hooks (`moveTo`). Trust changes show as distance and a small gesture.
 - Places are named rectangles; entering one publishes `world:signal { kind: 'enter', place }`, leaving publishes `exit`. Talking to an NPC (E in range) publishes `talk`. Events publish `event`.
 - `world.beginBeat`: if the beat has `@place` and the player is elsewhere, move player and Virgil there (fade if far).
-- Resolve, fear and fainting: fear zones drain Resolve (`RESOURCES.fearDrainPerSecond`, ×1.25 while carrying the Fear word); at 0 the player faints and respawns at the last checkpoint (`DO … {checkpoint}`, Virgil's stone bench). Suggested (GDD 2.4): with trust ≥ 7 (Faithful) Virgil catches Dante once per circle instead. The scripted faints at the end of Cantos III and V are story beats (`faint` mechanic, CAM white-out), not failures.
+- Resolve, fear and fainting: fear zones drain Resolve (`RESOURCES.fearDrainPerSecond`, ×1.25 while carrying the Fear word); at 0 the player faints and respawns at the last checkpoint (`DO … {checkpoint}`, Virgil's stone bench). A level can set a rescue rule instead (`setRescue({ at, to })`, bible §7.3 / §7.5): when Resolve falls to `at` units, Dante sinks to his knees and Virgil comes and lifts him back to `to` units. Cantos I, III and V use it (`{ at: 1, to: 3 }`), so the reader is never sent back. The scripted faints at the end of Cantos III and V are story beats (`faint` mechanic, CAM white-out), not failures.
+- `world.beginBeat` with `@place`: Dante and Virgil are brought to the place when Dante is elsewhere. With `setKeepAhead(true)` (Cantos IV and V), a play beat triggered by `enter:` whose place Dante has already walked through leaves him where he is, so a traversal is never undone by a beat that waited its turn.
 - Verse casting (J): needs `unlock:verse`, an equipped verse (`state.equippedVerse`, set from the Words screen) that `evaluateVerse` accepts, and Grace (`graceCost`). Effect by category of the middle word: Force pushes and stuns, Ward shields, Mend restores Resolve, Reveal lights the dark, Still slows hazards and calms wind, Swift a long dash. Nothing is ever killed.
 
 ### 8.2 Levels
 
-- A per-canto level is a `LevelModule` (contracts §10) default-exported from `src/levels/<cantoId>/index.ts`; the registry discovers it. `build(ctx)` creates the map, places (ids exactly as the script's `@place` / `enter:`), spawns, NPCs and mechanics; `emits` lists the events it can produce; `beatHooks[beatId]` implements that beat's DO lines (phases `start`, `do` with `doIndex`, `end`) and must honour `ctx.signal`.
-- **Generic fallback level** (used when no LevelModule exists; makes every script playable now): collect place ids in order of first appearance (`@place` and `enter:` triggers), lay them out left to right along a path in the canto palette, put an NPC for every `talk:` speaker in its beat's place (or the next one), mark armed places / NPCs with a glint, and report `canSatisfy(event:…) = false` so event triggers fall back (5.3).
-- Mechanics (`MECHANIC_NAMES`, bible §7.0) are reusable classes in `src/mechanics/`, one per file, created by `ctx.createMechanic(name, config)`. `PERSISTENT_MECHANICS` (move, dash, talk, follow, compose, verse, heart, remembrance, chain) work in every canto once unlocked or taught; every other mechanic is active only in cantos whose front matter lists it. Player abilities (move, dash, talk, follow, verse, look_back) live in the world, not as level mechanics. GDD 10.2 systems map to: `wind_field` / `shelter` / `wind_lull` (WindField), `swarm` and `crowd_flow` (PatternHazard), `darkness` (VisionModifier), `walk_on_water` (SurfaceModifier), plus `fear`, `hold_ground`, `push_back`, `chase`, `guardian`, `quake`, `faint`, `inscription`, `hub`, `judgement_game`.
+- **Registry** (`src/levels/_framework/registry.ts`): a canto's level is a `LevelModule` (contracts §10). A folder `src/levels/<cantoId>/index.ts` that default-exports one is discovered at build time (`import.meta.glob('/src/levels/{inf,pur,par}*/index.ts')`) and wins. Otherwise Chapter 1 uses the story levels of `src/levels/_framework/chapter1/`, and the fixture canto `inf99` uses `demo.ts`. A canto with no level at all gets the generic level built from its script.
+- **LevelModule**: `build(ctx)` creates the map, places (ids exactly as the script's `@place` / `enter:`), spawns, NPCs and mechanics; `emits` lists the events it can produce (the runner then waits for the player instead of firing them itself, §5.3); `beatHooks[beatId]` implements that beat's DO lines (phases `start`, `do` with `doIndex`, `end`) and must honour `ctx.signal`; optional `update(dt, level)` and `destroy()`.
+- **Generic level** (`layout.ts` plans, `generic.ts` builds, `map.ts` draws, `ambient.ts` adds mechanics; the planners are pure and unit-tested): place ids in order of first appearance (`@place` and `enter:` triggers) are laid out left to right along a path, themed by their ids, in the canto palette; a talkable NPC stands where each `talk:` beat happens; silent figures dress the scenes that name them; Virgil appears from the scene that first brings him; armed places and NPCs get a glint. The canto's front-matter mechanics that make sense without hand-made moments come as gentle ambience (darkness, fear hollows with a Resolve floor, wind lanes and lee rocks, the runners and their wasps, a walkable stream, the inscription). The generic level emits no events, so `event:` triggers fall back (5.3).
+- **Chapter 1 story levels** (`src/levels/_framework/chapter1/`): `inf01.ts` … `inf05.ts`, each made with `storyLevel({ id, emits, overrides, build, everyBeat, hooks })` from `common.ts`. A story level is the generic layout of its script (with `overrides` to retune or drop ambient mechanics) plus a hand-made layer: figures and props in `build`, staging that depends on where the story is in `everyBeat` (so jumps and Continue find the world in the right state), and beat hooks that stage the poem's moments and produce the events their DO lines name. Rules every moment follows: a declared event is always produced in the end, by play or by the moment's own time limit; a hook that holds its beat never holds it under autoplay and always has a time limit in game time (the Book's pause stops it); a moment that outlives its beat is bound to the level's lifetime (`levelSignal`). `kit.ts` has the bounded helpers (`onStart`, `onDo`, `onEnd`, `until`, …); `tests/world/chapter1.test.ts` checks that each level emits only events its script names, produces every event its beats wait for and hooks only real beats; `cantos-1-3.test.ts` and `inf04.test.ts` check the layout rules of the wood, the banner and Limbo.
+- **World extras** (`src/world/extras.ts`, `worldExtras(ctx.level)`): the world's API for levels and mechanics beyond the frozen `LevelRuntime`: hurt, drain, push and slow Dante; interactables and runtime solids; control locks and input capture (Minos's court); NPCs and extra actors; Virgil's staging (`showVirgil`, `setVirgilLeads`, `setLeadPath`, follow / hold modes); benches and checkpoints; fog, camera "ahead" point, look-back pose; scripted faint; `setRescue`, `setKeepAhead`.
+- **Mechanics** (`MECHANIC_NAMES`, bible §7.0) are reusable classes in `src/mechanics/`, one per file (pure maths in `src/mechanics/logic/`), created by `ctx.createMechanic(name, config)` and found again with `ctx.mechanic(idOrName)`. `PERSISTENT_MECHANICS` (move, dash, talk, follow, compose, verse, heart, remembrance, chain) work in every canto once unlocked or taught; every other mechanic is active only in cantos whose front matter lists it. Player abilities (move, dash, talk, follow, verse, look_back) live in the world, and compose, heart, remembrance, chain and read_pages in the book, not as level mechanics (`NON_LEVEL_MECHANICS`). The library: `fear`, `darkness`, `look_back`, `chase`, `hold_ground`, `push_back`, `crowd_flow`, `swarm`, `guardian`, `quake`, `faint`, `inscription`, `hub`, `walk_on_water`, `wind_field` / `shelter` / `wind_lull`, `judgement_game`. Options added for Chapter 1 are opt-in and off by default, for example the wind's "brace" (a Dante who stands still is pushed at 15 % after 0.45 s), the crowd's thinning at the sharp bends of its loop, and `quench()` for a fear zone.
 
 ### 8.3 Art
 
@@ -368,29 +381,38 @@ All art is generated in code at boot (`generateTextures`): ASCII pixel maps plus
 
 ## 9. Debug API, autoplay, smoke tests
 
-`window.__dante` (`DanteDebugApi` in contracts §12; `src/debug/DebugApi.ts`) exists with `?debug=1` and in `vite dev`. It never changes how the game plays.
+`window.__dante` (`DanteDebugApi` in contracts §12; `src/debug/DebugApi.ts`) exists with `?debug=1` and in `vite dev` (`?debug=0` turns it off). Installing it never changes how the game plays; debug builds also load the fixture chapter.
 
 ```js
 __dante.autoplay({ choices: 'canon', textDelayMs: 40 });   // or false to turn it off
+__dante.autoplay({ choices: { 'inf03.c1': 'b' } });         // per-choice letters, canon for the rest
+__dante.autoplay({ stopAt: 'inf05.s6.b3' });                // pause autoplay when that beat (or canto) starts
 __dante.newGame();                       // returns at once; poll __dante.status / __dante.beat
 __dante.newGame({ chapter: 'fixture' }); // play tests/fixtures/test-canto.md (debug builds only)
+__dante.continueGame();                  // like Continue on the title: replay the saved scene from its start
 __dante.jump('inf05');  __dante.jump('inf03.s2');  __dante.jump('inf05.s6.b3', { profile: 'm0' });
 __dante.choose('b');  __dante.skipText();  __dante.teleport('inf03_gate');
 __dante.emit('inf01.waited_dawn');  __dante.talk('VIRGIL');  __dante.armed();
-__dante.state;  __dante.beat;  __dante.errors();  __dante.events();  __dante.diagnostics();
+__dante.setSettings({ textSpeed: 'fast' });
+__dante.state;  __dante.status;  __dante.runnerStatus;  __dante.canto;  __dante.scene;  __dante.beat;  __dante.mode;
+__dante.errors();  __dante.events();  __dante.diagnostics();
+__dante.session;  __dante.runner;  __dante.store;  __dante.story;   // the live services, for tools
 ```
 
-`scripts/smoke.mjs` opens the game in headless Chromium and fails on any console error, page error, failed request or `__dante.errors()` entry; with `--autoplay` it must reach `status === 'chapter_complete'`.
+`errors()` collects uncaught errors, unhandled rejections and `debug:log` errors; `events()` is a ring buffer of the last 600 bus events (without `resources:changed` and `state:changed`); `diagnostics()` lists the parse and lint diagnostics of every loaded script.
+
+`scripts/smoke.mjs` (`npm run smoke`) opens the game in headless Chromium (1280×720) and fails on any console error, page error, failed request or `__dante.errors()` entry; without `--autoplay` it starts a journey, presses an arrow key, and opens and closes the Book; with `--autoplay` it must reach `status === 'chapter_complete'` within `--timeout` seconds (default 420; the whole chapter takes about three minutes on an idle 4-core machine). By default it starts its own Vite dev server without file watching or HMR, so editing files during a run cannot reload the page; `--dist` serves `dist/` with `vite preview` instead, and `--url` tests a server that is already running. Screenshots go to `test-results/`.
 
 ---
 
 ## 10. Testing rules
 
 - Vitest runs in Node (`vitest.config.ts`). There is no `@types/node`: do not import `node:*` modules in tests or `src`. Load text with `import text from '…/file.md?raw'` or `import.meta.glob(…, { query: '?raw', import: 'default', eager: true })`, exactly like the game.
-- A: parser, conditions, effects, quotes and lint tests against the fixture and against small inline scripts; `lint:story` lints every real script (profile `canto`) and the fixture (profile `fixture`) and fails on errors.
-- B: runner tests with headless presenter / world doubles (record calls, answer choices, fire signals) on the fixture: scheduling (auto, enter, talk, event, after, optional beats, next-scene head, fallback), GOTO diamond, nested IF, choices (requires, spoken, systemic, reveal timings and settings), effects and idempotency, collectible words, colophon and chapter end, save / continue, autoplay, cancellation.
-- C and D: keep logic that can be pure (layout maths, text wrapping, input mapping, level layout from a script) in plain functions with tests; Phaser code is covered by `npm run smoke`.
-- Definition of done for every team: `npm run typecheck`, `npm test`, `npm run build` and `npm run smoke` all pass with no console errors.
+- Layout: `tests/story/**` and `tests/story-lint/**` (story-core), `tests/runtime/**`, `tests/state/**`, `tests/verse/**` (runtime), `tests/ui/**`, `tests/audio/**` (presentation), `tests/world/**` (world: geometry, art, mechanics logic, generic layout, the Chapter 1 levels), `tests/fixtures/**` (the fixture canto and its guard).
+- Story-core: parser, conditions, effects, quotes and lint tests against the fixture and against small inline scripts; `lint:story` lints every real script (profile `canto`) and the fixture (profile `fixture`) and fails on errors. `tests/story/bible.test.ts` compares the registry snapshot with the live bible.
+- Runtime: runner tests with headless presenter / world doubles (record calls, answer choices, fire signals) on the fixture: scheduling (auto, enter, talk, event, after, optional beats, next-scene head, fallback), GOTO diamond, nested IF, choices (requires, spoken, systemic, reveal timings and settings), effects and idempotency, collectible words, colophon and chapter end, save / continue, autoplay, cancellation.
+- Presentation and world: keep logic that can be pure (layout maths, text wrapping, input mapping, view models, level layout from a script, wind / crowd / path maths) in plain functions with tests; Phaser code is covered by `npm run smoke`.
+- Definition of done: `npm run typecheck`, `npm test`, `npm run lint:story`, `npm run build` and `node scripts/smoke.mjs --autoplay` all pass with no console errors.
 
 ---
 

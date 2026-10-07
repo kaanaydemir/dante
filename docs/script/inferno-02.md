@@ -71,7 +71,7 @@ Kanto bir **yürüyüş konuşması** olarak kuruldu. Dante ile Vergilius akşam
 | Olay | Ne zaman yayılır |
 |---|---|
 | `inf02.shadow_faced` | Oyuncu hayvan biçimli gölgelerden birine iyice yaklaştığında; gölge çözülür |
-| `inf02.dante_halts` | Dante patikada durduğunda. Üç gölge de göründükten sonra: oyuncu iki saniye kıpırdamazsa, yokuş yukarı dönerse ya da Vergilius'la arası on iki karoyu aşarsa. Yürüyüşün başından en geç yirmi saniye sonra |
+| `inf02.dante_halts` | Dante patikada durduğunda. Üç gölge de göründükten sonra: oyuncu iki saniye kıpırdamazsa, yokuş yukarı dönerse, Vergilius'la arası on iki karoyu aşarsa ya da taşın yanında bekleyen Vergilius'a yetişirse. Yürüyüşün başından en geç yirmi saniye sonra |
 | `inf02.dante_rises` | Oturan Dante'yi oyuncu ayağa kaldırdığında (herhangi bir hareket tuşu ya da E) |
 | `inf02.stone_moved` | Ortasında Love olan (Force) bir tercet kayaya değdiğinde |
 
@@ -232,9 +232,9 @@ Bu yürüyüşte başarısızlık yoktur ve Dante her durumda durur (omurga: II 
 EKLEME: Alacakaranlıkta hayvan biçimine giren gölgeler ve ağırlaşan adımlar şiirde yok; Dante'nin isteksizliğinin (II 37–42) ve Vergilius'un ürken hayvan benzetmesinin (II 48) oyunlaştırılmasıdır. | Dayanak: Inferno II, 37–48
 // Vergilius bu yürüyüşte bilerek susar: HINT yok, Q sessiz kalır. Cevabı s3'tedir.
 NARRATION: Virgil went on down the path without a word. Dante followed him, and then followed more slowly.
-DO: Vergilius cevap vermeden patikadan iner ve eliyle yolu gösterir. Oyuncu yürür; Dante'nin adımları kısalır, birkaç adımda bir duraklayıp tepeye bakar. Oyuncu tuşu bırakırsa Dante yokuş yukarı bir adım geri atar.
+DO: Vergilius cevap vermeden patikadan iner ve eliyle yolu gösterir; Dante'yi geçer ve ağır adımlarla taşa doğru yürür, onu beklemez. Oyuncu yürür; Dante rehberinin önüne geçmez, adımları kısalır, birkaç adımda bir duraklayıp tepeye bakar. Oyuncu tuşu bırakırsa Dante yokuş yukarı bir adım geri atar.
 DO: Batan ışıkta patikanın kenarındaki üç gölge hayvan biçimine girer: benekli bir yaprak gölgesi (pars), yeleli bir çalı (aslan), sıska, kuru bir ağaç (dişi kurt). Oyuncu birine iyice yaklaşırsa gölge çözülür ve ne olduğu görünür: ardıç, taş, kuru dal {event:inf02.shadow_faced}. Uzak durursa gölgeler patikanın kenarında kalır; Dante her birinin önünden geçerken ürken bir hayvan gibi irkilir ve bir an geri çekilir.
-DO: Üç gölge de göründükten sonra, oyuncu iki saniye kıpırdamazsa, yokuş yukarı dönerse ya da Vergilius'la arası on iki karoyu aşarsa Dante durur. Oyuncu ne yaparsa yapsın, yürüyüşün başından en geç yirmi saniye sonra durur {event:inf02.dante_halts}.
+DO: Üç gölge de göründükten sonra, oyuncu iki saniye kıpırdamazsa, yokuş yukarı dönerse, Vergilius'la arası on iki karoyu aşarsa ya da taşın yanında bekleyen Vergilius'a yetişirse Dante durur. Oyuncu ne yaparsa yapsın, yürüyüşün başından en geç yirmi saniye sonra durur {event:inf02.dante_halts}.
 SFX: Dante'nin nefesi; çakıl; bir an, uzakta, tanıdık bir hırıltıya benzeyen rüzgâr
 ```
 

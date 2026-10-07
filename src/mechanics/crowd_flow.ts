@@ -20,6 +20,11 @@
  *   texture?: string            runner texture (default npc-neutral)
  *   banner?: boolean            carry the banner at the head (default true)
  *   area?: Rect | PlaceId       collisions only while Dante is inside
+ *   thinAtBends?: number        where the banner turns sharply, the line thins for a while behind it
+ *                               (III s3, "at the bend it thinned for a moment"): runners within this
+ *                               many px of a corner the banner passed less than `openMs` ago fade
+ *                               and let Dante through (default 0: off)
+ *   openMs?: number             how long a bend stays thin after the banner turned there (default 3500)
  *
  * Other mechanics read `runnerPoints()` (the swarms ride above the runners).
  *
@@ -32,7 +37,7 @@ import type { MechanicContext } from '../runtime/contracts';
 import type { EventId } from '../story/types';
 import { dist, rectContains } from '../world/geometry';
 import { BaseMechanic, num, type AreaRef, type Point } from './base';
-import { PolyPath, type PathPoint } from './logic/path';
+import { arcDelta, PolyPath, sharpBends, type PathPoint } from './logic/path';
 import { dustPuff } from './visuals';
 
 export interface CrowdFlowConfig {
@@ -49,6 +54,8 @@ export interface CrowdFlowConfig {
   readonly texture?: string;
   readonly banner?: boolean;
   readonly area?: AreaRef;
+  readonly thinAtBends?: number;
+  readonly openMs?: number;
 }
 
 interface Runner {
@@ -59,6 +66,8 @@ interface Runner {
   tx: number;
   ty: number;
   dir: 'left' | 'right';
+  /** At a bend the banner just turned: faded, lets Dante through. */
+  thin: boolean;
 }
 
 export class CrowdFlow extends BaseMechanic {
@@ -72,6 +81,10 @@ export class CrowdFlow extends BaseMechanic {
   private turns = 0;
   private touchCooldown = 0;
   private hits = 0;
+  /** Arc lengths of the sharp corners (only with `thinAtBends`). */
+  private readonly bends: number[];
+  private readonly thinPx: number;
+  private openBends = 0;
 
   constructor(ctx: MechanicContext, cfg: CrowdFlowConfig) {
     super('crowd_flow', ctx, cfg);
@@ -79,6 +92,8 @@ export class CrowdFlow extends BaseMechanic {
     this.declareEmits(cfg.turnEvent);
     this.path = new PolyPath(cfg.path ?? [], true);
     this.speed = Math.max(4, num(cfg.speed, 46));
+    this.thinPx = Math.max(0, num(cfg.thinAtBends, 0));
+    this.bends = this.thinPx > 0 ? sharpBends(this.path) : [];
     const scene = this.scene;
     const texture = cfg.texture ?? 'npc-neutral';
     const count = Math.max(1, Math.round(num(cfg.runners, 24)));
@@ -89,7 +104,7 @@ export class CrowdFlow extends BaseMechanic {
     for (let i = 0; i < count; i++) {
       if (i > 0 && i % gapEvery === 0) slot += gapLength;
       const sprite = scene.textures.exists(texture) ? this.own(scene.add.sprite(0, 0, texture, 'right-1').setOrigin(0.5, 1)) : null;
-      this.runners.push({ sprite, offset: slot * spacing, x: 0, y: 0, tx: 1, ty: 0, dir: 'right' });
+      this.runners.push({ sprite, offset: slot * spacing, x: 0, y: 0, tx: 1, ty: 0, dir: 'right', thin: false });
       slot += 1;
     }
     this.banner =
@@ -128,7 +143,22 @@ export class CrowdFlow extends BaseMechanic {
       if (this.lastSegment >= 0) this.onTurn(head);
       this.lastSegment = head.segment;
     }
+    // Bends the banner passed a moment ago (it is ahead of them by less than the open stretch).
+    const length = this.path.length;
+    const openPx = (this.speed * Math.max(0, num(this.cfg.openMs, 3500))) / 1000;
+    const open =
+      this.bends.length === 0
+        ? this.bends
+        : this.bends.filter((b) => {
+            const past = arcDelta(b, this.s, length);
+            return past >= 0 && past < openPx;
+          });
+    this.openBends = open.length;
     for (const r of this.runners) {
+      if (this.thinPx > 0) {
+        r.thin = open.some((b) => Math.abs(arcDelta(b, this.s - r.offset, length)) < this.thinPx);
+        r.sprite?.setAlpha(r.thin ? 0.3 : 1);
+      }
       const p = this.path.at(this.s - r.offset);
       r.x = p.x;
       r.y = p.y;
@@ -168,7 +198,7 @@ export class CrowdFlow extends BaseMechanic {
     if (w.dante.dashing || w.dante.invulnerable) return;
     const radius = num(this.cfg.radius, 9);
     for (const r of this.runners) {
-      if (Math.abs(r.x - p.x) > radius || Math.abs(r.y - p.y) > radius * 0.8) continue;
+      if (r.thin || Math.abs(r.x - p.x) > radius || Math.abs(r.y - p.y) > radius * 0.8) continue;
       // Caught: dragged along with the line.
       const drag = num(this.cfg.drag, 54);
       w.dante.knock(r.tx * drag * 4.4, r.ty * drag * 4.4, 260);
@@ -185,7 +215,7 @@ export class CrowdFlow extends BaseMechanic {
 
   override debugInfo(): Record<string, unknown> {
     const b = this.bannerPoint();
-    return { ...super.debugInfo(), banner: { x: Math.round(b.x), y: Math.round(b.y) }, turns: this.turns, hits: this.hits, runners: this.runners.length };
+    return { ...super.debugInfo(), banner: { x: Math.round(b.x), y: Math.round(b.y) }, turns: this.turns, hits: this.hits, runners: this.runners.length, openBends: this.openBends };
   }
 }
 

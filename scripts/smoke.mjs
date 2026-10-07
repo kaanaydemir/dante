@@ -7,7 +7,12 @@
  *   npm run smoke -- --url <url>       test an already running server
  *   npm run smoke -- --autoplay        also autoplay the chapter through window.__dante
  *   npm run smoke -- --autoplay --fixture   autoplay the fixture chapter (canto inf99) instead
- *   npm run smoke -- --timeout 240     autoplay timeout in seconds (default 180)
+ *   npm run smoke -- --timeout 600     autoplay timeout in seconds (default 420)
+ *
+ * The full Chapter 1 autoplay takes about 3 minutes on an idle 4-core machine
+ * and longer on a busy one; the default timeout leaves room for that and still
+ * catches a soft-lock. The dev server runs without file watching or HMR, so
+ * editing files during a run cannot reload the page under the test.
  *
  * Screenshots go to test-results/smoke-*.png. Exit code 1 on any console
  * error, page error, window.__dante.errors() entry, or autoplay timeout.
@@ -35,7 +40,11 @@ async function startServer() {
     const server = await vite.preview({ preview: { port: 4317, strictPort: false }, logLevel: 'error' });
     return { url: server.resolvedUrls.local[0], close: () => server.close() };
   }
-  const server = await vite.createServer({ server: { port: 5317, strictPort: false }, logLevel: 'error' });
+  // No watcher, no HMR: the run tests the tree as it was when the page loaded.
+  const server = await vite.createServer({
+    server: { port: 5317, strictPort: false, hmr: false, watch: null },
+    logLevel: 'error',
+  });
   await server.listen();
   return { url: server.resolvedUrls.local[0], close: () => server.close() };
 }
@@ -78,7 +87,7 @@ async function main() {
       window.__dante.autoplay({ choices: 'canon' });
       window.__dante.newGame(ch ? { chapter: ch } : {});
     }, chapter);
-    const timeoutMs = Number(option('timeout', '180')) * 1000;
+    const timeoutMs = Number(option('timeout', '420')) * 1000;
     const started = Date.now();
     let last = '';
     while (Date.now() - started < timeoutMs) {

@@ -26,6 +26,8 @@ export class BookPageScene extends Phaser.Scene implements BookPageApi {
   private curtain!: Phaser.GameObjects.Rectangle;
   private bookIcon!: Phaser.GameObjects.Image;
   private held: Phaser.GameObjects.Image | null = null;
+  /** The alpha the curtain is fading to (or rests at); finishTransitions() puts it there. */
+  private curtainGoal = 0;
 
   constructor() {
     super({ key: SceneKeys.BookPage });
@@ -36,6 +38,7 @@ export class BookPageScene extends Phaser.Scene implements BookPageApi {
     const theme = uiContext().theme();
     const bgColor = Phaser.Display.Color.HexStringToColor(PAGE_BACKGROUND).color;
     this.curtain = this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, bgColor, 1).setOrigin(0, 0).setDepth(DEPTH.page - 20).setAlpha(0);
+    this.curtainGoal = 0;
     this.spread = new BookSpread(this);
     this.bookIcon = this.add.image(BOOK_ICON.x, BOOK_ICON.y, iconTexture(this, 'book', theme.colors.rubric, theme.colors.ink, 44)).setDepth(DEPTH.page + 60).setAlpha(0);
     this.overlays = new OverlaySet(this, {
@@ -60,17 +63,20 @@ export class BookPageScene extends Phaser.Scene implements BookPageApi {
 
   showCurtain(alpha = 1): void {
     stopTweens(this, this.curtain);
+    this.curtainGoal = alpha;
     this.curtain.setAlpha(alpha);
   }
 
   async hideCurtain(ms: number): Promise<void> {
     stopTweens(this, this.curtain);
+    this.curtainGoal = 0;
     if (this.curtain.alpha <= 0.01) return;
     await tweenTo(this, { targets: this.curtain, alpha: 0, duration: ms });
   }
 
   async dimCurtain(alpha: number, ms: number): Promise<void> {
     stopTweens(this, this.curtain);
+    this.curtainGoal = alpha;
     if (Math.abs(this.curtain.alpha - alpha) < 0.01) return;
     if (ms <= 0) {
       this.curtain.setAlpha(alpha);
@@ -97,6 +103,7 @@ export class BookPageScene extends Phaser.Scene implements BookPageApi {
       return;
     }
     const cover = Math.max(GAME_WIDTH / img.width, GAME_HEIGHT / img.height) * 1.04;
+    this.curtainGoal = 0;
     stopTweens(this, img);
     await tweenTo(this, { targets: img, x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2, scale: cover, duration: Math.round(ms * 0.55), ease: 'Cubic.easeIn' });
     this.curtain.setAlpha(0);
@@ -133,6 +140,9 @@ export class BookPageScene extends Phaser.Scene implements BookPageApi {
         }
       }
     }
+    // complete() stops a tween where it stands; the curtain goes where its fade was heading
+    // (a skipped unengrave from the dark curtain must not leave the world hidden).
+    this.curtain.setAlpha(this.curtainGoal);
   }
 
   reset(): void {
@@ -141,6 +151,7 @@ export class BookPageScene extends Phaser.Scene implements BookPageApi {
     destroy(this.held);
     this.held = null;
     stopTweens(this, this.curtain);
+    this.curtainGoal = 0;
     this.curtain.setAlpha(0);
     this.bookIcon.setAlpha(0);
   }

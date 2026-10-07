@@ -92,7 +92,8 @@ Güvenin bu kantodaki net değişimi en çok +1'dir (`inf01.c4=b`). Kalp yoktur.
 | `inf01.climbed_again` | s5.b3: ilk düşüşten sonra yeniden tırmanılınca. b4'ü açar. |
 | `inf01.reached_shadow` | s5.b3–b4: Dante biçimin önüne varınca, her yolda (kararsız kalan oyuncuyu kurt iter). b5'i açar. |
 
-- s1.b2, s1.b3 ve s1.b4 tetikleyicisizdir (`auto`). Seviye, her birinin ilk `DO` satırında Dante'nin o noktaya (çukur, geçit, taş döşemenin bittiği yer) varmasını beklemelidir; yoksa üç orman dizesi art arda açılır.
+- s1.b2, s1.b3 ve s1.b4 tetikleyicisizdir (`auto`). Seviye, her birinin ilk `DO` satırında Dante'nin o noktaya (çukur, geçit, taş döşemenin bittiği yer) varmasını beklemelidir; yoksa üç orman dizesi art arda açılır. Seviye (`planWood`) ormanı haritanın başına kadar genişletir: Dante ormanın derinliğinde uyanır; döşemenin bittiği yerde ormanı boydan boya kesen bir dikenlik vardır ve yalnızca Way alınınca patikanın üstünde dar bir açıklık açılır (s1.b5'teki açıklık).
+- s3.b1: pars yamacın alt yarısını boydan boya tutar; yürüyerek yanından geçilmez, yalnızca atılma sıyırır. `inf01.waited_dawn` ancak geçmeyi hiç denemeden 8 saniye beklenirse ya da yokuş aşağı geri çekilirse yayılır; geçmeyi deneyip sonra duran oyuncu "Slipped past her" kartını alır.
 - Seviye kancaları `DO` satırlarının sırasına bağlıdır (`onDo(i)`, `src/levels/_framework/chapter1/inf01.ts`). Kancalı vuruşlarda `DO` satırı eklenir, silinir ya da yer değiştirirse seviye de güncellenmelidir.
 
 **Kanto boyunca geçerli kurallar.** Resolve 1 birimin altına inmez ve bayılma yoktur; bölümün bayılmaları III ve V'te omurgadadır. Codex kayıtları sessizce birikir ve Kanto IV'te görünür (§2.12). Duraklatma menüsünde kolofona kadar yalnızca Words sekmesi (ve her zaman açık olan ayarlar) vardır. Bu kanto hiçbir bayrak okumaz; bu yüzden `IF` bloğu yoktur.
@@ -543,7 +544,7 @@ DO: Vergilius cevap vermez; yalnızca başını hafifçe eğer. Bu, oyunda bir g
 ```script
 @mode: play
 EKLEME: Dante'nin kurdu göstermesi bir etkileşim olarak oynanır; oyuncu korktuğu şeye dönüp bakmak zorundadır. | Dayanak: Inferno I, 88–90
-DO: Yamacın ortasında kurt bir aşağı bir yukarı yürür. Dante yamaca, kurda dönünce "[E] Show him the beast" istemi belirir. Oyuncu Dante'yi kurda çevirip E'ye basmadan sahne ilerlemez; Vergilius bekler. Oyuncu uzun süre dönmezse (öneri: 60 saniye) Dante kendiliğinden kurda döner ve dize gelir.
+DO: Yamacın ortasında kurt bir aşağı bir yukarı yürür. Dante yamaca, kurda dönünce "[E] Show him the beast" istemi belirir. Oyuncu Dante'yi kurda çevirip E'ye basmadan sahne ilerlemez; Vergilius bekler ve o da yamaca, kurda bakar. Oyuncu dönmezse yirmi saniye sonra Dante'nin gözleri kendiliğinden kurda döner ve istem belirir; bir dakika sonra (öneri: 60 saniye) dize kendiliğinden gelir.
 QUOTE DANTE (Inferno I, 88–90)
 > Behold the beast, for which I have turned back;
 > Do thou protect me from her, famous Sage,

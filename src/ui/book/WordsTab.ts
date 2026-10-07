@@ -285,19 +285,21 @@ export class WordsTab implements BookTabView {
 
   private takeBack(): void {
     if (!this.composer) return;
-    if (!this.composer.clear()) {
-      // Nothing in the focused slot: take back the last filled one before it.
-      const all = this.composer.slots();
-      const i = all.findIndex((s) => sameSlot(s, this.composer!.focus));
-      for (let k = i - 1; k >= 0; k--) {
-        const s = all[k] as SlotRef;
-        if (this.composer.get(s)) {
-          this.composer.clear(s);
-          this.composer.focus = s;
-          break;
-        }
+    const comp = this.composer;
+    if (!comp.clear()) {
+      // Nothing in the focused slot: take back the last filled one before it, else the last filled one
+      // of the verse (the Book reopens with the focus on the first slot: Backspace still empties a verse).
+      const all = comp.slots();
+      const i = all.findIndex((s) => sameSlot(s, comp.focus));
+      const order = [...all.slice(0, Math.max(0, i)).reverse(), ...all.slice(i + 1).reverse()];
+      const s = order.find((ref) => comp.get(ref) !== null);
+      if (s) {
+        comp.clear(s);
+        comp.focus = s;
       }
     }
+    // An empty verse starts again from its first slot.
+    if (comp.isEmpty()) comp.focus = { kind: 'tercet', tercet: 0, slot: 0 };
     this.flash = '';
     sfx('ui');
     this.render();

@@ -69,6 +69,9 @@ export class FearZones extends BaseMechanic {
   private t = 0;
   private readonly edge: Phaser.GameObjects.Image | null;
   private edgeAlpha = 0;
+  /** The drawn hollows of the still zones (they fade when the zones are put out). */
+  private readonly hollows: Phaser.GameObjects.Graphics[] = [];
+  private quenched = false;
 
   constructor(ctx: MechanicContext, cfg: FearConfig) {
     super('fear', ctx, cfg);
@@ -85,6 +88,7 @@ export class FearZones extends BaseMechanic {
       const shadow = ctx.level.palette.shadow;
       for (const z of this.zones) {
         const g = this.own(s.add.graphics().setDepth(DEPTH.groundDecor + 1));
+        this.hollows.push(g);
         // A dark hollow: concentric ellipses, darkest in the middle.
         for (let i = 0; i < 4; i++) {
           g.fillStyle(shadow, 0.16);
@@ -110,8 +114,18 @@ export class FearZones extends BaseMechanic {
       : null;
   }
 
+  /**
+   * Put the still zones out for good (a level's moment: Dante leaves his fear
+   * at the gate, III s1). The edge darkness fades as usual; whirls keep turning.
+   */
+  quench(): void {
+    if (this.quenched) return;
+    this.quenched = true;
+    for (const g of this.hollows) this.scene.tweens.add({ targets: g, alpha: 0, duration: 900 });
+  }
+
   isInside(x: number, y: number): boolean {
-    if (this.zones.some((z) => rectContains(z, x, y))) return true;
+    if (!this.quenched && this.zones.some((z) => rectContains(z, x, y))) return true;
     return this.whirls.some((wh) => Math.abs(wh.x - x) <= wh.radius && Math.abs(wh.y - y) <= wh.radius * 0.7);
   }
 

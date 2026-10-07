@@ -230,7 +230,7 @@ function growThicket(ctx: LevelBuildContext, plan: WoodPlan, height: number): ()
     const near = Math.abs(y - plan.gap.y) < 56;
     const jitter = ((i * 37) % 11) - 5;
     if (near || i % 2 === 0) {
-      const img = placeProp(ctx, near ? 'bush' : i % 4 === 0 ? 'tree' : 'bush', x + jitter, y, { tint: 0x55644f });
+      const img = placeProp(ctx, near ? 'bush' : i % 4 === 0 ? 'tree' : 'bush', x + jitter, y);
       if (img) bushes.push({ img, y });
     }
   }
