@@ -184,6 +184,10 @@ export class World implements LevelHostWorld {
   private restoredCheckpoint = false;
   private caughtThisCanto = false;
   private lookBackOn = false;
+  /** Play beats whose `enter:` place Dante has already walked through leave him where he is (`keepAhead`). */
+  private keepAhead = false;
+  /** Places Dante has stood in since the level loaded. */
+  private readonly visited = new Set<PlaceId>();
   private movedFrame = false;
   private frameInput: WorldInputState = IDLE_INPUT;
   private loadToken = 0;
@@ -466,6 +470,8 @@ export class World implements LevelHostWorld {
     this.leadingOn = true;
     this.checkpointNext = null;
     this.lookBackOn = false;
+    this.keepAhead = false;
+    this.visited.clear();
   }
 
   // =========================================================================
@@ -499,7 +505,7 @@ export class World implements LevelHostWorld {
       }
     }
 
-    if (beat.place && this.tracker.has(beat.place) && !this.isPlayerIn(beat.place)) {
+    if (beat.place && this.tracker.has(beat.place) && !this.isPlayerIn(beat.place) && !this.walkedThrough(beat)) {
       await this.bringPlayerTo(beat.place, info);
     }
 
@@ -873,12 +879,11 @@ export class World implements LevelHostWorld {
     }
 
     this.companion.update(dt, { x: dante.x, y: dante.y, heading: dante.heading });
-    const reach2 = TALK_REACH * TALK_REACH;
+    // Only the one E would speak to shows the key; the others keep their glint.
+    const talkTarget = steer ? this.nearestTalkable() : null;
     for (const npc of host.npcList) {
-      const dx = npc.x - dante.x;
-      const dy = npc.y - dante.y;
       try {
-        npc.update(dt, dx * dx + dy * dy <= reach2 * 1.6);
+        npc.update(dt, talkTarget?.who === npc);
       } catch (err) {
         npc.behaviour = null;
         this.reportError(`NPC ${npc.speaker} update failed: ${describe(err)}`);
@@ -916,6 +921,7 @@ export class World implements LevelHostWorld {
   private updatePlaces(): void {
     if (!this.dante) return;
     const tr = this.tracker.update(this.dante.x, this.dante.y);
+    for (const id of tr.entered) this.visited.add(id);
     for (const id of tr.exited) this.bus.emit('world:signal', { kind: 'exit', place: id });
     for (const id of tr.entered) this.bus.emit('world:signal', { kind: 'enter', place: id });
   }
@@ -952,18 +958,25 @@ export class World implements LevelHostWorld {
   // Interaction, verses, hurting, fainting
   // =========================================================================
 
-  private nearestTalkable(): { speaker: SpeakerId; x: number; y: number } | null {
+  /**
+   * Whom E speaks to: the nearest figure in reach whose talk the story waits
+   * for, else the nearest talkable one. Figures standing close together (the
+   * great spirits of Limbo) never hide the one the story waits for behind one
+   * already heard.
+   */
+  private nearestTalkable(): { speaker: SpeakerId; x: number; y: number; who: object } | null {
     const dante = this.dante;
     if (!dante) return null;
-    let best: { speaker: SpeakerId; x: number; y: number; d: number } | null = null;
-    const consider = (speaker: SpeakerId, x: number, y: number, armedOnly: boolean): void => {
+    let best: { speaker: SpeakerId; x: number; y: number; who: object; d: number; armed: boolean } | null = null;
+    const consider = (speaker: SpeakerId, x: number, y: number, who: object, armedOnly: boolean): void => {
       const d = dist(x, y, dante.x, dante.y);
       if (d > TALK_REACH * 1.25) return;
-      if (armedOnly && !this.armed.some((a) => a.trigger.kind === 'talk' && a.trigger.speaker === speaker)) return;
-      if (!best || d < best.d) best = { speaker, x, y, d };
+      const armed = this.armed.some((a) => a.trigger.kind === 'talk' && a.trigger.speaker === speaker);
+      if (armedOnly && !armed) return;
+      if (!best || (armed && !best.armed) || (armed === best.armed && d < best.d)) best = { speaker, x, y, who, d, armed };
     };
-    if (this.companion?.visible) consider('VIRGIL', this.companion.actor.x, this.companion.actor.y, true);
-    for (const n of this.host?.npcList ?? []) if (n.talkable && n.actor.sprite.visible) consider(n.speaker, n.x, n.y, false);
+    if (this.companion?.visible) consider('VIRGIL', this.companion.actor.x, this.companion.actor.y, this.companion, true);
+    for (const n of this.host?.npcList ?? []) if (n.talkable && n.actor.sprite.visible) consider(n.speaker, n.x, n.y, n, false);
     return best;
   }
 
@@ -1308,6 +1321,16 @@ export class World implements LevelHostWorld {
     }
   }
 
+  /**
+   * A play beat whose `enter:` place Dante has already crossed while an
+   * earlier beat was still being read (the signal waited its turn): with
+   * `keepAhead`, he is not pulled back over ground he has already won.
+   */
+  private walkedThrough(beat: BeatRunInfo['beat']): boolean {
+    const t = beat.trigger;
+    return this.keepAhead && beat.mode === 'play' && t.kind === 'enter' && t.place === beat.place && this.visited.has(t.place);
+  }
+
   private firstSceneOfCanto(info: BeatRunInfo): boolean {
     const first = info.canto.scenes.find((s) => s.number > 0);
     return first?.id === info.scene.id;
@@ -1463,6 +1486,9 @@ export class World implements LevelHostWorld {
         this.leadingOn = on;
         if (!on) this.companion?.lead(null);
         else this.updateLead();
+      },
+      setKeepAhead: (on) => {
+        this.keepAhead = on;
       },
       showVirgil: (on, instant) => this.showVirgil(on, instant ?? false),
     };

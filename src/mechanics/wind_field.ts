@@ -24,6 +24,9 @@
  *                                only while Dante is inside it)
  *   restPerSecond?: number       Resolve regained in a shelter, standing (default 0.12)
  *   calmEvent?: EventId          emitted when a lull begins
+ *   brace?: { afterMs?, factor? } "keep low": Dante standing still braces after `afterMs`
+ *                                (default 450) and the push falls to `factor` (default 0.15):
+ *                                he is pushed, not swept away (default off)
  *
  * Owner: team D (mechanics).
  */
@@ -35,7 +38,7 @@ import type { EventId } from '../story/types';
 import { normalize, rectContains } from '../world/geometry';
 import type { VerseCast } from '../world/extras';
 import { BaseMechanic, num, type AreaRef, type Point, type Waiter } from './base';
-import { approachCalm, shelterShadow, windAt, type WindLane } from './logic/wind';
+import { approachCalm, braceFactor, shelterShadow, windAt, type WindBrace, type WindLane } from './logic/wind';
 
 export interface FlockConfig {
   readonly everyMs?: number;
@@ -60,6 +63,7 @@ export interface WindFieldConfig {
   readonly flock?: FlockConfig | null;
   readonly restPerSecond?: number;
   readonly calmEvent?: EventId;
+  readonly brace?: WindBrace | null;
 }
 
 interface Flock {
@@ -90,6 +94,8 @@ export class WindField extends BaseMechanic {
   private flockPasses = 0;
   private flockHits = 0;
   private lullWaiter: Waiter<'calm'> | null = null;
+  /** How long Dante has stood still (for the brace). */
+  private stillMs = 0;
 
   constructor(ctx: MechanicContext, cfg: WindFieldConfig) {
     super('wind_field', ctx, cfg);
@@ -206,7 +212,12 @@ export class WindField extends BaseMechanic {
     const localCalm = this.now() < this.localCalmUntil || w.stilled() ? 0.9 : 0;
     const v = windAt(p.x, p.y, { lanes: this.lanes, shelters: this.shelters, calm: Math.max(this.calm, localCalm), time: this.t });
     if (w.playable()) {
-      if (v.x !== 0 || v.y !== 0) w.push(v.x, v.y);
+      // "Keep low": standing still, he braces against it (pushed, not swept away).
+      const input = w.input();
+      const still = Math.hypot(input.moveX, input.moveY) < 0.1 && !input.dashPressed;
+      this.stillMs = still ? this.stillMs + dt : 0;
+      const brace = braceFactor(this.stillMs, this.cfg.brace);
+      if (v.x !== 0 || v.y !== 0) w.push(v.x * brace, v.y * brace);
       // Getting his breath back behind a rock.
       if (this.sheltered && !w.movedThisFrame()) {
         const rest = num(this.cfg.restPerSecond, 0.12);
@@ -312,6 +323,7 @@ export class WindField extends BaseMechanic {
       sheltered: this.sheltered,
       flock: this.flock !== null,
       flockHits: this.flockHits,
+      still: Math.round(this.stillMs),
     };
   }
 }

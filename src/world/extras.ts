@@ -160,6 +160,13 @@ export interface WorldExtras {
    * that walks him itself (`companion.actor.moveTo`, `companion.mode = 'hold'`) turns it off.
    */
   setVirgilLeads(on: boolean): void;
+  /**
+   * A play beat triggered by `enter:` whose place Dante has already walked
+   * through (its signal waited while an earlier beat was read) leaves him
+   * where he is instead of bringing him back to it (default off). For
+   * traversals such as the hurricane, where going back would undo the play.
+   */
+  setKeepAhead(on: boolean): void;
   /** The player's actor handle (same as LevelRuntime.player). */
   readonly player: ActorHandle;
 }

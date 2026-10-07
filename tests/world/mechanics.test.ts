@@ -10,7 +10,7 @@ import { ellipseLoop, PolyPath } from '../../src/mechanics/logic/path';
 import { angleDelta, DEFAULT_FLOW, flowAngle, headingIndex, turnedBetween } from '../../src/mechanics/logic/crowd';
 import { circleNumeral, DEFAULT_CONFESSIONS, JudgementGame, pickConfessions, RIGHT_NEEDED } from '../../src/mechanics/logic/judgement';
 import { CueWatch, StillTimer } from '../../src/mechanics/logic/stillness';
-import { approachCalm, inWind, shelterShadow, windAt, type WindLane } from '../../src/mechanics/logic/wind';
+import { approachCalm, braceFactor, inWind, shelterShadow, windAt, type WindLane } from '../../src/mechanics/logic/wind';
 
 describe('mechanics registry', () => {
   it('covers every §7.0 mechanic: a library class, or an ability of the world or the book', () => {
@@ -150,6 +150,14 @@ describe('wind', () => {
     expect(windAt(lee.x + 5, lee.y + 5, { lanes: [lane], shelters: [lee], calm: 0, time: 0 })).toEqual({ x: 0, y: 0 });
     expect(windAt(80, 80, { lanes: [lane], shelters: [], calm: 1, time: 0 }).x).toBeCloseTo(0);
     expect(inWind(150, 50, [lane], [])).toBe(false);
+  });
+
+  it('a braced Dante (standing still) is pushed, not swept away', () => {
+    expect(braceFactor(10_000, null)).toBe(1);
+    expect(braceFactor(0, { afterMs: 450, factor: 0.15 })).toBe(1);
+    expect(braceFactor(449, { afterMs: 450, factor: 0.15 })).toBe(1);
+    expect(braceFactor(450, { afterMs: 450, factor: 0.15 })).toBeCloseTo(0.15);
+    expect(braceFactor(5000, {})).toBeCloseTo(0.15);
   });
 
   it('the lee lies downwind of the rock', () => {

@@ -72,3 +72,18 @@ export function approachCalm(current: number, target: number, dtMs: number, perS
   if (Math.abs(target - current) <= step) return target;
   return current + Math.sign(target - current) * step;
 }
+
+/** How braced Dante is (bible §7.5 "keep low": pushed, not swept away). */
+export interface WindBrace {
+  /** Standing still this long (ms), he braces (default 450). */
+  readonly afterMs?: number;
+  /** The share of the push that still reaches him then (default 0.15). */
+  readonly factor?: number;
+}
+
+/** The wind's push multiplier after standing still for `stillMs` (1 = the full push; no brace: always 1). */
+export function braceFactor(stillMs: number, brace: WindBrace | null | undefined): number {
+  if (!brace) return 1;
+  const after = brace.afterMs ?? 450;
+  return stillMs >= after ? Math.max(0, Math.min(1, brace.factor ?? 0.15)) : 1;
+}

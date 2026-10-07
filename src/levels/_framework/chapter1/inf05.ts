@@ -67,6 +67,9 @@ const PLACE = {
   edge: 'inf05_lee_edge',
 } as const;
 
+/** Places crossed on the way down (s2–s3): bands across the level (see buildInf05). */
+const BANDED: readonly string[] = ['inf05_court', 'inf05_court_bench', 'inf05_threshold', 'inf05_dark', 'inf05_precipice', 'inf05_open'];
+
 /** The shades Virgil names (V 52–67), in the order they pass. */
 const SHADES: readonly SpeakerId[] = ['SEMIRAMIS', 'DIDO', 'CLEOPATRA', 'HELEN', 'ACHILLES', 'PARIS', 'TRISTAN'];
 
@@ -318,6 +321,9 @@ function buildInf05(ctx: LevelBuildContext, layout: GenericLayout): void {
 
   // Bible §7.5 s3.b3: at one unit Dante sinks to his knees; Virgil lifts him to three.
   w?.setRescue({ at: 1, to: 3 });
+  // Ground won against the wind is never taken back: a later beat of the hurricane whose place he has
+  // already crossed (while an earlier one was still being read) leaves him where he is.
+  w?.setKeepAhead(true);
 
   // Minos: dread about him (V 4: "There standeth Minos horribly, and snarls").
   const minos = w?.npcOf('MINOS') ?? null;
@@ -362,6 +368,8 @@ function buildInf05(ctx: LevelBuildContext, layout: GenericLayout): void {
     rocks: storm.rocks,
     souls: 6,
     restPerSecond: 0.15,
+    // V 37–39 / bible: the wind was not made for him: he is pushed, not swept away. Standing still he keeps low.
+    brace: { afterMs: 450, factor: 0.15 },
     // The starlings sweep the open field only (s3.b3, V 40–43).
     flock: storm.flockArea ? { everyMs: 6500, speed: 160, width: 50, damage: 0.4, area: storm.flockArea } : null,
   });
@@ -377,6 +385,12 @@ function buildInf05(ctx: LevelBuildContext, layout: GenericLayout): void {
   const lovers = new CircleOf(ctx, ['FRANCESCA', 'PAOLO'], { x: edgeC.x + 40, y: edgeC.y + 24 }, 60, 42, LOVERS_SPEED, 14, { tint: 0xe89aa8, size: 30, alpha: 0.3 });
   for (const s of [...SHADES, 'FRANCESCA', 'PAOLO']) showFigure(ctx, s, false);
   for (const s of SHADES) w?.npcOf(s)?.actor.sprite.setTint(0xe8dcb4);
+
+  // The court and the hurricane are crossed place by place: each of their places is a band across the level's
+  // height, so no beat is passed by going round its place (the high rock and its edge keep their own rects).
+  for (const p of layout.places) {
+    if (BANDED.includes(p.id)) ctx.addPlace({ ...p, y: 0, h: layout.height });
+  }
 
   states.set(ctx, {
     seat,

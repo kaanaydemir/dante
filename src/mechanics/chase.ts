@@ -211,7 +211,8 @@ export class Chase extends BaseMechanic {
     if (dist(this.pos.x, this.pos.y, p.x, p.y) < 20 && this.touchCooldown <= 0 && w.playable()) {
       this.touchCooldown = 700;
       // Turned back toward the wood (I 36): a shove away from the goal and a little fear.
-      w.hurt(this.damage, 'panther', this.pos, 190);
+      // The shove comes from the goal's side even when she catches him from behind (after a dash past her).
+      w.hurt(this.damage, 'panther', { x: p.x + d.x * 12, y: p.y + d.y * 12 }, 190);
       w.dante.actor.face(d.x > 0 ? 'left' : 'right');
     }
   }

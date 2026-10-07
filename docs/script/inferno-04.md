@@ -227,6 +227,7 @@ Birinci çember. Burada şiirin en sessiz ses manzarası vardır: yakınma yok, 
 ```script
 @mode: play
 @place: inf04_sighs
+@trigger: enter:inf04_sighs
 @ambience: Yakınma yok, çığlık yok. Yalnızca iç çekişler: her biri ayrı ayrı, uzaktan ve yakından, yavaş bir nefes gibi gelip gider. Dante'nin ayak sesleri ovada duyulan en yüksek sestir.
 CAM: fade-in — gri bir ova; uzaklık seçilmez
 EKLEME: İç çekişlerin havayı gözle görülür biçimde titretmesi ve yukarı dönük yüzler şiirde yok; IV 25–30'un ve IV 42'nin görselleştirilmesidir. | Dayanak: Inferno IV, 25–42
@@ -376,6 +377,7 @@ END IF
 ```script
 @mode: play
 @place: inf04_ghost_forest
+@trigger: enter:inf04_ghost_forest
 @ambience: İç çekişler burada seyrekleşir. Kalabalığın içinde yalnızca kumaş hışırtısı gibi bir ses ve uzakta, alçak, sürekli bir uğultu.
 QUOTE POET (Inferno IV, 64–66)
 > We ceased not to advance because he spake,
@@ -572,6 +574,7 @@ HINT-SHORT: Keep it ready.
 ```script
 @mode: play
 @place: inf04_light_road
+@trigger: enter:inf04_light_road
 @ambience: Altı çift ayak sesi; konuşma sesleri var ama tek bir sözü seçilmez, yalnızca tonları duyulur. Arada bir, ışığın sınırından gelen bir iç çekiş.
 DO: Altılı topluluk kaleye çıkan yolda yürür; Homeros önde, Vergilius ile Dante arkada. Bir sonraki dize balonunda "light" kelimesi parlar ve "[E] Take the word" istemi belirir.
 QUOTE POET (Inferno IV, 103)
@@ -666,6 +669,7 @@ Kantonun son çapa dizesi (IV 114) ve Vergilius'un evi. Vergilius çayırda bell
 ```script
 @mode: dialogue
 @place: inf04_meadow
+@trigger: enter:inf04_meadow
 DO: Çayırda, ağır adımlarla yürüyen ya da çimenin üstünde oturan figürler vardır. Gözleri ağır ve ağırbaşlıdır; yüzleri gri değildir. Onlar da yukarıya bakmaz; birbirlerine bakarlar.
 QUOTE POET (Inferno IV, 112–114)
 > People were there with solemn eyes and slow,
@@ -707,6 +711,7 @@ Kantonun merkez bölgesi (`hub`, GDD 4.2). Yüksek ve ışıklı yerden bütün 
 ```script
 @mode: play
 @place: inf04_opening
+@trigger: enter:inf04_opening
 @music: Lavta ve alçak org birlikte; yavaş, sakin, çözülmeyen bir akor.
 DO: Yüksek yerin kenarından bütün çayır görünür. Vergilius yanındadır ve gösterdiği her topluluk, dize belirirken bir an ışıkla belirginleşir.
 QUOTE POET (Inferno IV, 118–120)
@@ -1223,3 +1228,4 @@ RELATED: inf04.aristotle, inf04.socrates, inf04.plato, inf04.orpheus, inf04.avic
   5. Olaylar (`inf04.looked_down`, `inf04.chain_built`, `inf04.light_read`, `inf04.stepped_on_water`) yalnızca belgelemedir; Kanto IV'ün sistemik ölçümü yoktur.
   6. **Motor:** s1.b2 ve s5'te `HINT` yoktur. s5'te Q'ya basınca Vergilius'un boş bir balonu açılır ve kenar boşluğu açılmaz; bu sunum katmanının işidir (Kanto III'ün s4'teki sessiz yürüyüşüyle aynı istek). s7'nin merkez düzeni ENGINE §5.3'le çalışır. Tek koşul seviye tasarımındadır: sekideki ruhlar `inf04_philosophers` alanının içinde durmalı ve iç kapı (`inf04_meadow_gate`) sekünün ötesinde olmalıdır. Böylece s7.b6 her yolda oynar.
   7. **Süre:** 145 dize sahnede, yaklaşık elli modern satır, altı kısa yürüyüş, bir zincir öğreticisi ve isteğe bağlı on karşılaşma: 10–14 dakika. Bütün karşılaşmaları yapan oyuncu için üst sınıra yakındır.
+  8. **Oynanış testi (yürüyüşler).** s2.b1, s3.b1, s5.b1, s6.b4 ve s7.b1 kendi yerlerine girilince (`enter:`) oynar: inişten ovaya, çukurdan ormana, şairlerin buluştuğu yerden ışık yoluna, kapılardan çayıra ve çayırdan ışıklı yere oyuncu Vergilius'un ardından kendisi yürür; sahne geçişi kesmeyle değil, yürüyüşle olur. s4.b4'ten sonra topluluk buluşma yerinde bekler: oyuncu zinciri Kitap'ta o sırada kurabilir. Uçurumun kenarındaki çıkıntı bir kaya burnuyla biter; patikanın başındaki tek dar geçitte Vergilius durur ve Dante onunla konuşana kadar (s1.b3) geçit kapalıdır: kantonun ilk sözleri yürüyerek atlanamaz. Dört şair s4'ten s8.b1'e kadar topluluğun yanında yürür; çayırda (s7) sekideki filozoflar s7.b6'dan önce konuşmaz ve iç kapıya giden yol sekünün üstünden geçer. Kimlikler, DO sırası ve olaylar değişmedi.
